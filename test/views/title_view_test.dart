@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/title_view.dart';
+import 'package:rummipoker/widgets/fx/fx_ambient.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -25,11 +26,13 @@ void main() {
     await StorageHelper.init();
     GameSettings.bgmMuted = true;
     GameSettings.sfxMuted = true;
+    FxAmbient.debugReset();
   });
 
   testWidgets('title run info entry opens an empty-run explanation', (
     tester,
   ) async {
+    FxAmbient.setMood(FxAmbientMood.battle);
     tester.view.physicalSize = const Size(1170, 2532);
     tester.view.devicePixelRatio = 3.0;
     addTearDown(() {
@@ -60,6 +63,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(FxAmbient.controller.mood, FxAmbientMood.menu);
     expect(find.text('버전 1.0.0+1'), findsOneWidget);
     expect(find.text('도감'), findsWidgets);
     expect(find.text('보상 카드, Jester, Item 수집 상태 확인'), findsOneWidget);

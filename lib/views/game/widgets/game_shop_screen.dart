@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' as math;
+import 'dart:ui' show lerpDouble;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -19,8 +20,13 @@ import '../../../resources/sound_manager.dart';
 import '../../../services/active_run_save_facade.dart';
 import '../../../services/tutorial_state_service.dart';
 import '../../../utils/common_ui.dart';
+import '../../../widgets/fx/fx_sprites.dart';
+import '../../../widgets/fx/juice.dart';
+import '../../../widgets/fx/motion_policy.dart';
+import '../../../widgets/fx/spring_follow.dart';
 import '../../../widgets/phone_frame_scaffold.dart';
 import '../game_presentation_timings.dart';
+import '../game_feedback_cues.dart';
 import 'game_card_name_text.dart';
 import 'game_jester_widgets.dart';
 import 'game_market_feedback_widgets.dart';
@@ -60,6 +66,7 @@ class GameShopScreen extends StatefulWidget {
     required this.onBuyOffer,
     required this.onBuyItemOffer,
     required this.onBuyTileOffer,
+    this.isFirstAcquisition,
     required this.onUseMarketItem,
     required this.onSellOwnedJester,
     required this.onSellMarketItem,
@@ -87,6 +94,7 @@ class GameShopScreen extends StatefulWidget {
   final String? Function(RummiMarketOfferView offer) onBuyOffer;
   final String? Function(RummiMarketItemOfferView offer) onBuyItemOffer;
   final String? Function(int offerIndex) onBuyTileOffer;
+  final bool Function(String category, String contentId)? isFirstAcquisition;
   final String? Function(ItemDefinition item) onUseMarketItem;
   final bool Function(int ownedIndex) onSellOwnedJester;
   final bool Function(ItemDefinition item) onSellMarketItem;
@@ -153,6 +161,9 @@ class _GameShopScreenState extends State<GameShopScreen>
   String? _marketUseFeedbackLabel;
   String? _marketUseFeedbackDelta;
   int _marketRerollFeedbackTick = 0;
+  // Tutorial targets change with the tab; preserve the outgoing offer row.
+  final _marketOfferSwitcherKey = GlobalKey();
+  int _marketTransitionDirection = 1;
   List<RummiMarketItemOfferView>? _pinnedItemOffers;
   bool _pendingLifecycleOptions = false;
   bool _optionsDialogOpen = false;
@@ -161,6 +172,8 @@ class _GameShopScreenState extends State<GameShopScreen>
   bool _slotUnlockBannerVisible = false;
   Set<RummiSlotUnlockKind> _activeSlotUnlockPresentation =
       <RummiSlotUnlockKind>{};
+  int _newRevealTick = 0;
+  String? _newRevealLabel;
   Future<void> _pendingStateSave = Future<void>.value();
 
   void _mutate(VoidCallback fn) {
@@ -189,6 +202,7 @@ class _GameShopScreenState extends State<GameShopScreen>
       if (!mounted) return;
       final market = _market;
       _mutate(() => _syncCurrentLaneToAvailableOffers(market));
+      GameFeedback.play(GameCue.marketEntry);
       if (widget.initialItemPresentationEvents.isNotEmpty) {
         widget.onItemPresentationEventsShown?.call();
         _startEffectPresentationSummary(

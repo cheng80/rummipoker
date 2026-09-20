@@ -21,6 +21,9 @@ class StorageHelper {
     _prefs ??= await SharedPreferences.getInstance();
   }
 
+  /// init 완료 여부. 저장소 없이 그려지는 위젯 테스트에서 기본값을 쓰게 한다.
+  static bool get isInitialized => _prefs != null;
+
   static void resetForTest() {
     _prefs = null;
   }

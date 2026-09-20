@@ -44,6 +44,7 @@ class _MarketActionPane extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           GameActionButton(
+            key: const ValueKey('market-detail-action'),
             label: buttonLabel,
             background: buttonColor,
             foreground: foreground,

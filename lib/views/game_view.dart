@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,20 +36,25 @@ import '../resources/sound_manager.dart';
 import '../services/active_run_save_service.dart';
 import '../services/blind_selection_setup.dart';
 import '../services/debug_run_fixture_service.dart';
+import '../services/game_settings.dart';
 import '../services/game_analytics_service.dart';
 import '../services/new_run_setup.dart';
 import '../services/run_progression_service.dart';
 import '../services/run_unlock_state_service.dart';
 import '../services/tutorial_state_service.dart';
 import '../utils/common_ui.dart';
+import 'game/game_feedback_cues.dart';
 import 'game/game_presentation_timings.dart';
+import 'game/game_settlement_pacing.dart';
 import 'game/widgets/game_cashout_widgets.dart';
 import 'game/widgets/game_hand_zone.dart';
 import 'game/widgets/game_jester_widgets.dart';
 import 'game/widgets/game_market_feedback_widgets.dart';
 import 'game/widgets/game_bookmark_slot_dialog.dart';
+import 'game/widgets/game_boss_intro_widgets.dart';
 import 'game/widgets/game_options_dialog.dart';
 import 'game/widgets/game_run_info_dialog.dart';
+import 'game/widgets/game_run_victory_widgets.dart';
 import 'game/widgets/game_effect_overlay.dart';
 import 'game/widgets/game_shop_screen.dart';
 import 'game/widgets/game_shared_widgets.dart';
@@ -56,6 +62,13 @@ import 'game/widgets/game_tile_choice_dialog.dart';
 import 'game/widgets/game_tutorial_overlay.dart';
 import 'game/widgets/game_surface_metrics.dart';
 import 'game/widgets/game_ui_palette.dart';
+import '../widgets/fx/fx_ambient.dart';
+import '../widgets/fx/fx_layer.dart';
+import '../widgets/fx/fx_sprites.dart';
+import '../widgets/fx/juice.dart';
+import '../widgets/fx/motion_policy.dart';
+import '../widgets/fx/presentation_clock.dart';
+import '../widgets/fx/screen_shake.dart';
 import '../widgets/phone_frame_scaffold.dart';
 
 part 'game/game_view_transition_overlays.dart';
@@ -160,6 +173,16 @@ class _GameViewState extends ConsumerState<GameView>
   LineRef? _fateTransformFlashLineRef;
   int _fateTransformFlashTick = 0;
   bool _bossConstraintIntroShown = false;
+  // --- T4: Boss 인트로 배너와 제약 표시 비행 ---
+  bool _bossIntroSettled = false;
+  List<GameBossMarkFlight>? _bossMarkFlights;
+  Timer? _bossIntroGuardTimer;
+  int _bossIntroGuardRetries = 0;
+  final GlobalKey _gameStackKey = GlobalKey();
+  final GlobalKey _bossIntroMarksKey = GlobalKey();
+  // --- T4: 런 완료 승리 장면 ---
+  List<GameRunVictoryStat>? _runVictoryStats;
+  Completer<void>? _runVictoryDone;
   bool _pendingLifecycleOptions = false;
   bool _pausedLifecycleDuringStageFlow = false;
   bool _optionsDialogOpen = false;
@@ -178,7 +201,41 @@ class _GameViewState extends ConsumerState<GameView>
   final GlobalKey _battlePreviewTutorialKey = GlobalKey();
   final GlobalKey _battleActionsTutorialKey = GlobalKey();
   final GlobalKey _battleHandTutorialKey = GlobalKey();
-  Completer<void>? _presentationResumeCompleter;
+  final GlobalKey _battleJesterZoneKey = GlobalKey();
+
+  /// 마지막 거절 입력이 흔들 대상과 순번. 연출 전용이다.
+  _BattleDenyTarget _battleDenyTarget = _BattleDenyTarget.actions;
+  int _battleDenyTick = 0;
+
+  // 한 확정의 정산 연출 전용 상태. 저장·게임 결과와 무관하다.
+  bool _settlementSkipRequested = false;
+  bool _settlementSlowMo = false;
+  int _settlementStepCount = 0;
+  int _settlementTickIndex = 0;
+  int _settlementHitSerial = 0;
+  int _settlementGrade = 0;
+
+  /// 타일 tick은 매 박자 바뀌므로 화면 전체가 아니라 보드만 다시 그린다.
+  final ValueNotifier<SettlementTileTicks> _settlementTicks = ValueNotifier(
+    SettlementTileTicks.empty,
+  );
+
+  /// 정산·전환 연출 대기의 단일 시계. pause·정산 속도·hit-stop을 반영한다.
+  late final PresentationClock _presentationClock = PresentationClock(
+    tick: GamePresentationTimings.presentationPauseTick,
+    speed: _presentationSpeed,
+  );
+
+  /// 설정 속도 × 자동 가속 × 피니셔 슬로모션. 탭 스킵이면 즉시.
+  double _presentationSpeed() {
+    if (_settlementSkipRequested) return double.infinity;
+    final base = GameSettings.settlementSpeed.multiplier;
+    if (base.isInfinite) return base;
+    final slowMo = _settlementSlowMo
+        ? GamePresentationTimings.settlementFinisherSlowMo
+        : 1.0;
+    return base * GameSettlementPacing.autoAccel(_settlementStepCount) * slowMo;
+  }
 
   GameSessionNotifier get _gameNotifier =>
       ref.read(gameSessionNotifierProvider(_gameArgs).notifier);
@@ -218,6 +275,24 @@ class _GameViewState extends ConsumerState<GameView>
       DebugRunFixtureService.shouldAutoStartTutorials(
         _gameState.debugFixtureId,
       );
+
+  /// 자동 흐름(풀런봇·자동 cash-out 등)이나 OS 동작 줄이기에서는 흐름 연출을 건너뛴다.
+  bool get _skipsFlowPresentation =>
+      MotionPolicy.reduceMotion ||
+      widget.autoAdvanceMarketOnLoad ||
+      widget.autoEnterMarketOnCashOut ||
+      widget.autoCashOutLoopOnLoad ||
+      widget.debugAutoUseItemId != null;
+
+  /// Boss 인트로 배너와 제약 표시 비행이 아직 끝나지 않았다. 자동 튜토리얼은 이 뒤에 시작한다.
+  bool get _bossIntroPending =>
+      !_bossIntroSettled &&
+      _gameState.activeRunScene == ActiveRunScene.battle &&
+      _gameState.session?.blind.bossModifier != null;
+
+  /// 배너가 닫히고 비행이 닿기 전까지 보드·손패의 제약 표시를 숨긴다.
+  bool get _bossMarksHidden => _bossIntroPending && !_skipsFlowPresentation;
+
   bool get _isBattleInputLocked =>
       _isUiLocked ||
       _boardMoveMode ||
@@ -250,6 +325,7 @@ class _GameViewState extends ConsumerState<GameView>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       SoundManager.playBgm(AssetPaths.bgmMain);
+      FxAmbient.setMood(_battleAmbientMood);
       _loadJesterCatalog();
       if (widget.debugItemCatalogOverride == null) {
         _loadItemCatalog();
@@ -269,6 +345,10 @@ class _GameViewState extends ConsumerState<GameView>
   @override
   void dispose() {
     _inactiveLifecycleTimer?.cancel();
+    _bossIntroGuardTimer?.cancel();
+    _presentationClock.dispose();
+    _settlementTicks.dispose();
+    SoundManager.rampGlobalPitch(1, Duration.zero);
     WidgetsBinding.instance.removeObserver(this);
     _dismissBattleTutorial();
     super.dispose();
@@ -423,7 +503,16 @@ class _GameViewState extends ConsumerState<GameView>
     final modifier = _gameState.session?.blind.bossModifier;
     if (modifier == null) return;
     _bossConstraintIntroShown = true;
-    await _showBossConstraintInfo(modifier: modifier, buttonLabel: '전투 시작');
+    FxAmbient.setMood(FxAmbientMood.boss);
+    Rect? marksRect;
+    await _showBossConstraintInfo(
+      modifier: modifier,
+      buttonLabel: '전투 시작',
+      intro: true,
+      onBeforeClose: () => marksRect = _globalRectOf(_bossIntroMarksKey),
+    );
+    if (!mounted) return;
+    await _playBossMarkFlight(marksRect);
   }
 
   Future<void> _openBossConstraintInfo() async {
@@ -436,84 +525,119 @@ class _GameViewState extends ConsumerState<GameView>
   Future<void> _showBossConstraintInfo({
     required RummiBossModifier modifier,
     required String buttonLabel,
+    bool intro = false,
+    VoidCallback? onBeforeClose,
   }) async {
     await showGameFramedDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => GameModalCard(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(dialogContext).height * 0.72,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: GameUiPalette.specialDangerNotice,
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: GameUiPalette.specialDangerNoticeText.withValues(
-                          alpha: 0.88,
-                        ),
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: const Icon(
-                      Icons.warning_amber_rounded,
-                      color: GameUiPalette.textPrimary,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      modifier.title,
-                      softWrap: true,
-                      style: TextStyle(
-                        fontFamily: AssetPaths.fontNexonLv2Gothic,
-                        color: GameUiPalette.textPrimary.withValues(
-                          alpha: 0.96,
-                        ),
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Flexible(
-                child: SingleChildScrollView(
-                  key: const ValueKey('boss-constraint-rule-scroll'),
-                  child: Text(
-                    modifier.ruleText,
-                    style: TextStyle(
-                      color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      height: 1.45,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              GameChromeButton(
-                label: buttonLabel,
-                backgroundColor: GameUiPalette.actionGold,
-                foregroundColor: GameUiPalette.surfacePanel,
-                onPressed: () => Navigator.of(dialogContext).pop(),
-              ),
-            ],
-          ),
-        ),
+      builder: (dialogContext) => GameBossIntroCard(
+        modifier: modifier,
+        buttonLabel: buttonLabel,
+        animate: intro && !MotionPolicy.reduceMotion,
+        marksKey: intro ? _bossIntroMarksKey : null,
+        maxHeight: MediaQuery.sizeOf(dialogContext).height * 0.72,
+        onConfirm: () {
+          onBeforeClose?.call();
+          Navigator.of(dialogContext).pop();
+        },
       ),
     );
+  }
+
+  Rect? _globalRectOf(GlobalKey key) {
+    final box = key.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.attached || !box.hasSize) return null;
+    return box.localToGlobal(Offset.zero) & box.size;
+  }
+
+  /// 배너가 닫힌 뒤 제약 표시를 배너 위치에서 보드 칸으로 날려 보낸다.
+  ///
+  /// 상태는 바꾸지 않는다. 연출을 건너뛰는 경로에서는 곧바로 끝낸다.
+  Future<void> _playBossMarkFlight(Rect? source) async {
+    if (_skipsFlowPresentation || source == null) {
+      _settleBossIntro();
+      return;
+    }
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    final stackBox = _gameStackKey.currentContext?.findRenderObject();
+    final stackContext = _gameStackKey.currentContext;
+    if (stackBox is! RenderBox ||
+        stackContext == null ||
+        !stackContext.mounted) {
+      _settleBossIntro();
+      return;
+    }
+    final targets = collectBossMarkTargets(
+      stackContext,
+      fallbackKey: const ValueKey('battle-blind-info-chip'),
+    );
+    if (targets.isEmpty) {
+      _settleBossIntro();
+      return;
+    }
+    final from = stackBox.globalToLocal(source.center);
+    _startBossIntroGuard(targets.length);
+    _mutate(() {
+      _bossMarkFlights = [
+        for (final rect in targets)
+          GameBossMarkFlight(
+            from: from,
+            to: Rect.fromPoints(
+              stackBox.globalToLocal(rect.topLeft),
+              stackBox.globalToLocal(rect.bottomRight),
+            ),
+          ),
+      ];
+    });
+  }
+
+  /// 비행이 닿았다는 신호가 오지 않아도 상한 시간이 지나면 제약 표시를 드러낸다.
+  ///
+  /// 일시정지 중이면 몇 번 더 기다리되, 영원히 미루지는 않는다.
+  void _startBossIntroGuard(int count) {
+    final bound =
+        GameBossMarkFlightLayer.totalDuration(count) +
+        GamePresentationTimings.bossMarkFlightGuard;
+    _bossIntroGuardRetries = 0;
+    _scheduleBossIntroGuard(bound);
+  }
+
+  void _scheduleBossIntroGuard(Duration bound) {
+    _bossIntroGuardTimer?.cancel();
+    _bossIntroGuardTimer = Timer(bound, () {
+      if (_bossIntroSettled || !mounted) return;
+      if (_presentationPaused && _bossIntroGuardRetries < 3) {
+        _bossIntroGuardRetries++;
+        _scheduleBossIntroGuard(bound);
+        return;
+      }
+      _settleBossIntro();
+    });
+  }
+
+  void _onBossMarksLanded() {
+    if (_bossIntroSettled) return;
+    final flights = _bossMarkFlights;
+    _settleBossIntro();
+    final stackContext = _gameStackKey.currentContext;
+    if (flights == null || stackContext == null) return;
+    GameFeedback.play(GameCue.penalty);
+    ScreenShake.instance.add(0.2);
+    Fx.emit(stackContext, FxPresets.constraintImpact, [
+      for (final flight in flights) flight.to.center,
+    ]);
+  }
+
+  /// 여러 번 불려도 한 번만 동작한다. 화면이 사라진 뒤에도 잠금은 남긴다.
+  void _settleBossIntro() {
+    _bossIntroGuardTimer?.cancel();
+    _bossIntroGuardTimer = null;
+    if (_bossIntroSettled) return;
+    _bossIntroSettled = true;
+    if (!mounted) return;
+    _mutate(() => _bossMarkFlights = null);
   }
 
   void _scheduleDebugAutoUseItem() {
@@ -582,9 +706,18 @@ class _GameViewState extends ConsumerState<GameView>
     _saveActiveRun();
   }
 
-  void _showSnack(String message) {
+  FxAmbientMood get _battleAmbientMood {
+    final tierIndex =
+        _gameState.battleView?.currentBlindTierIndex ?? widget.blindTier.index;
+    return tierIndex >= BlindTier.boss.index
+        ? FxAmbientMood.boss
+        : FxAmbientMood.battle;
+  }
+
+  /// [silent]는 호출부가 이미 자체 cue를 냈을 때 알림 등급 소리만 끈다.
+  void _showSnack(String message, {bool silent = false}) {
     if (!mounted) return;
-    showTopNotice(context, message);
+    showTopNotice(context, message, cue: silent ? null : GameCue.noticeTop);
   }
 
   void _schedulePendingItemPresentationFeedback(GameSessionState gameState) {
@@ -636,81 +769,121 @@ class _GameViewState extends ConsumerState<GameView>
     final gameState = ref.watch(gameSessionNotifierProvider(_gameArgs));
     if (!gameState.isReady) {
       return const PhoneFrameScaffold(
-        child: Center(child: CircularProgressIndicator()),
+        child: Stack(
+          children: [
+            Positioned.fill(child: GameTableBackdrop()),
+            Center(
+              child: SizedBox.square(
+                key: ValueKey('game-view-loading'),
+                dimension: 34,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  strokeCap: StrokeCap.round,
+                  color: GameUiPalette.actionGoldBright,
+                  backgroundColor: GameUiPalette.surfacePanel,
+                ),
+              ),
+            ),
+          ],
+        ),
       );
     }
     _scheduleBattleTutorialIfNeeded();
     _schedulePendingItemPresentationFeedback(gameState);
     return PhoneFrameScaffold(
       child: Stack(
+        key: _gameStackKey,
         children: [
-          _GameSurface(
-            battle: _battleViewWithItemSlots,
-            station: _stationView,
-            market: _marketView,
-            stageFlowPhase: _stageFlowPhase,
-            presentationPaused: _presentationPaused,
-            stageScoreAdded: _stageScoreAdded,
-            activeSettlementLine: _activeSettlementLine,
-            activeSettlementStep: _activeSettlementStep,
-            activeSettlementEffectIndex: _activeSettlementEffectIndex,
-            activeSettlementEffectIndexes: _activeSettlementEffectIndexes,
-            settlementGoalDisplayScore: _settlementGoalDisplayScore,
-            settlementSequenceTick: _settlementSequenceTick,
-            settlementBoardSnapshot: _settlementBoardSnapshot,
-            selectedHandTile: _selectedHandTile,
-            selectedBoardRow: _selectedBoardRow,
-            selectedBoardCol: _selectedBoardCol,
-            boardMoveMode: _boardMoveMode,
-            pendingBoardMoveSourceRow: _pendingBoardMoveSourceRow,
-            pendingBoardMoveSourceCol: _pendingBoardMoveSourceCol,
-            boardMoveBonusTargetCellKey: _boardMoveBonusTargetCellKey,
-            boardMoveBonusFlashTick: _boardMoveBonusFlashTick,
-            fateLineSelection: _fateLineSelection,
-            fateTransformFlashLineRef: _fateTransformFlashLineRef,
-            fateTransformFlashTick: _fateTransformFlashTick,
-            selectedJesterOverlayIndex: _selectedJesterOverlayIndex,
-            selectedBattleItemSlot: _selectedBattleItemSlot,
-            selectedHandInfoTile: _selectedHandInfoTile,
-            itemEffectFeedback: _itemEffectFeedback,
-            itemEffectFeedbackTick: _itemEffectFeedbackTick,
-            ritualEffectFlight: _ritualEffectFlight,
-            ritualEffectFlightTick: _ritualEffectFlightTick,
-            suppressDebugChrome: widget.debugSuppressFixtureNotice,
-            difficultyLabel: _battleRunContextLabel(
-              difficulty: widget.difficulty,
-              runModifier: gameState.runModifier,
+          _GameOverSlump(
+            active: _gameOverFadeVisible,
+            child: GameBossMarkVeil(
+              hidden: _bossMarksHidden,
+              child: _GameSurface(
+                battle: _battleViewWithItemSlots,
+                station: _stationView,
+                market: _marketView,
+                stageFlowPhase: _stageFlowPhase,
+                presentationPaused: _presentationPaused,
+                stageScoreAdded: _stageScoreAdded,
+                activeSettlementLine: _activeSettlementLine,
+                activeSettlementStep: _activeSettlementStep,
+                activeSettlementEffectIndex: _activeSettlementEffectIndex,
+                activeSettlementEffectIndexes: _activeSettlementEffectIndexes,
+                settlementGoalDisplayScore: _settlementGoalDisplayScore,
+                settlementSequenceTick: _settlementSequenceTick,
+                settlementBoardSnapshot: _settlementBoardSnapshot,
+                settlementTicks: _settlementTicks,
+                settlementGrade: _settlementGrade,
+                selectedHandTile: _selectedHandTile,
+                selectedBoardRow: _selectedBoardRow,
+                selectedBoardCol: _selectedBoardCol,
+                boardMoveMode: _boardMoveMode,
+                pendingBoardMoveSourceRow: _pendingBoardMoveSourceRow,
+                pendingBoardMoveSourceCol: _pendingBoardMoveSourceCol,
+                boardMoveBonusTargetCellKey: _boardMoveBonusTargetCellKey,
+                boardMoveBonusFlashTick: _boardMoveBonusFlashTick,
+                fateLineSelection: _fateLineSelection,
+                fateTransformFlashLineRef: _fateTransformFlashLineRef,
+                fateTransformFlashTick: _fateTransformFlashTick,
+                selectedJesterOverlayIndex: _selectedJesterOverlayIndex,
+                selectedBattleItemSlot: _selectedBattleItemSlot,
+                selectedHandInfoTile: _selectedHandInfoTile,
+                itemEffectFeedback: _itemEffectFeedback,
+                itemEffectFeedbackTick: _itemEffectFeedbackTick,
+                ritualEffectFlight: _ritualEffectFlight,
+                ritualEffectFlightTick: _ritualEffectFlightTick,
+                suppressDebugChrome: widget.debugSuppressFixtureNotice,
+                difficultyLabel: _battleRunContextLabel(
+                  difficulty: widget.difficulty,
+                  runModifier: gameState.runModifier,
+                ),
+                battleBoardTutorialKey: _battleBoardTutorialKey,
+                battlePreviewTutorialKey: _battlePreviewTutorialKey,
+                battleActionsTutorialKey: _battleActionsTutorialKey,
+                battleHandTutorialKey: _battleHandTutorialKey,
+                battleJesterZoneKey: _battleJesterZoneKey,
+                denyTarget: _battleDenyTarget,
+                denyTick: _battleDenyTick,
+                onLockedSlotTap: () => _denyBattleAction(
+                  '잠긴 슬롯입니다.',
+                  target: _BattleDenyTarget.slots,
+                ),
+                onOptionsTap: _openGameOptions,
+                onTutorialTap: () => _startBattleTutorial(markSeen: false),
+                onRunInfoTap: _openRunInfo,
+                onBlindInfoTap: _openBossConstraintInfo,
+                onDebugTap: () => _openDebugBottomSheet(context),
+                onJesterTap: _openJesterOverlay,
+                onHandTileTap: _toggleHandTile,
+                onHandTileLongPress: _openHandTileInfoOverlay,
+                onBoardCellTap: _onBoardCellTap,
+                onFateLineTap: _selectFateLine,
+                onFateTileTap: _selectFateTile,
+                onFateConfirm: _confirmFateLineSelection,
+                onFateCancel: _cancelFateLineSelection,
+                onDraw: _drawTile,
+                onBoardDiscard: _discardSelectedBoardTile,
+                onHandDiscard: _discardSelectedHandTile,
+                onStartBoardMove: _startBoardMoveMode,
+                onBattleItemTap: _openBattleItemOverlay,
+                onConfirm: _confirmLines,
+                onClearSelection: _clearSelections,
+                onJesterSell: _sellOwnedJesterFromOverlay,
+                onJesterOverlayClose: _closeJesterOverlay,
+                onBattleItemUse: _useBattleItem,
+                onBattleItemOverlayClose: _closeBattleItemOverlay,
+                onHandTileInfoOverlayClose: _closeHandTileInfoOverlay,
+                onSettlementSkip: _skipSettlementPresentation,
+              ),
             ),
-            battleBoardTutorialKey: _battleBoardTutorialKey,
-            battlePreviewTutorialKey: _battlePreviewTutorialKey,
-            battleActionsTutorialKey: _battleActionsTutorialKey,
-            battleHandTutorialKey: _battleHandTutorialKey,
-            onOptionsTap: _openGameOptions,
-            onTutorialTap: () => _startBattleTutorial(markSeen: false),
-            onRunInfoTap: _openRunInfo,
-            onBlindInfoTap: _openBossConstraintInfo,
-            onDebugTap: () => _openDebugBottomSheet(context),
-            onJesterTap: _openJesterOverlay,
-            onHandTileTap: _toggleHandTile,
-            onHandTileLongPress: _openHandTileInfoOverlay,
-            onBoardCellTap: _onBoardCellTap,
-            onFateLineTap: _selectFateLine,
-            onFateTileTap: _selectFateTile,
-            onFateConfirm: _confirmFateLineSelection,
-            onFateCancel: _cancelFateLineSelection,
-            onDraw: _drawTile,
-            onBoardDiscard: _discardSelectedBoardTile,
-            onHandDiscard: _discardSelectedHandTile,
-            onStartBoardMove: _startBoardMoveMode,
-            onBattleItemTap: _openBattleItemOverlay,
-            onConfirm: _confirmLines,
-            onClearSelection: _clearSelections,
-            onJesterSell: _sellOwnedJesterFromOverlay,
-            onJesterOverlayClose: _closeJesterOverlay,
-            onBattleItemUse: _useBattleItem,
-            onBattleItemOverlayClose: _closeBattleItemOverlay,
-            onHandTileInfoOverlayClose: _closeHandTileInfoOverlay,
           ),
+          if (_bossMarkFlights != null)
+            Positioned.fill(
+              child: GameBossMarkFlightLayer(
+                flights: _bossMarkFlights!,
+                onLanded: _onBossMarksLanded,
+              ),
+            ),
           if (_settlementToMarketTransition != null)
             Positioned.fill(
               child: _SettlementToMarketTransitionOverlay(
@@ -723,11 +896,21 @@ class _GameViewState extends ConsumerState<GameView>
             const Positioned.fill(child: _GamePresentationPauseVeil()),
           if (_gameOverFadeVisible)
             const Positioned.fill(child: _GameOverFadeVeil()),
+          if (_runVictoryStats != null)
+            Positioned.fill(
+              child: GameRunVictoryOverlay(
+                stats: _runVictoryStats!,
+                onDone: _onRunVictoryDone,
+              ),
+            ),
         ],
       ),
     );
   }
 }
+
+/// 거절 입력에서 흔들리는 영역.
+enum _BattleDenyTarget { board, actions, hand, slots }
 
 String _battleRunContextLabel({
   required NewRunDifficulty difficulty,
@@ -750,15 +933,51 @@ class _GameOverFadeVeil extends StatelessWidget {
         duration: GamePresentationTimings.gameOverFade,
         curve: Curves.easeInCubic,
         builder: (context, value, child) {
+          // 채도를 빼는 ColorFiltered 대신 붉은 막 위에 어두운 막을 색 알파로 겹친다.
           return DecoratedBox(
             decoration: BoxDecoration(
               color: GameUiPalette.specialDangerHard.withValues(
                 alpha: 0.18 + (value * 0.58),
               ),
             ),
+            child: ColoredBox(
+              color: GameUiPalette.ink.withValues(alpha: 0.32 * value),
+            ),
           );
         },
       ),
+    );
+  }
+}
+
+/// 게임오버 위험 fade 동안 보드가 조금씩 가라앉고 기우는 느낌을 Transform만으로 만든다.
+///
+/// 트리 구조는 항상 같아서 켜고 꺼도 아래 상태가 다시 만들어지지 않는다.
+/// 동작 줄이기와 연출 강도 끔에서는 움직이지 않는다.
+class _GameOverSlump extends StatelessWidget {
+  const _GameOverSlump({required this.active, required this.child});
+
+  final bool active;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final on = active && MotionPolicy.juiceScale > 0;
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: on ? 1 : 0),
+      duration: on ? GamePresentationTimings.gameOverFade : Duration.zero,
+      curve: Curves.easeInCubic,
+      child: child,
+      builder: (context, t, child) {
+        return Transform(
+          alignment: Alignment.bottomCenter,
+          transform: Matrix4.identity()
+            ..translateByDouble(0, 18 * t, 0, 1)
+            ..rotateZ(0.02 * t)
+            ..scaleByDouble(1 - 0.04 * t, 1 - 0.06 * t, 1, 1),
+          child: child,
+        );
+      },
     );
   }
 }

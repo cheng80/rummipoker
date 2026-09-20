@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../widgets/fx/tile_material.dart';
 import '../../logic/rummi_poker_grid/models/tile.dart';
 import '../../views/game/widgets/game_ui_palette.dart';
+
+export '../../widgets/fx/tile_material.dart' show TileMaterialSurface;
 
 const double kRummikubTileCornerRadiusFactor = 0.11;
 
@@ -32,6 +35,7 @@ void paintRummikubTile(
 
   const face = GameUiPalette.tileFace;
   canvas.drawRRect(rr, Paint()..color = face);
+  paintTileMaterialFace(canvas, rect, tile);
 
   canvas.drawRRect(
     rr,

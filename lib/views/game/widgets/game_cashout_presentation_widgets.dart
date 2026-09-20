@@ -143,12 +143,9 @@ class _StageClearSparkField extends StatelessWidget {
       duration: GamePresentationTimings.stageClearSpark,
       curve: Curves.easeOutCubic,
       builder: (context, value, _) {
-        return Opacity(
-          opacity: (1 - value).clamp(0.0, 1.0),
-          child: CustomPaint(
-            painter: _StageClearSparkPainter(progress: value),
-            size: const Size(260, 150),
-          ),
+        return CustomPaint(
+          painter: _StageClearSparkPainter(progress: value),
+          size: const Size(260, 150),
         );
       },
     );
@@ -173,6 +170,7 @@ class _StageClearSparkPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final paint = Paint()..strokeCap = StrokeCap.round;
+    final fade = (1 - progress).clamp(0.0, 1.0);
     for (var i = 0; i < _origins.length; i++) {
       final angle = -math.pi / 2 + i * math.pi / 3;
       final origin = center + _origins[i];
@@ -183,7 +181,8 @@ class _StageClearSparkPainter extends CustomPainter {
       paint
         ..color = const Color(
           0xFFF2C14E,
-        ).withValues(alpha: 0.82 * (1 - progress))
+          // 바깥 Opacity(1 - progress)를 선 알파에 합쳐 그린다.
+        ).withValues(alpha: (0.82 * fade * fade).clamp(0.0, 1.0))
         ..strokeWidth = 2.2 * (1 - progress * 0.45);
       canvas.drawLine(
         sparkCenter.translate(-arm, 0),
@@ -236,10 +235,7 @@ class GameFloatingSettlementBurst extends StatelessWidget {
         ? _settlementStepMultiEffectSubLabel(activeEffects)
         : _settlementStepSubLabel(currentLine, step, activeEffect);
     final displayedScore = activeEffects.length > 1
-        ? activeEffects.fold<int>(
-            0,
-            (sum, effect) => sum + effect.scoreDelta,
-          )
+        ? activeEffects.fold<int>(0, (sum, effect) => sum + effect.scoreDelta)
         : _settlementStepScore(currentLine, step, activeEffect);
 
     return IgnorePointer(
@@ -390,9 +386,8 @@ String _settlementStepLabel(
           : JesterTranslationScope.of(
               context,
             ).resolveDisplayName(effect.jesterId, effect.displayName),
-    ScoringPresentationStep.tile => effect == null
-        ? '타일 효과'
-        : effect.displayName,
+    ScoringPresentationStep.tile =>
+      effect == null ? '타일 효과' : effect.displayName,
     ScoringPresentationStep.item =>
       effect == null
           ? 'Item 발동'

@@ -338,11 +338,11 @@ class _RitualGoldCoinFlights extends StatelessWidget {
         Positioned(
           left: end.dx - 40,
           top: end.dy + 22,
-          child: Opacity(
+          child: MarketGoldGainBadge(
+            gold: gold,
             opacity: progress < 0.68
                 ? 0.0
                 : ((progress - 0.68) / 0.18).clamp(0.0, 1.0),
-            child: MarketGoldGainBadge(gold: gold),
           ),
         ),
       ],
@@ -372,52 +372,53 @@ class _RitualGoldCoin extends StatelessWidget {
     final eased = GamePresentationMotion.flightProgress(local);
     final offset = GamePresentationMotion.flightOffset(start, end, local);
     final arc = math.sin(eased * math.pi) * -64;
-    final opacity = local < 0.92 ? 1.0 : (1 - local) / 0.08;
+    final opacity = (local < 0.92 ? 1.0 : (1 - local) / 0.08).clamp(0.0, 1.0);
     return Positioned(
       left: offset.dx - size / 2,
       top: offset.dy + arc - size / 2,
-      child: Opacity(
-        opacity: opacity.clamp(0.0, 1.0),
-        child: Transform.rotate(
-          angle: eased * math.pi * 2.2,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const RadialGradient(
-                colors: [
-                  GameUiPalette.textPrimary,
-                  GameUiPalette.actionGoldBright,
-                  GameUiPalette.actionGold,
-                ],
-                center: Alignment(-0.35, -0.45),
-              ),
-              border: Border.all(
-                color: GameUiPalette.actionGoldText.withValues(alpha: 0.85),
-                width: 1.3,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: GameUiPalette.actionGold.withValues(alpha: 0.5),
-                  blurRadius: 10,
-                ),
+      child: Transform.rotate(
+        angle: eased * math.pi * 2.2,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(
+              colors: [
+                GameUiPalette.textPrimary.withValues(alpha: opacity),
+                GameUiPalette.actionGoldBright.withValues(alpha: opacity),
+                GameUiPalette.actionGold.withValues(alpha: opacity),
               ],
+              center: const Alignment(-0.35, -0.45),
             ),
-            child: SizedBox(
-              width: size,
-              height: size,
-              child: Center(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: GameUiPalette.actionGoldText.withValues(
-                        alpha: 0.55,
-                      ),
-                      width: 1,
-                    ),
-                  ),
-                  child: SizedBox(width: size * 0.46, height: size * 0.46),
+            border: Border.all(
+              color: GameUiPalette.actionGoldText.withValues(
+                alpha: 0.85 * opacity,
+              ),
+              width: 1.3,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: GameUiPalette.actionGold.withValues(
+                  alpha: 0.5 * opacity,
                 ),
+                blurRadius: 10,
+              ),
+            ],
+          ),
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: Center(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: GameUiPalette.actionGoldText.withValues(
+                      alpha: 0.55 * opacity,
+                    ),
+                    width: 1,
+                  ),
+                ),
+                child: SizedBox(width: size * 0.46, height: size * 0.46),
               ),
             ),
           ),
@@ -518,11 +519,11 @@ class _ItemEffectSparkBurst extends StatelessWidget {
                       18 +
                       _targets[i].dy * value -
                       math.sin(value * math.pi) * 4,
-                  child: Opacity(
-                    opacity: opacity.clamp(0.0, 1.0),
-                    child: Transform.rotate(
-                      angle: value * math.pi * (i.isEven ? 0.35 : -0.3),
-                      child: _ItemEffectSpark(accent: accent),
+                  child: Transform.rotate(
+                    angle: value * math.pi * (i.isEven ? 0.35 : -0.3),
+                    child: _ItemEffectSpark(
+                      accent: accent,
+                      opacity: opacity.clamp(0.0, 1.0),
                     ),
                   ),
                 ),
@@ -535,18 +536,22 @@ class _ItemEffectSparkBurst extends StatelessWidget {
 }
 
 class _ItemEffectSpark extends StatelessWidget {
-  const _ItemEffectSpark({required this.accent});
+  const _ItemEffectSpark({required this.accent, this.opacity = 1});
 
   final Color accent;
+  final double opacity;
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: accent,
+        color: accent.withValues(alpha: accent.a * opacity),
         borderRadius: BorderRadius.circular(3),
         boxShadow: [
-          BoxShadow(color: accent.withValues(alpha: 0.32), blurRadius: 7),
+          BoxShadow(
+            color: accent.withValues(alpha: 0.32 * opacity),
+            blurRadius: 7,
+          ),
         ],
       ),
       child: const SizedBox(width: 4, height: 10),

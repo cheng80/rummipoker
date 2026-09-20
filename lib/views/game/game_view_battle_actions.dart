@@ -127,9 +127,43 @@ extension _GameViewBattleActions on _GameViewState {
   }
 
   void _sellOwnedJesterFromOverlay() {
+    final slotIndex = _selectedJesterOverlayIndex;
     final ok = _gameNotifier.sellSelectedJesterOverlayFromState();
     if (!ok) return;
-    _showSnack('제스터를 판매했습니다.');
+    GameFeedback.play(GameCue.sell);
+    if (slotIndex != null) _emitJesterSaleBurst(slotIndex);
+    _showSnack('제스터를 판매했습니다.', silent: true);
+  }
+
+  /// 상점 판매처럼 팔린 슬롯에서 카드 조각과 코인이 튄다.
+  void _emitJesterSaleBurst(int slotIndex) {
+    final zoneContext = _battleJesterZoneKey.currentContext;
+    final box = zoneContext?.findRenderObject() as RenderBox?;
+    if (zoneContext == null || box == null || !box.hasSize) return;
+    // GameJesterZone: 좌우 패딩 10, 슬롯 5칸 spaceEvenly.
+    const slotCount = 5;
+    const padding = 10.0;
+    final inner = box.size.width - padding * 2;
+    final gap = (inner - kBattleItemSlotWidth * slotCount) / (slotCount + 1);
+    final center = Offset(
+      padding +
+          gap * (slotIndex + 1) +
+          kBattleItemSlotWidth * (slotIndex + 0.5),
+      box.size.height / 2,
+    );
+    Fx.emit(zoneContext, FxPresets.shards, [center]);
+    Fx.emit(zoneContext, FxPresets.coins, [center]);
+    ScreenShake.instance.add(0.15);
+  }
+
+  /// 거절 입구. 알림 문구는 그대로 두고 흔들림·오류음·error 햅틱을 더한다.
+  void _denyBattleAction(String message, {required _BattleDenyTarget target}) {
+    GameFeedback.play(GameCue.deny);
+    _mutate(() {
+      _battleDenyTarget = target;
+      _battleDenyTick++;
+    });
+    _showSnack(message, silent: true);
   }
 
   void _openBattleItemOverlay(RummiBattleItemSlotView slot) {
@@ -148,7 +182,9 @@ extension _GameViewBattleActions on _GameViewState {
 
   void _toggleHandTile(Tile tile) {
     if (_isBattleInputLocked) return;
+    final selecting = _selectedHandTile != tile;
     _gameNotifier.toggleSelectedHandTile(tile);
+    GameFeedback.play(GameCue.tileSelect, pitch: selecting ? 1 : 0.85);
   }
 
   void _openHandTileInfoOverlay(Tile tile) {
@@ -187,12 +223,12 @@ extension _GameViewBattleActions on _GameViewState {
         result.failMessage!,
         parameters: {'row': row, 'col': col},
       );
-      _showSnack(result.failMessage!);
+      _denyBattleAction(result.failMessage!, target: _BattleDenyTarget.board);
       return;
     }
     if (result.didPlaceTile) {
       _logBattleAction('board_place', parameters: {'row': row, 'col': col});
-      SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+      GameFeedback.play(GameCue.tilePlace);
       final didGameOver = await _afterAction();
       if (didGameOver) return;
       await _saveActiveRun();
@@ -204,11 +240,11 @@ extension _GameViewBattleActions on _GameViewState {
     final failReason = _gameNotifier.drawTile();
     if (failReason != null) {
       _logBattleActionFail('draw', failReason);
-      _showSnack(failReason);
+      _denyBattleAction(failReason, target: _BattleDenyTarget.hand);
       return;
     }
     _logBattleAction('draw');
-    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    GameFeedback.play(GameCue.tileDraw);
     final didGameOver = await _afterAction();
     if (didGameOver) return;
     await _saveActiveRun();
@@ -219,11 +255,11 @@ extension _GameViewBattleActions on _GameViewState {
     final failReason = _gameNotifier.discardSelectedBoardTileFromState();
     if (failReason != null) {
       _logBattleActionFail('board_discard', failReason);
-      _showSnack(failReason);
+      _denyBattleAction(failReason, target: _BattleDenyTarget.actions);
       return;
     }
     _logBattleAction('board_discard');
-    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    GameFeedback.play(GameCue.discard);
     final didGameOver = await _afterAction();
     if (didGameOver) return;
     await _saveActiveRun();
@@ -234,11 +270,11 @@ extension _GameViewBattleActions on _GameViewState {
     final failReason = _gameNotifier.discardSelectedHandTileFromState();
     if (failReason != null) {
       _logBattleActionFail('hand_discard', failReason);
-      _showSnack(failReason);
+      _denyBattleAction(failReason, target: _BattleDenyTarget.actions);
       return;
     }
     _logBattleAction('hand_discard');
-    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    GameFeedback.play(GameCue.discard, pitch: 1.15);
     final didGameOver = await _afterAction();
     if (didGameOver) return;
     await _saveActiveRun();
@@ -265,18 +301,18 @@ extension _GameViewBattleActions on _GameViewState {
         failReason,
         parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
       );
-      _showSnack(failReason);
+      _denyBattleAction(failReason, target: _BattleDenyTarget.slots);
       return;
     }
     _logBattleAction(
       'battle_item_use',
       parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
     );
-    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    GameFeedback.play(GameCue.itemUse);
     final itemName = ItemTranslationScope.of(
       context,
     ).resolveDisplayName(slot.contentId, slot.displayName);
-    _showSnack('$itemName 사용');
+    _showSnack('$itemName 사용', silent: true);
     _showItemEffectFeedback(
       title: itemName,
       detail: _battleItemFeedbackDetail(slot.item),
@@ -316,7 +352,10 @@ extension _GameViewBattleActions on _GameViewState {
         'no_target_lines',
         parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
       );
-      _showSnack(isRitual ? '선택할 보드 선이 없습니다.' : '선택할 완성 줄이 없습니다.');
+      _denyBattleAction(
+        isRitual ? '선택할 보드 선이 없습니다.' : '선택할 완성 줄이 없습니다.',
+        target: _BattleDenyTarget.slots,
+      );
       return;
     }
     final itemName = ItemTranslationScope.of(
@@ -407,17 +446,17 @@ extension _GameViewBattleActions on _GameViewState {
         failReason,
         parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
       );
-      _showSnack(failReason);
+      _denyBattleAction(failReason, target: _BattleDenyTarget.slots);
       return;
     }
     _logBattleAction(
       'targeted_item_use',
       parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
     );
-    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    GameFeedback.play(GameCue.itemUse);
     final targetLabel =
         '${_lineChoiceLabel(selected.ref)} ${_lineChoiceRankLabel(selected)}';
-    _showSnack('$itemName 사용');
+    _showSnack('$itemName 사용', silent: true);
     _showItemEffectFeedback(
       title: itemName,
       detail: _scoringLineTargetFeedbackDetail(
@@ -483,15 +522,19 @@ extension _GameViewBattleActions on _GameViewState {
     final selection = _fateLineSelection;
     final selected = selection?.selectedLine;
     if (selection == null || selected == null) {
-      _showSnack(
+      _denyBattleAction(
         selection?.needsTileTarget == true
             ? '적용할 보드 타일을 먼저 선택하세요.'
             : '적용할 보드 선을 먼저 선택하세요.',
+        target: _BattleDenyTarget.board,
       );
       return;
     }
     if (selection.needsTileTarget && selection.selectedTileIndex == null) {
-      _showSnack('적용할 보드 타일을 먼저 선택하세요.');
+      _denyBattleAction(
+        '적용할 보드 타일을 먼저 선택하세요.',
+        target: _BattleDenyTarget.board,
+      );
       return;
     }
     final useResult = _gameNotifier.useBattleItemOnRitualTargetResult(
@@ -508,7 +551,10 @@ extension _GameViewBattleActions on _GameViewState {
           'item_op': selection.slot.item.effect.op,
         },
       );
-      _showSnack(useResult.failMessage ?? '아이템을 사용할 수 없습니다.');
+      _denyBattleAction(
+        useResult.failMessage ?? '아이템을 사용할 수 없습니다.',
+        target: _BattleDenyTarget.slots,
+      );
       return;
     }
     _logBattleAction(
@@ -518,13 +564,13 @@ extension _GameViewBattleActions on _GameViewState {
         'item_op': selection.slot.item.effect.op,
       },
     );
-    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+    GameFeedback.play(GameCue.lineTransform);
     _mutate(() {
       _fateLineSelection = null;
       _fateTransformFlashLineRef = selected.ref;
       _fateTransformFlashTick += 1;
     });
-    _showSnack('${selection.itemName} 사용');
+    _showSnack('${selection.itemName} 사용', silent: true);
     final feedbackDetail = _scoringLineTargetFeedbackDetail(
       selection.slot.item,
       '${_lineChoiceLabel(selected.ref)} ${_lineChoiceRankLabel(selected)}',
@@ -705,7 +751,10 @@ extension _GameViewBattleActions on _GameViewState {
         useResult.failMessage ?? 'item_use_failed',
         parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
       );
-      _showSnack(useResult.failMessage ?? '아이템을 사용할 수 없습니다.');
+      _denyBattleAction(
+        useResult.failMessage ?? '아이템을 사용할 수 없습니다.',
+        target: _BattleDenyTarget.slots,
+      );
       return;
     }
     final itemName = ItemTranslationScope.of(
@@ -736,8 +785,8 @@ extension _GameViewBattleActions on _GameViewState {
         'deck_peek',
         parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
       );
-      SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-      _showSnack('$itemName 사용');
+      GameFeedback.play(GameCue.itemUse);
+      _showSnack('$itemName 사용', silent: true);
       _showItemEffectFeedback(
         title: itemName,
         detail: '덱 확인',
@@ -757,15 +806,15 @@ extension _GameViewBattleActions on _GameViewState {
         failReason,
         parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
       );
-      _showSnack(failReason);
+      _denyBattleAction(failReason, target: _BattleDenyTarget.slots);
       return;
     }
     _logBattleAction(
       'deck_peek_discard',
       parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
     );
-    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    _showSnack('${selectedTile.code} 제거');
+    GameFeedback.play(GameCue.discard);
+    _showSnack('${selectedTile.code} 제거', silent: true);
     _showItemEffectFeedback(
       title: itemName,
       detail: '${selectedTile.code} 제거',
@@ -873,9 +922,10 @@ extension _GameViewBattleActions on _GameViewState {
       final didGameOver = await _afterAction();
       if (didGameOver) return;
       _logBattleActionFail('confirm_lines', 'no_scoring_lines');
-      _showSnack('확정할 족보 줄이 없습니다.');
+      _denyBattleAction('확정할 족보 줄이 없습니다.', target: _BattleDenyTarget.actions);
       return;
     }
+    GameFeedback.play(GameCue.confirmPress);
     final settlementGoalBaseScore = _stationView.objective.scoreTowardObjective;
     _logBattleAction(
       'confirm_lines',
@@ -920,12 +970,15 @@ extension _GameViewBattleActions on _GameViewState {
     final col = _selectedBoardCol;
     if (row == null || col == null) {
       _logBattleActionFail('board_move_start', 'no_source_tile');
-      _showSnack('이동할 보드 타일을 먼저 선택하세요.');
+      _denyBattleAction(
+        '이동할 보드 타일을 먼저 선택하세요.',
+        target: _BattleDenyTarget.board,
+      );
       return;
     }
     if (_stationView.resources.boardMovesRemaining <= 0) {
       _logBattleActionFail('board_move_start', 'no_board_moves');
-      _showSnack('보드 이동 횟수가 없습니다.');
+      _denyBattleAction('보드 이동 횟수가 없습니다.', target: _BattleDenyTarget.actions);
       return;
     }
     _mutate(() {
@@ -967,7 +1020,7 @@ extension _GameViewBattleActions on _GameViewState {
           'to_col': col,
         },
       );
-      _showSnack('빈 칸으로만 이동할 수 있습니다.');
+      _denyBattleAction('빈 칸으로만 이동할 수 있습니다.', target: _BattleDenyTarget.board);
       return;
     }
 
@@ -990,7 +1043,7 @@ extension _GameViewBattleActions on _GameViewState {
           'to_col': col,
         },
       );
-      _showSnack(failReason);
+      _denyBattleAction(failReason, target: _BattleDenyTarget.board);
       return;
     }
     _logBattleAction(
@@ -1004,8 +1057,11 @@ extension _GameViewBattleActions on _GameViewState {
       },
     );
     _cancelBoardMoveMode();
-    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
-    _showSnack(hadSlideBonus ? '보드 이동 보너스가 발동했습니다.' : '타일을 이동했습니다.');
+    GameFeedback.play(GameCue.tileMove);
+    _showSnack(
+      hadSlideBonus ? '보드 이동 보너스가 발동했습니다.' : '타일을 이동했습니다.',
+      silent: true,
+    );
     if (hadSlideBonus) {
       _showBoardMoveBonusFlash(row: row, col: col);
       _showItemEffectFeedback(title: '슬라이드 왁스', detail: '이동 보너스 발동');

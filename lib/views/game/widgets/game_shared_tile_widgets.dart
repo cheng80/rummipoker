@@ -37,6 +37,10 @@ class GameRummiTileCard extends StatelessWidget {
             ),
             if (tile.hasModifier)
               Positioned.fill(
+                child: TileMaterialSurface(tile: tile, accent: accent),
+              ),
+            if (tile.hasModifier)
+              Positioned.fill(
                 child: GameTileModifierBadges(
                   tile: tile,
                   reserveConstraintBadgeSpace: reserveConstraintBadgeSpace,
@@ -452,6 +456,9 @@ class _GameRummiTilePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _GameRummiTilePainter oldDelegate) {
     return oldDelegate.tile != tile ||
+        oldDelegate.tile.enhancement != tile.enhancement ||
+        oldDelegate.tile.seal != tile.seal ||
+        oldDelegate.tile.edition != tile.edition ||
         oldDelegate.selected != selected ||
         oldDelegate.accent != accent;
   }

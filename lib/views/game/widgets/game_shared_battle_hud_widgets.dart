@@ -12,6 +12,7 @@ class GameTopHud extends StatelessWidget {
     this.stationGoalDisplayScore,
     this.stationGoalPulse = false,
     this.stationGoalPulseTick = 0,
+    this.goalHeat = 0,
   });
 
   final RummiStationRuntimeFacade station;
@@ -24,14 +25,14 @@ class GameTopHud extends StatelessWidget {
   final bool stationGoalPulse;
   final int stationGoalPulseTick;
 
+  /// 미리보기 점수가 남은 목표를 넘을 때의 달아오름(0~1).
+  final double goalHeat;
+
   @override
   Widget build(BuildContext context) {
     final objective = station.objective;
     final scoreTowardObjective =
         stationGoalDisplayScore ?? objective.scoreTowardObjective;
-    final progress = objective.targetScore <= 0
-        ? 0.0
-        : (scoreTowardObjective / objective.targetScore).clamp(0.0, 1.0);
     final goalReached =
         objective.targetScore > 0 &&
         scoreTowardObjective >= objective.targetScore;
@@ -142,65 +143,95 @@ class GameTopHud extends StatelessWidget {
                   child: child,
                 );
               },
-              child: GameHudChip(
-                key: const ValueKey('station-goal-chip'),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          goalLabel,
-                          style: gameHudLabelStyle.copyWith(
-                            color: isEndless
-                                ? GameUiPalette.specialGold
-                                : gameHudLabelStyle.color,
+              child: FxBoxGlow(
+                key: ValueKey(
+                  goalHeat > 0 ? 'station-goal-heat' : 'station-goal-cool',
+                ),
+                color: GameUiPalette.actionGoldBright.withValues(
+                  alpha: 0.5 * goalHeat,
+                ),
+                blurRadius: 6 + 10 * goalHeat,
+                spreadRadius: 1.5 * goalHeat,
+                child: GameHudChip(
+                  key: const ValueKey('station-goal-chip'),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            goalLabel,
+                            style: gameHudLabelStyle.copyWith(
+                              color: isEndless
+                                  ? GameUiPalette.specialGold
+                                  : gameHudLabelStyle.color,
+                            ),
+                            maxLines: 1,
+                            textAlign: TextAlign.center,
                           ),
-                          maxLines: 1,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 2),
-                        Expanded(
-                          child: Align(
-                            alignment: Alignment.center,
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              alignment: Alignment.center,
-                              child: _StationGoalScoreText(
-                                score: scoreTowardObjective,
-                                targetScore: objective.targetScore,
-                                color: goalColor,
+                          const SizedBox(height: 2),
+                          Expanded(
+                            child: GameCountUpInt(
+                              key: const ValueKey('station-goal-count-up'),
+                              value: scoreTowardObjective,
+                              builder: (context, shown) => Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Expanded(
+                                    child: Align(
+                                      alignment: Alignment.center,
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        alignment: Alignment.center,
+                                        child: _StationGoalScoreText(
+                                          score: shown,
+                                          targetScore: objective.targetScore,
+                                          color: goalColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(
+                                      kGameHudProgressRadius,
+                                    ),
+                                    child: LinearProgressIndicator(
+                                      key: const ValueKey(
+                                        'station-goal-progress',
+                                      ),
+                                      value: objective.targetScore <= 0
+                                          ? 0.0
+                                          : (shown / objective.targetScore)
+                                                .clamp(0.0, 1.0),
+                                      minHeight: 6,
+                                      backgroundColor: GameUiPalette.ink
+                                          .withValues(alpha: 0.3),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Color.lerp(
+                                          progressColor,
+                                          GameUiPalette.actionGoldBright,
+                                          goalHeat,
+                                        )!,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 3),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(
-                            kGameHudProgressRadius,
-                          ),
-                          child: LinearProgressIndicator(
-                            value: progress,
-                            minHeight: 6,
-                            backgroundColor: GameUiPalette.ink.withValues(
-                              alpha: 0.3,
-                            ),
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              progressColor,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (goalReached)
-                      const Positioned(
-                        key: ValueKey('station-goal-clear-badge'),
-                        right: -2,
-                        top: -5,
-                        child: _StationGoalClearBadge(),
+                        ],
                       ),
-                  ],
+                      if (goalReached)
+                        const Positioned(
+                          key: ValueKey('station-goal-clear-badge'),
+                          right: -2,
+                          top: -5,
+                          child: _StationGoalClearBadge(),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),

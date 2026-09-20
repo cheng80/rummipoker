@@ -6,6 +6,14 @@ import 'package:flutter/widgets.dart';
 class GamePresentationTimings {
   const GamePresentationTimings._();
 
+  // --- T5: 재질과 분위기
+  static const t5MaterialTick = Duration(milliseconds: 200);
+  static const t5SheenPeriod = Duration(seconds: 4);
+  static const t5AmbientTransition = Duration(milliseconds: 900);
+  static const t5AmbientPulse = Duration(milliseconds: 800);
+  static const t5AmbientTick = Duration(milliseconds: 200);
+  static const t5StarPeriod = Duration(seconds: 4);
+
   static const Duration presentationPauseTick = Duration(milliseconds: 50);
   static const Duration inactiveLifecycleDebounce = Duration(milliseconds: 250);
   static const Duration itemEffectFeedback = Duration(seconds: 2);
@@ -21,13 +29,14 @@ class GamePresentationTimings {
   );
   static const Duration nextStationOverlayIn = Duration(milliseconds: 420);
 
-  static const Duration settlementBoardLineStep = Duration(milliseconds: 720);
-  static const Duration settlementHandRankStep = Duration(milliseconds: 720);
-  static const Duration settlementOverlapStep = Duration(milliseconds: 680);
-  static const Duration settlementConstraintStep = Duration(milliseconds: 1240);
-  static const Duration settlementEffectStep = Duration(milliseconds: 1040);
-  static const Duration settlementFinalScoreStep = Duration(milliseconds: 920);
-  static const Duration settlementLineTail = Duration(milliseconds: 300);
+  // 전투 레인: boardLine은 타일 tick 뒤 남은 정지 시간이다.
+  static const Duration settlementBoardLineStep = Duration(milliseconds: 260);
+  static const Duration settlementHandRankStep = Duration(milliseconds: 560);
+  static const Duration settlementOverlapStep = Duration(milliseconds: 520);
+  static const Duration settlementConstraintStep = Duration(milliseconds: 960);
+  static const Duration settlementEffectStep = Duration(milliseconds: 640);
+  static const Duration settlementFinalScoreStep = Duration(milliseconds: 720);
+  static const Duration settlementLineTail = Duration(milliseconds: 180);
   static const Duration settlementStepCalloutIn = Duration(milliseconds: 280);
 
   static const Duration stageClearOverlayPop = Duration(milliseconds: 320);
@@ -86,6 +95,8 @@ class GamePresentationTimings {
   static const Duration marketDenyFeedbackHold = Duration(milliseconds: 560);
   static const Duration marketUseFeedbackHold = Duration(milliseconds: 1800);
   static const Duration marketTabSwitch = Duration(milliseconds: 140);
+  static const Duration marketDetailSwitch = Duration(milliseconds: 180);
+  static const Duration marketOfferFlip = Duration(milliseconds: 260);
   static const Duration marketEntryIntro = Duration(milliseconds: 220);
   static const Duration marketUseFeedbackIn = Duration(milliseconds: 260);
   static const Duration marketActionDenyShake = Duration(milliseconds: 360);
@@ -105,8 +116,129 @@ class GamePresentationTimings {
   );
   static const Duration marketSlotUnlockPulse = Duration(milliseconds: 1200);
   static const Duration marketSlotUnlockBannerIn = Duration(milliseconds: 420);
+  static const Duration marketOfferAmbientCycle = Duration(milliseconds: 3200);
+  static const Duration marketNewReveal = Duration(milliseconds: 620);
 
   static const Duration debugGameOverOnLoadDelay = Duration(milliseconds: 220);
+
+  // --- T0: 공통 입력·팝업·화면 전환 ---
+  /// 팝업 scale-pop 등장과 barrier fade.
+  static const Duration dialogPopIn = Duration(milliseconds: 220);
+
+  /// 팝업 닫힘. 등장보다 짧게 둔다.
+  static const Duration dialogPopOut = Duration(milliseconds: 140);
+
+  /// 화면 전환 fade·slide. 지시 상한 400ms보다 짧게 둔다.
+  static const Duration routeTransition = Duration(milliseconds: 280);
+  static const Duration routeReverseTransition = Duration(milliseconds: 220);
+
+  /// 타이틀 이탈 때 BGM 페이드 아웃.
+  static const Duration titleBgmFadeOut = Duration(milliseconds: 320);
+
+  /// 거절 좌우 흔들림.
+  static const Duration denyShake = Duration(milliseconds: 320);
+
+  /// 난이도·modifier·Archive 카드 선택 상태 전환.
+  static const Duration choiceSelect = Duration(milliseconds: 180);
+
+  // ── 전투 레인(T2 정산 클라이맥스 · T1 전투 입력) ──
+  /// 줄 안 타일 하나가 반응하는 박자.
+  static const Duration settlementTileTick = Duration(milliseconds: 80);
+
+  /// Jester 한 장이 발동하는 박자(왼쪽부터 한 장씩).
+  static const Duration settlementJesterFire = Duration(milliseconds: 420);
+
+  /// Jester 발동 모션(내려찍기·부풀기·회전 섬광) 길이.
+  static const Duration jesterFireMotion = Duration(milliseconds: 380);
+
+  /// 목표 점수·골드 count-up과 진행 바 채움.
+  static const Duration hudCountUp = Duration(milliseconds: 500);
+
+  /// count-up tick 소리 간격.
+  static const Duration hudCountTickInterval = Duration(milliseconds: 70);
+
+  /// 상위 등급 줄의 hit-stop.
+  static const Duration settlementGradeHitStop = Duration(milliseconds: 90);
+
+  /// 목표 달성 피니셔의 마지막 타격 hit-stop.
+  static const Duration settlementFinisherHitStop = Duration(milliseconds: 100);
+
+  /// 피니셔 finalScore 스텝의 슬로모션 배율.
+  static const double settlementFinisherSlowMo = 0.5;
+
+  /// 확정 후 contributor 타일이 줄 방향을 따라 터지는 간격.
+  static const Duration contributorClearStagger = Duration(milliseconds: 35);
+
+  /// contributor 타일 하나가 터지며 사라지는 길이.
+  static const Duration contributorClearPop = Duration(milliseconds: 220);
+
+  /// 빈 칸에 남는 잔광.
+  static const Duration contributorClearAfterglow = Duration(milliseconds: 420);
+
+  /// 정산 결과 시트 등장 전환.
+  static const Duration cashOutSheetIn = Duration(milliseconds: 260);
+
+  /// 줄 예고 숨쉬기 한 주기와 반복 횟수(유휴 시 멈춘다).
+  static const Duration lineHintBreath = Duration(milliseconds: 1400);
+  static const int lineHintBreathCycles = 3;
+
+  /// 타일 착지 뒤 주변 타일 파문 간격.
+  static const Duration landingRippleStagger = Duration(milliseconds: 25);
+
+  /// 덱→손패, 손패→보드 호 비행.
+  static const Duration tileArcFlight = Duration(milliseconds: 300);
+
+  /// 전투 진입 stagger.
+  static const Duration battleEntryStagger = Duration(milliseconds: 28);
+  static const Duration battleEntryDeal = Duration(milliseconds: 320);
+
+  /// Boss 제약 표시가 찍히는 모션.
+  static const Duration bossMarkStamp = Duration(milliseconds: 360);
+
+  // --- T4: 흐름과 메타 화면 ---
+  /// 화면 진입 때 카드·배너가 차례로 들어오는 한 장의 길이와 간격.
+  static const Duration flowEntranceIn = Duration(milliseconds: 320);
+  static const Duration flowEntranceStagger = Duration(milliseconds: 80);
+
+  /// Boss 인트로 배너 등장, 이름 도장, 제약 아이콘 낙하 간격.
+  static const Duration bossIntroBannerIn = Duration(milliseconds: 280);
+  static const Duration bossIntroTitleStamp = Duration(milliseconds: 300);
+  static const Duration bossIntroIconDrop = Duration(milliseconds: 260);
+  static const Duration bossIntroIconStagger = Duration(milliseconds: 90);
+
+  /// 배너가 닫힌 뒤 제약 표시가 보드 칸으로 날아가는 길이와 칸 사이 간격.
+  static const Duration bossMarkFlight = Duration(milliseconds: 420);
+  static const Duration bossMarkFlightStagger = Duration(milliseconds: 60);
+
+  /// 비행이 끝났다는 신호가 오지 않아도 이 시간이 더 지나면 제약 표시를 드러낸다.
+  static const Duration bossMarkFlightGuard = Duration(milliseconds: 600);
+
+  /// Blind 카드 고른 뒤 전투로 넘어가기 전 선택 강조(입력 잠금 상한).
+  static const Duration blindPlayCommit = Duration(milliseconds: 240);
+
+  /// Blind 상태 배지 전환과 Boss 위험 표시 맥동(횟수만큼 돌고 멈춘다).
+  static const Duration blindBadgeSwap = Duration(milliseconds: 260);
+  static const Duration blindDangerPulse = Duration(milliseconds: 520);
+  static const int blindDangerPulseCycles = 3;
+
+  /// 런 진행 띠에서 현재 위치가 한 칸 나아가는 길이.
+  static const Duration runProgressAdvance = Duration(milliseconds: 520);
+
+  /// 런 완료 승리 장면 전체 길이(탭으로 건너뛸 수 있다)와 수치 tally 간격.
+  static const Duration runVictoryHold = Duration(milliseconds: 2400);
+  static const Duration runVictoryTallyStagger = Duration(milliseconds: 260);
+  static const Duration runVictoryBgmFadeOut = Duration(milliseconds: 420);
+
+  /// 게임오버 결과 창의 기억 카드 공개.
+  static const Duration gameOverRewardReveal = Duration(milliseconds: 420);
+  static const Duration gameOverRewardRevealDelay = Duration(milliseconds: 260);
+
+  /// 타이틀 로고 내려앉기와 강도 '강'의 idle 흔들림 한 주기.
+  static const Duration titleLogoSettle = Duration(milliseconds: 520);
+  static const Duration titleLogoIdle = Duration(milliseconds: 3200);
+
+  /// Archive 새 항목 카드가 처음 열릴 때 뒤집히는 공개.
+  static const Duration archiveNewReveal = Duration(milliseconds: 420);
 }
 
 /// 반복되는 duration/stagger 조합을 이름 붙여 쓰는 presentation 전용 보조 타입.

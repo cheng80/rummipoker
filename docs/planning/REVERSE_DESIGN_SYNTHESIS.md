@@ -31,7 +31,7 @@
 
 ## 재미를 키울 후보
 
-상태는 이렇게 읽는다. `후보`는 아직 게임에 넣지 않은 아이디어고, `선행 수정`은 기존 오류나 잘못된 안내를 먼저 고쳐야 한다는 뜻이다.
+상태는 이렇게 읽는다. `후보`는 아직 게임에 넣지 않은 아이디어고, `일부 완료`는 표에 적힌 일부만 구현했다는 뜻이며, `선행 수정`은 기존 오류나 잘못된 안내를 먼저 고쳐야 한다는 뜻이다.
 
 | 우선순위 | 후보 | 근거 비교축 | 기대 효과 | 위험 | 검증 지표 | 상태 |
 |---|---|---|---|---|---|---|
@@ -39,7 +39,7 @@
 | P0 | 정산·런 종료 보상을 한 번만 지급 | 저장 신뢰 | 골드·Insight 중복 지급 제거 | 저장 형식과 처리 단계 추가 필요 | 강제 종료 후 다시 열어도 1회만 지급 | 완료 |
 | P0 | first-save gap / Market exit flush / payload+signature 원자성 | premium mobile peer 불만 축 | 이어하기 신뢰 | storage 경계 변경 | New Run 직후 kill, Market→Title 복원 | 완료 |
 | P1 | Game Over에 부족 점수·남은 행동을 보여 주는 카드 + `loss_snapshot` | 플레이어의 실패 이해 | 다음 도전에서 판단하기 쉬움 | 원인을 단정하거나 비난하지 않음 | 이해도 QA, 이벤트 연결 | 후보 |
-| P1 | 정산 라벨/연출을 계산 순서(growth→overlap→Jester→tile→Item→Boss)에 맞춤 | Balatro ordered theatrical resolve | 빌드 학습 | 연출 시간 증가 | 라벨 정확도 테스트 | 후보 |
+| P1 | 정산 라벨/연출을 계산 순서(growth→overlap→Jester→tile→Item→Boss)에 맞춤 | Balatro ordered theatrical resolve | 빌드 학습 | 연출 시간 증가 | 라벨 정확도 테스트 | 일부 완료: 연출은 구현, 라벨 정확도는 후보 |
 | P1 | Challenge 계승을 실제로 기록하거나 안내 문구를 제거 | 현재 잘못된 안내 | 다음 런 목표를 믿고 세울 수 있음 | 밸런스 영향 | S8 완료 후 Challenge 시작 상태 확인 | 완료 |
 | P2 | Market에서 다음 Blind/Boss의 목표와 제약을 미리 보여 주기 | 덱빌더의 눈에 보이는 선택 | 무엇을 살지 판단하기 쉬움 | 보상 표시를 먼저 바로잡아야 함 | 다음 목표·자원 표시가 실제와 같은지 확인 | 후보 |
 | P2 | ‘지금 빌드에 맞는 후보’의 기준을 정한 뒤 Market 조정 | Balatro/STS의 옆길 발견 | 쓸모없는 Market 감소 | 아직 기준과 측정 방법이 없음 | Station별 적합 후보 등장률 | 후보/측정 선행 |
@@ -54,6 +54,17 @@
 - **STS / Monster Train / Wildfrost / Slice & Dice**: 제한된 선택 + 주기적 두꺼운 빌드 선택. 전투 셸은 전이하지 않음.
 - **Poker Squares / Sage Solitaire / Triple Town / Isle of Arrows / Grindstone**: 격자 배치, 공간 회복, 짧은 재도전.
 - **비전이**: exact preview 부재, 숨은 핵심 규칙, 카지노 테마 강화, Completionist급 체크리스트 압박.
+
+### 연출(손맛) 조사 요약
+
+2026-09 연출 보강 track을 위해 기존 연출과 전 화면 터치포인트를 조사하고 Balatro 등 레퍼런스의 기법을 정리했다.
+
+- 현재 게임은 정산 순서 연출은 있지만 버튼 눌림, 햅틱, 화면 흔들림, 음높이 변화, 연출 속도 설정이 없었다. 효과음 7개 중 3개는 쓰이지 않았다.
+- 비용 대비 효과가 큰 기법은 공용 juice(찌그러짐 뒤 감쇠 진동), 정산 단계마다 조금씩 오르는 음높이, 1/2/4배속과 즉시 옵션, 등급 햅틱, trauma 기반 흔들림, 동작 줄이기 존중 순이었다.
+- 모바일 웹에서는 애니메이션되는 `Opacity`, 프레임마다 바뀌는 blur, `saveLayer` 계열이 비싸다. 파티클은 구운 스프라이트와 atlas 한 번 그리기로 처리한다.
+- HTMLAudio의 재생 속도는 음높이를 바꾸지 않으므로 음높이 변주는 Web Audio로 한다. iOS 웹에는 진동 API가 없다.
+- 계산 순서 후보는 연출 보강 track의 T2에서 일부 구현했다. Jester를 왼쪽 슬롯부터 한 장씩 발동시키고 타일 modifier·Item·Boss 감점에 각각 다른 cue와 색을 주었다. 단계 순서(`boardLine`→`handRank`→`overlap`→`constraint`→`jester`→`tile`→`item`→`finalScore`)는 기존 그대로다. 라벨의 `Jester` 합계가 다른 효과를 포함하는 문제는 아직 손대지 않았고, 라벨 정확도 테스트도 없다.
+- 레퍼런스 게임의 코드는 가져오지 않고 기법과 수치 감각만 참고한다. 실행 계획은 [ACTIVE_EXECUTION_PLAN.md](ACTIVE_EXECUTION_PLAN.md)의 연출 보강 track이 맡는다.
 
 ## 광고와 수익 모델을 넣는다면
 

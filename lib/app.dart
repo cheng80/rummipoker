@@ -13,6 +13,7 @@ import 'resources/sound_manager.dart';
 import 'router.dart';
 import 'services/frame_timing_metrics.dart';
 import 'views/game/widgets/game_ui_palette.dart';
+import 'widgets/fx/fx_layer.dart';
 import 'widgets/starry_background.dart';
 
 /// 앱의 루트 위젯. 테마, 라우팅 등 앱 전체 설정을 담당한다.
@@ -94,6 +95,7 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
                 const Positioned.fill(child: StarryBackground()),
                 if (child != null)
                   Positioned.fill(child: RepaintBoundary(child: child)),
+                const Positioned.fill(child: FxLayer()),
               ],
             );
           },

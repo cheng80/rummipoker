@@ -8,8 +8,12 @@ import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_state.dart';
 import 'package:rummipoker/views/game/widgets/game_effect_overlay.dart';
+import 'package:rummipoker/widgets/fx/fx_layer.dart';
 
 void main() {
+  setUp(Fx.debugReset);
+  tearDown(Fx.debugReset);
+
   testWidgets('보드 라인 정산 단계에서 점수 조각 연출을 띄운다', (tester) async {
     await tester.pumpWidget(
       _effectOverlayHost(
@@ -41,7 +45,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(_gameWidgetFinder(), findsOneWidget);
+    expect(Fx.controller.particleCount, greaterThan(0));
     expect(
       find.byKey(const ValueKey('constraint-impact-badge-layer')),
       findsOneWidget,
@@ -68,29 +72,31 @@ void main() {
     );
     await tester.pump();
 
-    expect(_gameWidgetFinder(), findsNothing);
+    expect(Fx.controller.particleCount, 0);
     expect(
       find.byKey(const ValueKey('constraint-impact-badge-layer')),
       findsNothing,
     );
   });
 
-  testWidgets('큰 final score 정산 단계에서 보드 이펙트를 띄운다', (tester) async {
+  testWidgets('상위 등급 final score 정산 단계에서 보드 이펙트를 띄운다', (tester) async {
     await tester.pumpWidget(
       _effectOverlayHost(
         activeSettlementStep: ScoringPresentationStep.finalScore,
         line: _line(finalScore: 150),
+        settlementGrade: 2,
       ),
     );
     await tester.pump();
     await tester.pump();
 
-    expect(_gameWidgetFinder(), findsOneWidget);
+    expect(Fx.controller.particleCount, greaterThan(0));
+    // 합계는 등급 callout이 채점 줄을 피해 보여 주므로 줄 위 배지는 없다.
     expect(
       find.byKey(const ValueKey('large-score-burst-badge-layer')),
-      findsOneWidget,
+      findsNothing,
     );
-    expect(find.text('+150'), findsOneWidget);
+    expect(find.text('+150'), findsNothing);
     await tester.pump(const Duration(milliseconds: 1350));
   });
 
@@ -104,7 +110,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(_gameWidgetFinder(), findsOneWidget);
+    expect(Fx.controller.particleCount, greaterThan(0));
     expect(
       find.byKey(const ValueKey('settlement-effect-line-pulse-layer')),
       findsOneWidget,
@@ -116,7 +122,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1350));
   });
 
-  testWidgets('작은 final score 정산 단계는 보드 이펙트를 띄우지 않는다', (tester) async {
+  testWidgets('하위 등급 final score 정산 단계는 보드 이펙트를 띄우지 않는다', (tester) async {
     await tester.pumpWidget(
       _effectOverlayHost(
         activeSettlementStep: ScoringPresentationStep.finalScore,
@@ -125,7 +131,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(_gameWidgetFinder(), findsNothing);
+    expect(Fx.controller.particleCount, 0);
     expect(
       find.byKey(const ValueKey('large-score-burst-badge-layer')),
       findsNothing,
@@ -133,29 +139,30 @@ void main() {
   });
 }
 
-Finder _gameWidgetFinder() {
-  return find.byWidgetPredicate(
-    (widget) => widget.runtimeType.toString().startsWith('GameWidget<'),
-  );
-}
-
 Widget _effectOverlayHost({
   required ScoringPresentationStep activeSettlementStep,
   required ConfirmedLineBreakdown line,
+  int settlementGrade = 0,
 }) {
   return MaterialApp(
     home: Scaffold(
-      body: Center(
-        child: SizedBox.square(
-          dimension: 240,
-          child: GameBoardEffectOverlay(
-            activeSettlementLine: line,
-            activeSettlementStep: activeSettlementStep,
-            settlementSequenceTick: 1,
-            frameInset: 6,
-            gridGap: 4,
+      body: Stack(
+        children: [
+          Center(
+            child: SizedBox.square(
+              dimension: 240,
+              child: GameBoardEffectOverlay(
+                activeSettlementLine: line,
+                activeSettlementStep: activeSettlementStep,
+                settlementSequenceTick: 1,
+                settlementGrade: settlementGrade,
+                frameInset: 6,
+                gridGap: 4,
+              ),
+            ),
           ),
-        ),
+          const Positioned.fill(child: FxLayer()),
+        ],
       ),
     ),
   );

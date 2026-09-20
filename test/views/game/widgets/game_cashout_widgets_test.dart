@@ -1,3 +1,4 @@
+import 'market_feedback_test_support.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/hand_rank.dart';
@@ -12,6 +13,7 @@ import 'package:rummipoker/views/game/widgets/game_cashout_widgets.dart';
 import 'package:rummipoker/views/game/widgets/game_options_dialog.dart';
 
 void main() {
+  setUpMarketFeedback();
   testWidgets('GameFloatingSettlementBurst shows item effect callout', (
     tester,
   ) async {

@@ -10,6 +10,7 @@ class GameItemZoneSkeleton extends StatefulWidget {
     required this.settlementSequenceTick,
     this.selectedSlotIndex,
     this.onItemSlotTap,
+    this.onLockedSlotTap,
   });
 
   final RummiBattleRuntimeFacade battle;
@@ -17,6 +18,9 @@ class GameItemZoneSkeleton extends StatefulWidget {
   final int settlementSequenceTick;
   final int? selectedSlotIndex;
   final ValueChanged<RummiBattleItemSlotView>? onItemSlotTap;
+
+  /// 잠긴 슬롯을 탭했을 때 거절 피드백.
+  final VoidCallback? onLockedSlotTap;
 
   @override
   State<GameItemZoneSkeleton> createState() => _GameItemZoneSkeletonState();
@@ -119,6 +123,7 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
                                   widget.selectedSlotIndex,
                           locked: index >= unlockedQuickSlots,
                           onTap: widget.onItemSlotTap,
+                          onLockedTap: widget.onLockedSlotTap,
                         ),
                       for (
                         var index = 0;
@@ -142,6 +147,7 @@ class _GameItemZoneSkeletonState extends State<GameItemZoneSkeleton> {
                                   widget.selectedSlotIndex,
                           locked: index >= unlockedPassiveSlots,
                           onTap: widget.onItemSlotTap,
+                          onLockedTap: widget.onLockedSlotTap,
                         ),
                     ]
                   : [
@@ -212,25 +218,23 @@ class _GameItemQueuedBadge extends StatelessWidget {
         curve: Curves.easeOutCubic,
         builder: (context, value, child) {
           final glow = sin(pi * value).clamp(0.0, 1.0);
-          return DecoratedBox(
-            key: const ValueKey('battle-item-confirm-queued-badge'),
-            decoration: BoxDecoration(
-              color: GameUiPalette.actionGold.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: GameUiPalette.actionGold.withValues(alpha: 0.58),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: GameUiPalette.specialScoreText.withValues(
-                    alpha: 0.32 * glow,
-                  ),
-                  blurRadius: 14 * glow,
-                  spreadRadius: 1.2 * glow,
-                ),
-              ],
+          return FxBoxGlow(
+            color: GameUiPalette.specialScoreText.withValues(
+              alpha: 0.32 * glow,
             ),
-            child: child,
+            blurRadius: 14 * glow,
+            spreadRadius: 1.2 * glow,
+            child: DecoratedBox(
+              key: const ValueKey('battle-item-confirm-queued-badge'),
+              decoration: BoxDecoration(
+                color: GameUiPalette.actionGold.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: GameUiPalette.actionGold.withValues(alpha: 0.58),
+                ),
+              ),
+              child: child,
+            ),
           );
         },
         child: Padding(
@@ -416,6 +420,7 @@ class _GameItemPocketChip extends StatelessWidget {
     this.activeEffect,
     required this.settlementSequenceTick,
     this.onTap,
+    this.onLockedTap,
   });
 
   final String label;
@@ -426,6 +431,7 @@ class _GameItemPocketChip extends StatelessWidget {
   final RummiJesterEffectBreakdown? activeEffect;
   final int settlementSequenceTick;
   final ValueChanged<RummiBattleItemSlotView>? onTap;
+  final VoidCallback? onLockedTap;
 
   @override
   Widget build(BuildContext context) {
@@ -440,7 +446,9 @@ class _GameItemPocketChip extends StatelessWidget {
     return GestureDetector(
       key: ValueKey('battle-item-slot-$label'),
       behavior: HitTestBehavior.opaque,
-      onTap: locked || itemSlot == null || onTap == null
+      onTap: locked
+          ? onLockedTap
+          : itemSlot == null || onTap == null
           ? null
           : () => onTap!(itemSlot),
       child: Stack(
@@ -625,7 +633,7 @@ class _GameItemEffectBurst extends StatelessWidget {
       tween: Tween<double>(begin: 0, end: 1),
       duration: GamePresentationTimings.settlementEffectBurst,
       curve: Curves.easeOutCubic,
-      builder: (context, value, child) {
+      builder: (context, value, _) {
         final fade = value < 0.18
             ? value / 0.18
             : value > 0.82
@@ -633,77 +641,83 @@ class _GameItemEffectBurst extends StatelessWidget {
             : 1.0;
         final dy = -6 * value;
         final scale = 0.88 + value * 0.12;
-        return Opacity(
-          opacity: fade.clamp(0.0, 1.0),
-          child: Transform.translate(
-            offset: Offset(0, dy),
-            child: Transform.scale(scale: scale, child: child),
-          ),
-        );
-      },
-      child: Center(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: GameUiPalette.settlementEffectSurface,
-            borderRadius: BorderRadius.circular(7),
-            border: Border.all(
-              color: GameUiPalette.actionGoldBright.withValues(alpha: 0.72),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: GameUiPalette.actionGoldBright.withValues(alpha: 0.18),
-                blurRadius: 10,
-                spreadRadius: 1,
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(0, 5, 8, 5),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 3,
-                  height: 30,
-                  color: GameUiPalette.actionGoldBright,
-                ),
-                const SizedBox(width: 7),
-                Flexible(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        sourceName,
-                        maxLines: 1,
-                        style: TextStyle(
-                          color: GameUiPalette.textPrimary.withValues(
-                            alpha: 0.92,
-                          ),
-                          fontSize: 7.5,
-                          fontWeight: FontWeight.w900,
-                          height: 1,
-                        ),
+        final opacity = fade.clamp(0.0, 1.0);
+        // 알파를 색에 직접 곱해 Opacity 합성을 피한다.
+        Color faded(Color color) => color.withValues(alpha: color.a * opacity);
+        return Transform.translate(
+          offset: Offset(0, dy),
+          child: Transform.scale(
+            scale: scale,
+            child: Center(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: faded(GameUiPalette.settlementEffectSurface),
+                  borderRadius: BorderRadius.circular(7),
+                  border: Border.all(
+                    color: GameUiPalette.actionGoldBright.withValues(
+                      alpha: 0.72 * opacity,
+                    ),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: GameUiPalette.actionGoldBright.withValues(
+                        alpha: 0.18 * opacity,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _itemEffectBadge(effect),
-                        maxLines: 1,
-                        style: const TextStyle(
-                          color: GameUiPalette.textWarmPale,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w900,
-                          height: 1,
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 5, 8, 5),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 3,
+                        height: 30,
+                        color: faded(GameUiPalette.actionGoldBright),
+                      ),
+                      const SizedBox(width: 7),
+                      Flexible(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              sourceName,
+                              maxLines: 1,
+                              style: TextStyle(
+                                color: GameUiPalette.textPrimary.withValues(
+                                  alpha: 0.92 * opacity,
+                                ),
+                                fontSize: 7.5,
+                                fontWeight: FontWeight.w900,
+                                height: 1,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              _itemEffectBadge(effect),
+                              maxLines: 1,
+                              style: TextStyle(
+                                color: faded(GameUiPalette.textWarmPale),
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                height: 1,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

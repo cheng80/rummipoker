@@ -1,3 +1,4 @@
+import 'dart:math' show pi, sin;
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
@@ -5,6 +6,9 @@ import 'package:flutter/material.dart';
 import '../../../logic/rummi_poker_grid/rummi_battle_facade.dart';
 import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
+import '../../../widgets/fx/fx_sprites.dart';
+import '../../../widgets/fx/motion_policy.dart';
+import '../../../widgets/fx/spring_follow.dart';
 import '../game_presentation_timings.dart';
 import 'game_shared_widgets.dart';
 import 'game_ui_palette.dart';
@@ -42,6 +46,9 @@ class _GameHandZoneState extends State<GameHandZone>
 
   late final AnimationController _controller;
   late final AnimationController _capacityController;
+
+  /// 전투 진입 때 손패가 짧은 stagger로 깔리는 진행도(0~1).
+  late final AnimationController _entryController;
   List<Tile> _settledHand = <Tile>[];
   List<Tile> _fromHand = <Tile>[];
   List<Tile> _toHand = <Tile>[];
@@ -74,12 +81,20 @@ class _GameHandZoneState extends State<GameHandZone>
           if (status != AnimationStatus.completed || !mounted) return;
           setState(() => _capacityGain = 0);
         });
+    _entryController = AnimationController(
+      vsync: this,
+      duration:
+          GamePresentationTimings.battleEntryDeal +
+          GamePresentationTimings.battleEntryStagger * 5,
+      value: MotionPolicy.reduceMotion ? 1 : 0,
+    )..forward();
   }
 
   @override
   void dispose() {
     _controller.dispose();
     _capacityController.dispose();
+    _entryController.dispose();
     super.dispose();
   }
 
@@ -180,7 +195,8 @@ class _GameHandZoneState extends State<GameHandZone>
                   canDraw: canDraw,
                   pulse: _capacityController,
                   pulsing: _capacityGain > 0,
-                  onPressed: canDraw ? widget.onDraw : null,
+                  // 막힌 드로우도 탭을 받아 거절 피드백을 준다.
+                  onPressed: widget.onDraw,
                 ),
               ),
               const SizedBox(width: 10),
@@ -237,7 +253,10 @@ class _GameHandZoneState extends State<GameHandZone>
                             tileWidth: widget.tileWidth,
                           );
                           return AnimatedBuilder(
-                            animation: _controller,
+                            animation: Listenable.merge([
+                              _controller,
+                              _entryController,
+                            ]),
                             builder: (context, _) {
                               final t = _animating ? _controller.value : 1.0;
                               final sel = widget.selectedHandTile;
@@ -339,6 +358,8 @@ class _GameHandZoneState extends State<GameHandZone>
     final left = lerpDouble(from.left, to.left, t)!;
     final top = lerpDouble(from.top, to.top, t)!;
     final angle = lerpDouble(from.angle, to.angle, t)!;
+    final selected = widget.selectedHandTile == tile;
+    final entry = _entryProgress(widget.hand.indexOf(tile));
 
     return Positioned(
       key: ValueKey('settled-$key'),
@@ -346,19 +367,50 @@ class _GameHandZoneState extends State<GameHandZone>
       top: top,
       width: to.width,
       height: to.height,
-      child: Transform.rotate(
-        angle: angle,
-        child: GestureDetector(
-          onTap: () => widget.onHandTileTap(tile),
-          onLongPress: () => widget.onHandTileLongPress(tile),
-          child: _HandTileCard(
-            tile: tile,
-            selected: widget.selectedHandTile == tile,
-            constrained: widget.battle.isTileConstrained(tile),
+      child: Transform.translate(
+        offset: Offset(0, 36 * (1 - entry)),
+        child: Transform.scale(
+          scale: 0.7 + 0.3 * entry,
+          child: Transform.rotate(
+            angle: angle,
+            child: GestureDetector(
+              onTap: () => widget.onHandTileTap(tile),
+              onLongPress: () => widget.onHandTileLongPress(tile),
+              // 선택하면 떠오르며 커지고 살짝 기운다. 목표를 따라가는 움직임이다.
+              child: SpringFollow(
+                offset: selected ? const Offset(0, -10) : Offset.zero,
+                scale: selected ? 1.08 : 1,
+                rotation: selected ? 0.05 - angle * 0.5 : 0,
+                child: FxBoxGlow(
+                  color: GameUiPalette.ink.withValues(
+                    alpha: selected ? 0.45 : 0,
+                  ),
+                  blurRadius: selected ? 14 : 0,
+                  offset: const Offset(0, 8),
+                  child: _HandTileCard(
+                    tile: tile,
+                    selected: selected,
+                    constrained: widget.battle.isTileConstrained(tile),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
     );
+  }
+
+  /// 진입 deal에서 [index]번째 타일의 진행도(0~1).
+  double _entryProgress(int index) {
+    if (_entryController.isCompleted || index < 0) return 1;
+    final total = _entryController.duration!;
+    final elapsed = total * _entryController.value;
+    final local =
+        (elapsed - GamePresentationTimings.battleEntryStagger * index)
+            .inMicroseconds /
+        GamePresentationTimings.battleEntryDeal.inMicroseconds;
+    return Curves.easeOutBack.transform(local.clamp(0.0, 1.0));
   }
 
   Widget _buildDiscardingTile(
@@ -372,10 +424,15 @@ class _GameHandZoneState extends State<GameHandZone>
     if (from == null) {
       return const SizedBox.shrink();
     }
-    final eased = Curves.easeOutCubic.transform(t.clamp(0.0, 1.0));
-    final top = lerpDouble(from.top, from.top - 18, eased)!;
-    final scale = lerpDouble(1.0, 0.9, eased)!;
-    final opacity = (1 - eased).clamp(0.0, 1.0);
+    // 보드 버림과 같은 결: 먼저 들렸다가 기울며 줄어들고 사라진다.
+    final p = Curves.easeOutCubic.transform(t.clamp(0.0, 1.0));
+    final top = p < 0.32
+        ? from.top - 10 * (p / 0.32)
+        : from.top - 10 - 16 * ((p - 0.32) / 0.68);
+    final scale = p < 0.32
+        ? 1.0 + 0.08 * (p / 0.32)
+        : 1.08 - 0.3 * ((p - 0.32) / 0.68);
+    final opacity = p < 0.32 ? 1.0 : (1 - (p - 0.32) / 0.68).clamp(0.0, 1.0);
 
     return Positioned(
       key: ValueKey('discarding-$key'),
@@ -388,7 +445,7 @@ class _GameHandZoneState extends State<GameHandZone>
         child: Transform.scale(
           scale: scale,
           child: Transform.rotate(
-            angle: lerpDouble(from.angle, from.angle - 0.08, eased)!,
+            angle: lerpDouble(from.angle, from.angle - 0.14, p)!,
             child: IgnorePointer(
               child: _HandTileCard(
                 tile: tile,
@@ -412,11 +469,14 @@ class _GameHandZoneState extends State<GameHandZone>
     if (to == null) {
       return const SizedBox.shrink();
     }
-    final startLeft = areaSize.width + 12;
+    // 덱(왼쪽 드로우 버튼)에서 호를 그리며 날아와 착지 때 눌렸다 펴진다.
+    final startLeft = -(72 + 10) + (72 - to.width) / 2;
     final startTop = (areaSize.height - to.height) / 2;
-    final left = lerpDouble(startLeft, to.left, t)!;
-    final top = lerpDouble(startTop, to.top, t)!;
-    final angle = lerpDouble(0.18, to.angle, t)!;
+    final flight = Curves.easeOutCubic.transform(t.clamp(0.0, 1.0));
+    final left = lerpDouble(startLeft, to.left, flight)!;
+    final top = lerpDouble(startTop, to.top, flight)! - 28 * sin(pi * flight);
+    final angle = lerpDouble(-0.35, to.angle, flight)!;
+    final landing = t < 0.8 ? 0.0 : sin(pi * ((t - 0.8) / 0.2));
 
     return Positioned(
       key: ValueKey('incoming-${_handTileKey(tile)}'),
@@ -424,8 +484,11 @@ class _GameHandZoneState extends State<GameHandZone>
       top: top,
       width: to.width,
       height: to.height,
-      child: Transform.rotate(
-        angle: angle,
+      child: Transform(
+        alignment: Alignment.bottomCenter,
+        transform: Matrix4.identity()
+          ..rotateZ(angle)
+          ..scaleByDouble(1 + 0.08 * landing, 1 - 0.1 * landing, 1, 1),
         child: GestureDetector(
           onTap: () => widget.onHandTileTap(tile),
           onLongPress: () => widget.onHandTileLongPress(tile),
@@ -452,36 +515,39 @@ class _HandDrawIncomingBadge extends StatelessWidget {
       builder: (context, _) {
         final t = Curves.easeOutCubic.transform(animation.value);
         final opacity = (1 - (t - 0.72).clamp(0.0, 1.0) / 0.28).clamp(0.0, 1.0);
-        return Opacity(
-          opacity: opacity,
-          child: Transform.translate(
-            offset: Offset(0, -6 * t),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: GameUiPalette.surfaceModalInner.withValues(alpha: 0.96),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: GameUiPalette.specialSoftMint),
-                boxShadow: [
-                  BoxShadow(
-                    color: GameUiPalette.specialSoftMint.withValues(
-                      alpha: 0.24,
-                    ),
-                    blurRadius: 12,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
+        return Transform.translate(
+          offset: Offset(0, -6 * t),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: GameUiPalette.surfaceModalInner.withValues(
+                alpha: 0.96 * opacity,
               ),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                child: Text(
-                  '드로우 +1',
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: GameUiPalette.specialSoftMint,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                    height: 1,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: GameUiPalette.specialSoftMint.withValues(alpha: opacity),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: GameUiPalette.specialSoftMint.withValues(
+                    alpha: 0.24 * opacity,
                   ),
+                  blurRadius: 12,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+              child: Text(
+                '드로우 +1',
+                maxLines: 1,
+                style: TextStyle(
+                  color: GameUiPalette.specialSoftMint.withValues(
+                    alpha: opacity,
+                  ),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
                 ),
               ),
             ),
@@ -602,25 +668,26 @@ class _HandCapacityGainBadge extends StatelessWidget {
         final t = Curves.easeOutCubic.transform(animation.value);
         final opacity = (1 - t).clamp(0.0, 1.0);
         final dy = lerpDouble(0, -10, t)!;
-        return Opacity(
-          opacity: opacity,
-          child: Transform.translate(
-            offset: Offset(0, dy),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: GameUiPalette.surfaceHandPanel,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: GameUiPalette.specialSoftMintText),
+        // 알파를 색에 직접 곱해 Opacity 합성을 피한다.
+        Color fade(Color color) => color.withValues(alpha: color.a * opacity);
+        return Transform.translate(
+          offset: Offset(0, dy),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: fade(GameUiPalette.surfaceHandPanel),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: fade(GameUiPalette.specialSoftMintText),
               ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Text(
-                  '손패 +$amount',
-                  style: const TextStyle(
-                    color: GameUiPalette.specialSuccessText,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                  ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Text(
+                '손패 +$amount',
+                style: TextStyle(
+                  color: fade(GameUiPalette.specialSuccessText),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
                 ),
               ),
             ),

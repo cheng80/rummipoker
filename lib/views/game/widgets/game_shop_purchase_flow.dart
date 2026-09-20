@@ -48,6 +48,7 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
                 const SizedBox(width: 10),
                 Expanded(
                   child: GameActionButton(
+                    key: const ValueKey('market-reroll-confirm'),
                     label: _rerollConfirmActionLabel(rerollQuote),
                     background: GameUiPalette.actionGold,
                     foreground: GameUiPalette.ink,
@@ -74,7 +75,8 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
         ? widget.onReroll()
         : widget.onRerollItemOffers!(placement);
     if (failMessage != null) {
-      showBottomNotice(context, failMessage);
+      _startMarketDenyFeedback('reroll', failMessage);
+      showBottomNotice(context, failMessage, cue: null);
       return;
     }
     _mutate(() {
@@ -93,6 +95,7 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       _startEffectPresentation(effectPresentation);
     }
     await widget.onStateChanged();
+    GameFeedback.play(GameCue.reroll);
   }
 
   void _buySelected() {
@@ -113,10 +116,13 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       targetLabel: flightLabel,
       discountSourceLabel: boughtOffer.discountSourceLabel,
     );
+    final isFirstAcquisition =
+        widget.isFirstAcquisition?.call('jester', boughtOffer.contentId) ??
+        false;
     final failMessage = widget.onBuyOffer(boughtOffer);
     if (failMessage != null) {
       _startMarketDenyFeedback('jester-buy', failMessage);
-      showBottomNotice(context, failMessage);
+      showBottomNotice(context, failMessage, cue: null);
       return;
     }
     _mutate(() {
@@ -160,6 +166,10 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       _startEffectPresentation(effectPresentation);
     }
     _queueStateSave();
+    GameFeedback.play(GameCue.buy);
+    if (isFirstAcquisition) {
+      _startNewAcquisitionReveal(flightLabel);
+    }
   }
 
   void _buySelectedItem() {
@@ -179,10 +189,12 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       targetLabel: flightLabel,
       discountSourceLabel: boughtOffer.discountSourceLabel,
     );
+    final isFirstAcquisition =
+        widget.isFirstAcquisition?.call('item', boughtOffer.contentId) ?? false;
     final failMessage = widget.onBuyItemOffer(boughtOffer);
     if (failMessage != null) {
       _startMarketDenyFeedback('item-buy', failMessage);
-      showBottomNotice(context, failMessage);
+      showBottomNotice(context, failMessage, cue: null);
       return;
     }
     _mutate(() {
@@ -240,6 +252,10 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       _startEffectPresentation(effectPresentation);
     }
     _queueStateSave();
+    GameFeedback.play(GameCue.buy);
+    if (isFirstAcquisition) {
+      _startNewAcquisitionReveal(flightLabel);
+    }
   }
 
   void _buySelectedTile() {
@@ -255,7 +271,7 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
     final failMessage = widget.onBuyTileOffer(index);
     if (failMessage != null) {
       _startMarketDenyFeedback('tile-buy', failMessage);
-      showBottomNotice(context, failMessage);
+      showBottomNotice(context, failMessage, cue: null);
       return;
     }
     _mutate(() {
@@ -277,7 +293,12 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       );
     });
     _queueStateSave();
-    showBottomNotice(context, '${_tileLabel(boughtOffer.tile)} 덱 추가');
+    GameFeedback.play(GameCue.buy);
+    showBottomNotice(
+      context,
+      '${_tileLabel(boughtOffer.tile)} 덱 추가',
+      cue: null,
+    );
   }
 
   RummiMarketItemSlotView? _findPurchasedItemSlot(

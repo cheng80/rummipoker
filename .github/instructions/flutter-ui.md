@@ -37,4 +37,5 @@ alwaysApply: false
 
 - 상태·입력은 widget test, 실제 모양은 최신 build의 Chrome/Simulator screenshot 또는 video로 확인한다. UI 변경 뒤 `build/web`이나 `--skip-build` 캡처를 재사용하지 않는다.
 - overflow, 잘림, 겹침, frame 밖 누수, 읽을 수 없는 문구는 기능이 동작해도 실패다. 실제 화면 잔존 문제는 단위 테스트만으로 닫지 않고 재현 fixture나 저장 상태로 눈검증한다.
+- 선택 카드의 이동·확대가 clip을 넘지 않도록 공용 연출 상수에서 진열 여유를 계산한다. 수정 전 RenderBox 좌표로 잘림을 재현하고, 수정 뒤 전환 중 테두리 네 변과 아래 가격·버튼 간격을 검증한다.
 - 테스트 입력은 표시 텍스트 대신 안정된 key, content id, slot index를 사용한다.

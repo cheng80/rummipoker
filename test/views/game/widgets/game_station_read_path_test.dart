@@ -792,7 +792,7 @@ void main() {
     expect(midTop, lessThan(startTop));
   });
 
-  testWidgets('GameHandZone draws an incoming tile from the right edge', (
+  testWidgets('GameHandZone draws an incoming tile from the draw button side', (
     tester,
   ) async {
     const station = RummiStationRuntimeFacade(
@@ -857,8 +857,9 @@ void main() {
 
     await tester.pump(const Duration(milliseconds: 130));
 
+    // 덱(왼쪽 드로우 버튼)에서 손패 자리로 날아온다.
     final midLeft = tester.widget<Positioned>(incomingFinder).left!;
-    expect(midLeft, lessThan(startLeft));
+    expect(midLeft, greaterThan(startLeft));
   });
 
   testWidgets('GameHandZone lays out up to five hand tiles', (tester) async {

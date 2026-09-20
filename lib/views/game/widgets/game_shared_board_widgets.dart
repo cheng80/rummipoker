@@ -1,5 +1,13 @@
 part of 'game_shared_widgets.dart';
 
+/// 교차 타일이 맞을수록 달아오르는 색.
+const Color _kOverlapHeatColor = Color(0xFFFF8A3D);
+
+Tile? _boardTileAtKey(RummiBoard board, String cellKey) {
+  final (row, col) = _parseBoardCellKey(cellKey);
+  return board.cellAt(row, col);
+}
+
 class GameBoardGrid extends StatefulWidget {
   const GameBoardGrid({
     super.key,
@@ -24,6 +32,10 @@ class GameBoardGrid extends StatefulWidget {
     this.lineFlashTick = 0,
     this.bonusFlashCellKey,
     this.bonusFlashTick = 0,
+    this.settlementTileHeat = const {},
+    this.settlementTileHitSerial = const {},
+    this.dealOnEnter = false,
+    this.showLineHints = false,
     this.alignment = Alignment.center,
   });
 
@@ -46,6 +58,18 @@ class GameBoardGrid extends StatefulWidget {
   final int? moveSourceCol;
   final String? bonusFlashCellKey;
   final int bonusFlashTick;
+
+  /// 한 확정 안에서 여러 줄에 기여한 교차 타일이 맞은 횟수. 달아오름 표시에 쓴다.
+  final Map<String, int> settlementTileHeat;
+
+  /// 정산 tick이 칸을 마지막으로 친 순번. 바뀌면 그 칸이 튕긴다.
+  final Map<String, int> settlementTileHitSerial;
+
+  /// 처음 그릴 때 타일과 Boss 표시가 짧은 stagger로 깔린다(전투 진입).
+  final bool dealOnEnter;
+
+  /// 지금 확정하면 점수가 나는 줄을 숨쉬듯 비추고, 한 칸 남은 줄에 희미한 힌트를 준다.
+  final bool showLineHints;
   final void Function(int row, int col) onTapCell;
   final ValueChanged<Tile> onLongPressTile;
   final AlignmentGeometry alignment;
@@ -54,7 +78,8 @@ class GameBoardGrid extends StatefulWidget {
   State<GameBoardGrid> createState() => _GameBoardGridState();
 }
 
-class _GameBoardGridState extends State<GameBoardGrid> {
+class _GameBoardGridState extends State<GameBoardGrid>
+    with SingleTickerProviderStateMixin {
   late Map<String, String?> _previousTileKeys;
   late Map<String, Tile?> _previousTiles;
   Set<String> _appearingCells = const {};
@@ -62,12 +87,29 @@ class _GameBoardGridState extends State<GameBoardGrid> {
   _BoardRemoveFlight? _removeFlight;
   int _moveFlightTick = 0;
   int _removeFlightTick = 0;
+  _ContributorClear? _contributorClear;
+  int _contributorClearTick = 0;
+  int _boardWobbleSerial = 0;
+  final List<Timer> _clearTimers = [];
+  final Map<String, int> _rippleSerial = {};
+  final List<Timer> _rippleTimers = [];
+  late final AnimationController _dealController;
 
   @override
   void initState() {
     super.initState();
     _previousTileKeys = _tileKeysForBoard(widget.board);
     _previousTiles = _tilesForBoard(widget.board);
+    final deal = widget.dealOnEnter && !MotionPolicy.reduceMotion;
+    _dealController = AnimationController(
+      vsync: this,
+      duration:
+          GamePresentationTimings.battleEntryDeal +
+          GamePresentationTimings.battleEntryStagger *
+              (kBoardSize * kBoardSize),
+      value: deal ? 0 : 1,
+    );
+    if (deal) _dealController.forward();
   }
 
   @override
@@ -97,11 +139,181 @@ class _GameBoardGridState extends State<GameBoardGrid> {
       appearedCells: appearedCells,
       previousTiles: _previousTiles,
     );
+    _startContributorClearIfNeeded(oldWidget);
+    if (appearedCells.length == 1 && _moveFlight == null) {
+      _startLandingRipple(appearedCells.single);
+    }
+    _emitSettlementHitSparks(oldWidget);
     _previousTileKeys = currentTileKeys;
     _previousTiles = _tilesForBoard(widget.board);
     _appearingCells = _moveFlight == null
         ? appearingCells
         : appearingCells.difference({_moveFlight!.toCellKey});
+  }
+
+  @override
+  void dispose() {
+    for (final timer in [..._clearTimers, ..._rippleTimers]) {
+      timer.cancel();
+    }
+    _dealController.dispose();
+    super.dispose();
+  }
+
+  /// 확정 뒤 snapshot이 비워질 때 사라지는 contributor 타일을 줄 방향으로 터뜨린다.
+  ///
+  /// 보드 state는 이미 갱신되어 있고 overlay는 입력을 막지 않는다.
+  void _startContributorClearIfNeeded(GameBoardGrid oldWidget) {
+    if (oldWidget.settlementBoardSnapshot.isEmpty ||
+        widget.settlementBoardSnapshot.isNotEmpty) {
+      return;
+    }
+    final cleared = <(String, Tile)>[
+      for (final entry in oldWidget.settlementBoardSnapshot.entries)
+        if (_boardTileAtKey(widget.board, entry.key) == null)
+          (entry.key, entry.value),
+    ];
+    if (cleared.isEmpty || MotionPolicy.juiceScale <= 0) return;
+    final tick = ++_contributorClearTick;
+    _boardWobbleSerial++;
+    _contributorClear = _ContributorClear(tick: tick, tiles: cleared);
+    for (final timer in _clearTimers) {
+      timer.cancel();
+    }
+    _clearTimers.clear();
+    const stagger = GamePresentationTimings.contributorClearStagger;
+    final popAt = GamePresentationTimings.contributorClearPop * 0.4;
+    for (var i = 0; i < cleared.length; i++) {
+      final key = cleared[i].$1;
+      _clearTimers.add(
+        Timer(stagger * i + popAt, () {
+          if (!mounted) return;
+          final center = _cellCenter(key);
+          if (center == null) return;
+          Fx.emit(context, FxPresets.shards, [center]);
+        }),
+      );
+    }
+    final total =
+        stagger * cleared.length +
+        GamePresentationTimings.contributorClearPop +
+        GamePresentationTimings.contributorClearAfterglow;
+    _clearTimers.add(
+      Timer(total, () {
+        if (!mounted || _contributorClear?.tick != tick) return;
+        setState(() => _contributorClear = null);
+      }),
+    );
+  }
+
+  /// 타일이 착지하면 주변 타일이 거리순으로 20~30ms 간격 파문을 탄다.
+  void _startLandingRipple(String cellKey) {
+    if (MotionPolicy.juiceScale <= 0) return;
+    final (row, col) = _parseBoardCellKey(cellKey);
+    final landing = GamePresentationTimings.boardTilePlacePop * 0.45;
+    for (var r = 0; r < kBoardSize; r++) {
+      for (var c = 0; c < kBoardSize; c++) {
+        final distance = (r - row).abs() + (c - col).abs();
+        if (distance == 0 || distance > 2) continue;
+        if (widget.board.cellAt(r, c) == null) continue;
+        final key = '$r:$c';
+        _rippleTimers.add(
+          Timer(
+            landing + GamePresentationTimings.landingRippleStagger * distance,
+            () {
+              if (!mounted) return;
+              setState(
+                () => _rippleSerial[key] = (_rippleSerial[key] ?? 0) + 1,
+              );
+            },
+          ),
+        );
+      }
+    }
+    _rippleTimers.removeWhere((timer) => !timer.isActive);
+  }
+
+  /// 진입 deal에서 [index]번째 칸의 진행도(0~1).
+  double _dealProgress(int index) {
+    if (_dealController.isCompleted) return 1;
+    final elapsed = _dealController.duration! * _dealController.value;
+    final local =
+        (elapsed - GamePresentationTimings.battleEntryStagger * index)
+            .inMicroseconds /
+        GamePresentationTimings.battleEntryDeal.inMicroseconds;
+    return local.clamp(0.0, 1.0);
+  }
+
+  /// 정산 tick으로 새로 맞은 칸에서 불꽃을 튀긴다. 교차 타일은 맞을수록 크게.
+  void _emitSettlementHitSparks(GameBoardGrid oldWidget) {
+    final hits = <String>[
+      for (final entry in widget.settlementTileHitSerial.entries)
+        if (oldWidget.settlementTileHitSerial[entry.key] != entry.value)
+          entry.key,
+    ];
+    if (hits.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      for (final key in hits) {
+        final center = _cellCenter(key);
+        if (center == null) continue;
+        final heat = widget.settlementTileHeat[key] ?? 0;
+        Fx.emit(
+          context,
+          heat > 1
+              ? FxPresets.burst.copyWith(
+                  color: _kOverlapHeatColor,
+                  count: 10 + 6 * heat,
+                )
+              : FxPresets.sparks.copyWith(count: 6),
+          [center],
+        );
+      }
+    });
+  }
+
+  /// 네 칸이 찼고 한 칸만 빈 줄의 빈 칸. 이미 점수 줄에 든 칸은 뺀다.
+  Set<String> _nearCompleteCells() {
+    final refs = [
+      for (var i = 0; i < kBoardSize; i++) LineRef.row(i),
+      for (var i = 0; i < kBoardSize; i++) LineRef.col(i),
+      LineRef.diagMain,
+      LineRef.diagAnti,
+    ];
+    final out = <String>{};
+    for (final ref in refs) {
+      final cells = ref.cells();
+      final empty = [
+        for (final (r, c) in cells)
+          if (widget.board.cellAt(r, c) == null) '$r:$c',
+      ];
+      if (empty.length != 1) continue;
+      final key = empty.single;
+      if (widget.blockedCellKeys.contains(key)) continue;
+      final alreadyScoring = cells.every(
+        (cell) => widget.scoringCells.contains('${cell.$1}:${cell.$2}'),
+      );
+      if (!alreadyScoring) out.add(key);
+    }
+    return out;
+  }
+
+  Offset? _cellCenter(String cellKey) {
+    final size = context.size;
+    if (size == null || size.isEmpty) return null;
+    final side = min(size.width, size.height);
+    final inner = side - kBoardFrameInset * 2;
+    final cell = (inner - kBoardGridGap * (kBoardSize - 1)) / kBoardSize;
+    final (row, col) = _parseBoardCellKey(cellKey);
+    final origin = Offset(
+      (size.width - side) / 2 + kBoardFrameInset,
+      (size.height - side) / 2 + kBoardFrameInset,
+    );
+    return origin +
+        Offset(
+          col * (cell + kBoardGridGap) + cell / 2,
+          row * (cell + kBoardGridGap) + cell / 2,
+        );
   }
 
   @override
@@ -195,12 +407,63 @@ class _GameBoardGridState extends State<GameBoardGrid> {
                             child: child,
                           );
                         }
+                        final heat = widget.settlementTileHeat[cellKey] ?? 0;
+                        if (heat > 0) {
+                          child = FxBoxGlow(
+                            key: ValueKey('board-cell-heat-$row-$col-$heat'),
+                            color: _kOverlapHeatColor.withValues(
+                              alpha: min(0.85, 0.3 + 0.2 * heat),
+                            ),
+                            blurRadius: 8 + 4.0 * heat,
+                            spreadRadius: 1.0 * heat,
+                            child: child,
+                          );
+                        }
+                        child = Juice(
+                          trigger: (_boardWobbleSerial, _rippleSerial[cellKey]),
+                          strength: 0.35,
+                          child: Juice(
+                            trigger: widget.settlementTileHitSerial[cellKey],
+                            strength: heat > 0 ? 0.9 + 0.45 * heat : 0.7,
+                            child: child,
+                          ),
+                        );
+                        if (!_dealController.isCompleted &&
+                            (tile != null || placementBlocked)) {
+                          child = AnimatedBuilder(
+                            animation: _dealController,
+                            child: child,
+                            builder: (context, child) {
+                              final t = Curves.easeOutBack.transform(
+                                _dealProgress(index),
+                              );
+                              return Transform.translate(
+                                offset: Offset(0, -24 * (1 - t)),
+                                child: Transform.scale(
+                                  scale: 0.6 + 0.4 * t,
+                                  child: child,
+                                ),
+                              );
+                            },
+                          );
+                        }
                         if (!_appearingCells.contains(cellKey)) {
                           return child;
                         }
                         return _BoardPlacePop(child: child);
                       },
                     ),
+                    if (widget.showLineHints &&
+                        !widget.boardMoveMode &&
+                        widget.activeSettlementCells.isEmpty)
+                      Positioned.fill(
+                        child: _BoardLineHintLayer(
+                          scoringCells: widget.scoringCells,
+                          nearCells: _nearCompleteCells(),
+                        ),
+                      ),
+                    if (_contributorClear != null)
+                      _ContributorClearOverlay(clear: _contributorClear!),
                     if (_moveFlight != null)
                       _BoardMoveFlightOverlay(flight: _moveFlight!),
                     if (_removeFlight != null)
@@ -319,31 +582,27 @@ class _BoardMoveBonusFlash extends StatelessWidget {
             Positioned.fill(
               key: const ValueKey('board-move-bonus-flash'),
               child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: const Color(
-                        0xFFFFD86B,
-                      ).withValues(alpha: 0.95 * fade),
-                      width: 2 + (1.5 * wave),
+                child: FxBoxGlow(
+                  color: const Color(0xFFFFD86B).withValues(alpha: 0.48 * wave),
+                  blurRadius: 18 * wave,
+                  spreadRadius: 2.5 * wave,
+                  child: FxBoxGlow(
+                    color: const Color(
+                      0xFF80F7CA,
+                    ).withValues(alpha: 0.35 * wave),
+                    blurRadius: 22 * wave,
+                    spreadRadius: 1.5 * wave,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: const Color(
+                            0xFFFFD86B,
+                          ).withValues(alpha: 0.95 * fade),
+                          width: 2 + (1.5 * wave),
+                        ),
+                      ),
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(
-                          0xFFFFD86B,
-                        ).withValues(alpha: 0.48 * wave),
-                        blurRadius: 18 * wave,
-                        spreadRadius: 2.5 * wave,
-                      ),
-                      BoxShadow(
-                        color: const Color(
-                          0xFF80F7CA,
-                        ).withValues(alpha: 0.35 * wave),
-                        blurRadius: 22 * wave,
-                        spreadRadius: 1.5 * wave,
-                      ),
-                    ],
                   ),
                 ),
               ),
@@ -573,6 +832,31 @@ Rect _tileMarkerRect((int, int) cell, Size size) {
   return metric.rectFor(cell.$1, cell.$2).inflate(metric.tapTolerance * 0.1);
 }
 
+/// `MaskFilter.blur` 없이 번진 stroke를 그린다.
+///
+/// ponytail: blur 대신 폭을 넓힌 반투명 stroke 3장을 겹쳐 가우시안 번짐을
+/// 근사한다. 번짐이 더 부드러워야 하면 구운 링 스프라이트로 바꾼다.
+void _paintGlowStroke(
+  Canvas canvas,
+  RRect rrect, {
+  required Color color,
+  required double strokeWidth,
+  required double sigma,
+}) {
+  if (color.a <= 0) return;
+  final paint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeJoin = StrokeJoin.round;
+  const spreads = [2.0, 1.2, 0.4];
+  const weights = [0.2, 0.32, 0.5];
+  for (var i = 0; i < spreads.length; i++) {
+    paint
+      ..color = color.withValues(alpha: color.a * weights[i])
+      ..strokeWidth = strokeWidth + 2 * spreads[i] * sigma;
+    canvas.drawRRect(rrect, paint);
+  }
+}
+
 class _BoardTileSelectionPainter extends CustomPainter {
   const _BoardTileSelectionPainter(
     this.targets, {
@@ -594,11 +878,6 @@ class _BoardTileSelectionPainter extends CustomPainter {
       final color = selected
           ? GameUiPalette.userSelection
           : GameUiPalette.tileBlueSeal;
-      final glow = Paint()
-        ..color = color.withValues(alpha: selected ? 0.24 : 0.12)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = selected ? 8 : 5
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
       final stroke = Paint()
         ..color = color.withValues(alpha: selected ? 0.98 : 0.68)
         ..style = PaintingStyle.stroke
@@ -611,9 +890,14 @@ class _BoardTileSelectionPainter extends CustomPainter {
         rect,
         Radius.circular(metric.cellCornerRadius),
       );
-      canvas
-        ..drawRRect(rrect, glow)
-        ..drawRRect(rrect, stroke);
+      _paintGlowStroke(
+        canvas,
+        rrect,
+        color: color.withValues(alpha: selected ? 0.24 : 0.12),
+        strokeWidth: selected ? 8 : 5,
+        sigma: 4,
+      );
+      canvas.drawRRect(rrect, stroke);
     }
   }
 
@@ -640,11 +924,6 @@ class _BoardLineSelectionPainter extends CustomPainter {
       final color = selected
           ? GameUiPalette.userSelection
           : GameUiPalette.tileBlueSeal;
-      final glow = Paint()
-        ..color = color.withValues(alpha: selected ? 0.20 : 0.10)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = selected ? 8 : 5
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
       final stroke = Paint()
         ..color = selected
             ? color.withValues(alpha: 0.96)
@@ -659,9 +938,14 @@ class _BoardLineSelectionPainter extends CustomPainter {
           rect,
           Radius.circular(metric.cellCornerRadius),
         );
-        canvas
-          ..drawRRect(rrect, glow)
-          ..drawRRect(rrect, stroke);
+        _paintGlowStroke(
+          canvas,
+          rrect,
+          color: color.withValues(alpha: selected ? 0.20 : 0.10),
+          strokeWidth: selected ? 8 : 5,
+          sigma: 4,
+        );
+        canvas.drawRRect(rrect, stroke);
       }
     }
   }
@@ -686,11 +970,6 @@ class _BoardLineFlashPainter extends CustomPainter {
     final wave = sin(pi * progress).clamp(0.0, 1.0);
     final fade = (1 - progress).clamp(0.0, 1.0);
     final reveal = progress < 0.36 ? progress / 0.36 : 1.0;
-    final glow = Paint()
-      ..color = GameUiPalette.userSelection.withValues(alpha: 0.72 * fade)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 9 + 7 * wave
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 8 * wave);
     final fill = Paint()
       ..color = GameUiPalette.userSelection.withValues(alpha: 0.12 * fade)
       ..style = PaintingStyle.fill;
@@ -707,10 +986,15 @@ class _BoardLineFlashPainter extends CustomPainter {
         rect,
         Radius.circular(metric.cellCornerRadius),
       );
-      canvas
-        ..drawRRect(rrect, fill)
-        ..drawRRect(rrect, glow)
-        ..drawRRect(rrect, core);
+      canvas.drawRRect(rrect, fill);
+      _paintGlowStroke(
+        canvas,
+        rrect,
+        color: GameUiPalette.userSelection.withValues(alpha: 0.72 * fade),
+        strokeWidth: 9 + 7 * wave,
+        sigma: 8 * wave,
+      );
+      canvas.drawRRect(rrect, core);
     }
   }
 
@@ -762,6 +1046,7 @@ double _distanceToSegment(Offset point, Offset start, Offset end) {
   return (point - projection).distance;
 }
 
+/// 손패 쪽(아래)에서 호를 그리며 들어와 착지할 때 눌렸다 펴진다.
 class _BoardPlacePop extends StatelessWidget {
   const _BoardPlacePop({required this.child});
 
@@ -773,36 +1058,35 @@ class _BoardPlacePop extends StatelessWidget {
       key: const ValueKey('board-place-pop'),
       tween: Tween<double>(begin: 0, end: 1),
       duration: GamePresentationTimings.boardTilePlacePop,
-      curve: Curves.easeOutBack,
       builder: (context, value, child) {
         final progress = value.clamp(0.0, 1.0);
-        final travel = progress < 0.35
-            ? 18 + (-20 * (progress / 0.35))
-            : -2 + (2 * ((progress - 0.35) / 0.65));
-        final scale = progress < 0.35
-            ? 0.90 + (0.14 * (progress / 0.35))
-            : 1.04 + (-0.04 * ((progress - 0.35) / 0.65));
+        // 0~0.45 비행(아래에서 위로, 옆으로 살짝 휘며), 이후 착지 찌그러짐.
+        final flight = Curves.easeOutCubic.transform(
+          (progress / 0.45).clamp(0.0, 1.0),
+        );
+        final travel = 34 * (1 - flight);
+        final sway = 8 * sin(pi * flight);
+        final landing = progress < 0.45
+            ? 0.0
+            : sin(pi * ((progress - 0.45) / 0.55)) * (1 - progress) * 2;
         final glow = 0.24 * (1 - progress);
         return Transform.translate(
           key: const ValueKey('board-place-flight'),
-          offset: Offset(0, travel),
-          child: Opacity(
-            opacity: (0.72 + (progress * 0.28)).clamp(0.0, 1.0),
-            child: Transform.scale(
-              scale: scale,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(9),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFF2C14E).withValues(alpha: glow),
-                      blurRadius: 16 * (glow / 0.24),
-                      spreadRadius: 1.5 * (glow / 0.24),
-                    ),
-                  ],
-                ),
-                child: child,
+          offset: Offset(sway, travel),
+          child: Transform(
+            alignment: Alignment.bottomCenter,
+            transform: Matrix4.identity()
+              ..scaleByDouble(
+                (0.86 + 0.14 * flight) * (1 + 0.1 * landing),
+                (0.86 + 0.14 * flight) * (1 - 0.12 * landing),
+                1,
+                1,
               ),
+            child: FxBoxGlow(
+              color: const Color(0xFFF2C14E).withValues(alpha: glow),
+              blurRadius: 16 * (glow / 0.24),
+              spreadRadius: 1.5 * (glow / 0.24),
+              child: child!,
             ),
           ),
         );
@@ -810,6 +1094,101 @@ class _BoardPlacePop extends StatelessWidget {
       child: child,
     );
   }
+}
+
+/// 점수 줄 예고: 3번 숨쉬듯 빛난 뒤 은은하게 멈춘다. 한 칸 남은 줄은 빈 칸에 희미한 테두리만.
+class _BoardLineHintLayer extends StatelessWidget {
+  const _BoardLineHintLayer({
+    required this.scoringCells,
+    required this.nearCells,
+  });
+
+  final Set<String> scoringCells;
+  final Set<String> nearCells;
+
+  @override
+  Widget build(BuildContext context) {
+    if (scoringCells.isEmpty && nearCells.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    const breath = GamePresentationTimings.lineHintBreath;
+    const cycles = GamePresentationTimings.lineHintBreathCycles;
+    final signature = ([...scoringCells]..sort()).join('|');
+    return IgnorePointer(
+      child: RepaintBoundary(
+        child: TweenAnimationBuilder<double>(
+          key: ValueKey('board-line-hint-$signature'),
+          tween: Tween<double>(begin: 0, end: 1),
+          duration: MotionPolicy.reduceMotion ? Duration.zero : breath * cycles,
+          builder: (context, t, _) {
+            // 끝나면 0.5 밝기로 멈춘다. 반복 루프를 두지 않는다.
+            final phase = t >= 1 ? 0.5 : 0.5 - 0.5 * cos(2 * pi * cycles * t);
+            return CustomPaint(
+              key: const ValueKey('board-line-hint'),
+              painter: _BoardLineHintPainter(
+                scoringCells: scoringCells,
+                nearCells: nearCells,
+                pulse: phase,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _BoardLineHintPainter extends CustomPainter {
+  const _BoardLineHintPainter({
+    required this.scoringCells,
+    required this.nearCells,
+    required this.pulse,
+  });
+
+  final Set<String> scoringCells;
+  final Set<String> nearCells;
+  final double pulse;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final metric = _BoardLineOverlayMetric(size);
+    for (final key in scoringCells) {
+      final (row, col) = _parseBoardCellKey(key);
+      final rrect = RRect.fromRectAndRadius(
+        metric.rectFor(row, col).deflate(1),
+        Radius.circular(metric.cellCornerRadius),
+      );
+      _paintGlowStroke(
+        canvas,
+        rrect,
+        color: GameUiPalette.scoringPreview.withValues(
+          alpha: 0.18 + 0.4 * pulse,
+        ),
+        strokeWidth: 2,
+        sigma: 3 + 3 * pulse,
+      );
+    }
+    final faint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..color = GameUiPalette.scoringPreview.withValues(alpha: 0.32);
+    for (final key in nearCells) {
+      final (row, col) = _parseBoardCellKey(key);
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          metric.rectFor(row, col).deflate(5),
+          Radius.circular(metric.cellCornerRadius),
+        ),
+        faint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _BoardLineHintPainter oldDelegate) =>
+      oldDelegate.pulse != pulse ||
+      oldDelegate.scoringCells != scoringCells ||
+      oldDelegate.nearCells != nearCells;
 }
 
 class GameBoardCell extends StatelessWidget {
@@ -982,25 +1361,51 @@ class GameBoardBlockedCellBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
-      child: Center(
-        child: Text(
-          'X',
-          maxLines: 1,
-          style: TextStyle(
-            color: GameUiPalette.bossWeakenPreview.withValues(alpha: 0.96),
-            fontSize: side * 0.58,
-            fontWeight: FontWeight.w900,
-            height: 0.9,
-            shadows: [
-              Shadow(
-                color: GameUiPalette.ink.withValues(alpha: 0.72),
-                blurRadius: 2,
-                offset: const Offset(0, 1),
-              ),
-            ],
+      child: GameStampIn(
+        child: Center(
+          child: Text(
+            'X',
+            maxLines: 1,
+            style: TextStyle(
+              color: GameUiPalette.bossWeakenPreview.withValues(alpha: 0.96),
+              fontSize: side * 0.58,
+              fontWeight: FontWeight.w900,
+              height: 0.9,
+              shadows: [
+                Shadow(
+                  color: GameUiPalette.ink.withValues(alpha: 0.72),
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Boss 제약 표시가 처음 나타날 때 도장처럼 크게 찍혔다 자리 잡는다.
+class GameStampIn extends StatelessWidget {
+  const GameStampIn({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    // T4: Boss 인트로 배너가 닫히기 전에는 숨겼다가, 풀리는 순간 도장을 찍는다.
+    if (GameBossMarkVeil.hiddenOf(context)) {
+      return Opacity(opacity: 0, child: child);
+    }
+    if (MotionPolicy.juiceScale <= 0) return child;
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: GamePresentationTimings.bossMarkStamp,
+      curve: Curves.easeOutBack,
+      builder: (context, t, child) =>
+          Transform.scale(scale: 1.9 - 0.9 * t, child: child),
+      child: child,
     );
   }
 }
@@ -1049,30 +1454,34 @@ class GameConstraintBadge extends StatelessWidget {
         final fontSize = barHeight * 0.98;
 
         return IgnorePointer(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(pad, pad, pad, 0),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: SizedBox(
-                width: innerWidth,
-                height: barHeight,
-                child: Center(
-                  child: Text(
-                    'X',
-                    maxLines: 1,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: GameUiPalette.textPrimary.withValues(alpha: 0.96),
-                      fontSize: fontSize,
-                      fontWeight: FontWeight.w900,
-                      height: 1,
-                      shadows: [
-                        Shadow(
-                          color: GameUiPalette.ink.withValues(alpha: 0.36),
-                          blurRadius: 1.7,
-                          offset: const Offset(0, 0.9),
+          child: GameStampIn(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(pad, pad, pad, 0),
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: SizedBox(
+                  width: innerWidth,
+                  height: barHeight,
+                  child: Center(
+                    child: Text(
+                      'X',
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: GameUiPalette.textPrimary.withValues(
+                          alpha: 0.96,
                         ),
-                      ],
+                        fontSize: fontSize,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                        shadows: [
+                          Shadow(
+                            color: GameUiPalette.ink.withValues(alpha: 0.36),
+                            blurRadius: 1.7,
+                            offset: const Offset(0, 0.9),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

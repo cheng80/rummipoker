@@ -1,3 +1,4 @@
+import 'market_feedback_test_support.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,6 +34,7 @@ Future<void> _pumpTileShopScreen(
             home: JesterTranslationScope(
               child: ItemTranslationScope(
                 child: GameShopScreen(
+                  autoStartTutorials: false,
                   runSeed: 77,
                   readMarketView: readMarketView,
                   readActiveRunSaveView: () => const RummiActiveRunSaveFacade(
@@ -75,6 +77,7 @@ Future<void> _pumpTileShopScreen(
 }
 
 void main() {
+  setUpMarketFeedback();
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('tile lane can reroll after all tile offers are bought', (

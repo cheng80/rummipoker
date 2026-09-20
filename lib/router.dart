@@ -10,23 +10,23 @@ import 'services/debug_run_fixture_service.dart';
 import 'services/new_run_setup.dart';
 import 'services/run_unlock_state_service.dart';
 import 'views/archive_view.dart';
+import 'views/game/game_presentation_timings.dart';
 import 'views/blind_select_view.dart';
 import 'views/game_view.dart';
 import 'views/home_placeholder_view.dart';
 import 'views/new_run_view.dart';
 import 'views/setting_view.dart';
 import 'views/title_view.dart';
+import 'widgets/fx/motion_policy.dart';
 
 /// 앱 전체 라우팅 설정.
 final GoRouter appRouter = GoRouter(
   initialLocation: RoutePaths.title,
-  observers: [
-    FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
-  ],
+  observers: [FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance)],
   routes: [
     GoRoute(
       path: RoutePaths.title,
-      pageBuilder: (context, state) => _instantPage(
+      pageBuilder: (context, state) => appTransitionPage(
         state: state,
         child: TitleView(
           debugScrollPreset: state.uri.queryParameters['debug_scroll'],
@@ -50,7 +50,7 @@ final GoRouter appRouter = GoRouter(
         final runModifier = NewRunModifier.parse(
           state.uri.queryParameters['modifier'],
         );
-        return _instantPage(
+        return appTransitionPage(
           state: state,
           child: BlindSelectView(
             runSeed: seed,
@@ -111,7 +111,7 @@ final GoRouter appRouter = GoRouter(
             restoredRun?.session.runSeed ??
             int.tryParse(seedStr ?? '') ??
             RummiPokerGridSession.rollNewRunSeed();
-        return _instantPage(
+        return appTransitionPage(
           state: state,
           child: GameView(
             runSeed: runSeed,
@@ -138,11 +138,11 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: RoutePaths.setting,
       pageBuilder: (context, state) =>
-          _instantPage(state: state, child: const SettingView()),
+          appTransitionPage(state: state, child: const SettingView()),
     ),
     GoRoute(
       path: RoutePaths.newRun,
-      pageBuilder: (context, state) => _instantPage(
+      pageBuilder: (context, state) => appTransitionPage(
         state: state,
         child: NewRunView(
           debugScrollPreset: state.uri.queryParameters['debug_scroll'],
@@ -151,7 +151,7 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: RoutePaths.trial,
-      pageBuilder: (context, state) => _instantPage(
+      pageBuilder: (context, state) => appTransitionPage(
         state: state,
         child: HomePlaceholderView(
           title: '특별 모드',
@@ -168,7 +168,7 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: RoutePaths.archive,
-      pageBuilder: (context, state) => _instantPage(
+      pageBuilder: (context, state) => appTransitionPage(
         state: state,
         child: ArchiveView(
           debugScrollPreset: state.uri.queryParameters['debug_scroll'],
@@ -179,17 +179,51 @@ final GoRouter appRouter = GoRouter(
   ],
 );
 
-CustomTransitionPage<void> _instantPage({
+/// 디버그 픽스처·자동 흐름 경로와 OS 동작 줄이기에서는 전환 애니메이션을 건너뛴다.
+bool isInstantRouteTransition(Uri uri) =>
+    MotionPolicy.reduceMotion ||
+    uri.queryParameters.keys.any(
+      (key) =>
+          key == 'fixture' ||
+          key.startsWith('auto_') ||
+          key.startsWith('debug_'),
+    );
+
+/// 화면 전환. 짧은 fade와 아래에서 올라오는 slide를 쓴다.
+///
+/// 디버그 픽스처·`auto_*`·`debug_*` 경로와 OS 동작 줄이기에서는 풀런봇과
+/// 자동 흐름을 늦추지 않도록 즉시 전환한다.
+CustomTransitionPage<void> appTransitionPage({
   required GoRouterState state,
   required Widget child,
 }) {
+  final instant = isInstantRouteTransition(state.uri);
   return CustomTransitionPage<void>(
     key: state.pageKey,
     name: state.matchedLocation,
-    transitionDuration: Duration.zero,
-    reverseTransitionDuration: Duration.zero,
+    transitionDuration: instant
+        ? Duration.zero
+        : GamePresentationTimings.routeTransition,
+    reverseTransitionDuration: instant
+        ? Duration.zero
+        : GamePresentationTimings.routeReverseTransition,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return child;
+      if (instant) return child;
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.04),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        ),
+      );
     },
     child: child,
   );

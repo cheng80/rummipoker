@@ -15,6 +15,8 @@ class _GameSurface extends StatelessWidget {
     required this.settlementGoalDisplayScore,
     required this.settlementSequenceTick,
     required this.settlementBoardSnapshot,
+    required this.settlementTicks,
+    required this.settlementGrade,
     required this.selectedHandTile,
     required this.selectedBoardRow,
     required this.selectedBoardCol,
@@ -39,6 +41,10 @@ class _GameSurface extends StatelessWidget {
     required this.battlePreviewTutorialKey,
     required this.battleActionsTutorialKey,
     required this.battleHandTutorialKey,
+    required this.battleJesterZoneKey,
+    required this.denyTarget,
+    required this.denyTick,
+    required this.onLockedSlotTap,
     required this.onOptionsTap,
     required this.onTutorialTap,
     required this.onRunInfoTap,
@@ -64,6 +70,7 @@ class _GameSurface extends StatelessWidget {
     required this.onBattleItemUse,
     required this.onBattleItemOverlayClose,
     required this.onHandTileInfoOverlayClose,
+    required this.onSettlementSkip,
   });
 
   final RummiBattleRuntimeFacade battle;
@@ -79,6 +86,8 @@ class _GameSurface extends StatelessWidget {
   final int? settlementGoalDisplayScore;
   final int settlementSequenceTick;
   final Map<String, Tile> settlementBoardSnapshot;
+  final ValueListenable<SettlementTileTicks> settlementTicks;
+  final int settlementGrade;
   final Tile? selectedHandTile;
   final int? selectedBoardRow;
   final int? selectedBoardCol;
@@ -103,6 +112,10 @@ class _GameSurface extends StatelessWidget {
   final GlobalKey battlePreviewTutorialKey;
   final GlobalKey battleActionsTutorialKey;
   final GlobalKey battleHandTutorialKey;
+  final GlobalKey battleJesterZoneKey;
+  final _BattleDenyTarget denyTarget;
+  final int denyTick;
+  final VoidCallback onLockedSlotTap;
   final VoidCallback onOptionsTap;
   final VoidCallback onTutorialTap;
   final VoidCallback onRunInfoTap;
@@ -128,6 +141,7 @@ class _GameSurface extends StatelessWidget {
   final ValueChanged<RummiBattleItemSlotView> onBattleItemUse;
   final VoidCallback onBattleItemOverlayClose;
   final VoidCallback onHandTileInfoOverlayClose;
+  final VoidCallback onSettlementSkip;
 
   @override
   Widget build(BuildContext context) {
@@ -170,6 +184,11 @@ class _GameSurface extends StatelessWidget {
                   activeSettlementLine: activeSettlementLine,
                   settlementSequenceTick: settlementSequenceTick,
                   settlementBoardSnapshot: settlementBoardSnapshot,
+                  settlementTicks: settlementTicks,
+                  settlementGrade: settlementGrade,
+                  showsFloatingSettlementBurst:
+                      !presentationPaused &&
+                      stageFlowPhase == GameStageFlowPhase.confirmSettlement,
                   selectedHandTile: selectedHandTile,
                   selectedBoardRow: selectedBoardRow,
                   selectedBoardCol: selectedBoardCol,
@@ -189,6 +208,10 @@ class _GameSurface extends StatelessWidget {
                   battlePreviewTutorialKey: battlePreviewTutorialKey,
                   battleActionsTutorialKey: battleActionsTutorialKey,
                   battleHandTutorialKey: battleHandTutorialKey,
+                  battleJesterZoneKey: battleJesterZoneKey,
+                  denyTarget: denyTarget,
+                  denyTick: denyTick,
+                  onLockedSlotTap: onLockedSlotTap,
                   onOptionsTap: onOptionsTap,
                   onTutorialTap: onTutorialTap,
                   onRunInfoTap: onRunInfoTap,
@@ -212,23 +235,18 @@ class _GameSurface extends StatelessWidget {
                 ),
               ),
             ),
-            if (!presentationPaused &&
-                stageFlowPhase == GameStageFlowPhase.confirmSettlement)
-              if (_showsFloatingSettlementBurst(activeSettlementStep))
-                Positioned.fill(
-                  child: GameFloatingSettlementBurst(
-                    key: ValueKey(
-                      'settlement-$settlementSequenceTick-$activeSettlementStep-$activeSettlementEffectIndex-${activeSettlementEffectIndexes.join(",")}',
-                    ),
-                    line: activeSettlementLine,
-                    step: activeSettlementStep,
-                    effectIndex: _floatingSettlementEffectIndex(
-                      activeSettlementEffectIndex,
-                      activeSettlementEffectIndexes,
-                    ),
-                    effectIndexes: activeSettlementEffectIndexes,
-                  ),
+            if (stageFlowPhase == GameStageFlowPhase.confirmSettlement)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                top: kBattleSurfacePadding.top + kGameHudHeight,
+                child: GestureDetector(
+                  key: const ValueKey('settlement-skip-area'),
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onSettlementSkip,
                 ),
+              ),
             if (fateLineSelection != null)
               Positioned.fill(
                 child: _FateLineSelectionBarrier(
@@ -372,6 +390,9 @@ class _GameLayout extends StatelessWidget {
     required this.activeSettlementLine,
     required this.settlementSequenceTick,
     required this.settlementBoardSnapshot,
+    required this.settlementTicks,
+    required this.settlementGrade,
+    required this.showsFloatingSettlementBurst,
     required this.selectedHandTile,
     required this.selectedBoardRow,
     required this.selectedBoardCol,
@@ -392,6 +413,10 @@ class _GameLayout extends StatelessWidget {
     required this.battlePreviewTutorialKey,
     required this.battleActionsTutorialKey,
     required this.battleHandTutorialKey,
+    required this.battleJesterZoneKey,
+    required this.denyTarget,
+    required this.denyTick,
+    required this.onLockedSlotTap,
     required this.onOptionsTap,
     required this.onTutorialTap,
     required this.onRunInfoTap,
@@ -424,6 +449,9 @@ class _GameLayout extends StatelessWidget {
   final ConfirmedLineBreakdown? activeSettlementLine;
   final int settlementSequenceTick;
   final Map<String, Tile> settlementBoardSnapshot;
+  final ValueListenable<SettlementTileTicks> settlementTicks;
+  final int settlementGrade;
+  final bool showsFloatingSettlementBurst;
   final Tile? selectedHandTile;
   final int? selectedBoardRow;
   final int? selectedBoardCol;
@@ -443,6 +471,10 @@ class _GameLayout extends StatelessWidget {
   final GlobalKey battlePreviewTutorialKey;
   final GlobalKey battleActionsTutorialKey;
   final GlobalKey battleHandTutorialKey;
+  final GlobalKey battleJesterZoneKey;
+  final _BattleDenyTarget denyTarget;
+  final int denyTick;
+  final VoidCallback onLockedSlotTap;
   final VoidCallback onOptionsTap;
   final VoidCallback onTutorialTap;
   final VoidCallback onRunInfoTap;
@@ -463,6 +495,10 @@ class _GameLayout extends StatelessWidget {
   final ValueChanged<RummiBattleItemSlotView> onBattleItemTap;
   final VoidCallback onConfirm;
   final VoidCallback onClearSelection;
+
+  /// [target]이 마지막 거절 대상일 때만 흔들림 순번을 준다.
+  int _denyTickFor(_BattleDenyTarget target) =>
+      denyTarget == target ? denyTick : 0;
 
   @override
   Widget build(BuildContext context) {
@@ -487,6 +523,16 @@ class _GameLayout extends StatelessWidget {
       activeSettlementEffectIndexes,
     );
 
+    final preview = battle.scoringPreview;
+    final goalHeat = preview == null
+        ? 0.0
+        : GameSettlementPacing.goalHeat(
+            expectedScore: preview.expectedScore,
+            remaining:
+                station.objective.targetScore -
+                station.objective.scoreTowardObjective,
+          );
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final boardSide = constraints.maxWidth;
@@ -504,23 +550,36 @@ class _GameLayout extends StatelessWidget {
               stationGoalPulse:
                   activeSettlementStep == ScoringPresentationStep.finalScore,
               stationGoalPulseTick: settlementSequenceTick,
+              goalHeat: goalHeat,
               onTutorialTap: onTutorialTap,
             ),
             const SizedBox(height: 4),
-            GameJesterZone(
-              market: market,
-              activeEffects: visibleSettlementEffects,
-              settlementSequenceTick: settlementSequenceTick,
-              selectedIndex: selectedJesterOverlayIndex,
-              onTapCard: onJesterTap,
-            ),
-            const SizedBox(height: 4),
-            GameItemZoneSkeleton(
-              battle: battle,
-              activeEffects: visibleSettlementEffects,
-              settlementSequenceTick: settlementSequenceTick,
-              selectedSlotIndex: selectedBattleItemSlot?.slotIndex,
-              onItemSlotTap: onBattleItemTap,
+            GameDenyShake(
+              tick: _denyTickFor(_BattleDenyTarget.slots),
+              child: Column(
+                children: [
+                  KeyedSubtree(
+                    key: battleJesterZoneKey,
+                    child: GameJesterZone(
+                      market: market,
+                      activeEffects: visibleSettlementEffects,
+                      settlementSequenceTick: settlementSequenceTick,
+                      selectedIndex: selectedJesterOverlayIndex,
+                      onTapCard: onJesterTap,
+                      onLockedTap: onLockedSlotTap,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  GameItemZoneSkeleton(
+                    battle: battle,
+                    activeEffects: visibleSettlementEffects,
+                    settlementSequenceTick: settlementSequenceTick,
+                    selectedSlotIndex: selectedBattleItemSlot?.slotIndex,
+                    onItemSlotTap: onBattleItemTap,
+                    onLockedSlotTap: onLockedSlotTap,
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 5),
             Expanded(
@@ -539,35 +598,49 @@ class _GameLayout extends StatelessWidget {
                             dimension: side,
                             child: _GameTutorialTarget(
                               showcaseKey: battleBoardTutorialKey,
-                              child: GameBoardGrid(
-                                board: battle.board,
-                                scoringCells: scoringCells,
-                                constrainedScoringCells:
-                                    battle.constrainedScoringCellKeys,
-                                constrainedCells: constrainedCells,
-                                blockedCellKeys: {
-                                  for (final cell
-                                      in battle.bossModifier?.blockedCells ??
-                                          const <(int, int)>[])
-                                    '${cell.$1}:${cell.$2}',
-                                },
-                                activeSettlementCells: activeSettlementCells,
-                                settlementBoardSnapshot:
-                                    settlementBoardSnapshot,
-                                selectedRow: selectedBoardRow,
-                                selectedCol: selectedBoardCol,
-                                boardMoveMode: boardMoveMode,
-                                moveSourceRow: pendingBoardMoveSourceRow,
-                                moveSourceCol: pendingBoardMoveSourceCol,
-                                bonusFlashCellKey: boardMoveBonusTargetCellKey,
-                                bonusFlashTick: boardMoveBonusFlashTick,
-                                lineSelectionLines: const [],
-                                selectedLineRef: null,
-                                onTapLine: null,
-                                lineFlashRef: fateTransformFlashLineRef,
-                                lineFlashTick: fateTransformFlashTick,
-                                onTapCell: onBoardCellTap,
-                                onLongPressTile: onHandTileLongPress,
+                              child: GameDenyShake(
+                                tick: _denyTickFor(_BattleDenyTarget.board),
+                                child: ValueListenableBuilder(
+                                  valueListenable: settlementTicks,
+                                  builder: (context, ticks, _) => GameBoardGrid(
+                                    board: battle.board,
+                                    scoringCells: scoringCells,
+                                    constrainedScoringCells:
+                                        battle.constrainedScoringCellKeys,
+                                    constrainedCells: constrainedCells,
+                                    blockedCellKeys: {
+                                      for (final cell
+                                          in battle
+                                                  .bossModifier
+                                                  ?.blockedCells ??
+                                              const <(int, int)>[])
+                                        '${cell.$1}:${cell.$2}',
+                                    },
+                                    activeSettlementCells:
+                                        activeSettlementCells,
+                                    settlementBoardSnapshot:
+                                        settlementBoardSnapshot,
+                                    settlementTileHeat: ticks.heat,
+                                    settlementTileHitSerial: ticks.hitSerial,
+                                    dealOnEnter: true,
+                                    showLineHints: true,
+                                    selectedRow: selectedBoardRow,
+                                    selectedCol: selectedBoardCol,
+                                    boardMoveMode: boardMoveMode,
+                                    moveSourceRow: pendingBoardMoveSourceRow,
+                                    moveSourceCol: pendingBoardMoveSourceCol,
+                                    bonusFlashCellKey:
+                                        boardMoveBonusTargetCellKey,
+                                    bonusFlashTick: boardMoveBonusFlashTick,
+                                    lineSelectionLines: const [],
+                                    selectedLineRef: null,
+                                    onTapLine: null,
+                                    lineFlashRef: fateTransformFlashLineRef,
+                                    lineFlashTick: fateTransformFlashTick,
+                                    onTapCell: onBoardCellTap,
+                                    onLongPressTile: onHandTileLongPress,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -580,22 +653,45 @@ class _GameLayout extends StatelessWidget {
                       activeSettlementLine: activeSettlementLine,
                       activeSettlementStep: activeSettlementStep,
                       settlementSequenceTick: settlementSequenceTick,
+                      settlementGrade: settlementGrade,
                       frameInset: kBoardFrameInset,
                       gridGap: kBoardGridGap,
                     ),
                   ),
                   if (_showsBoardScoringCallout(activeSettlementStep) &&
                       activeSettlementLine != null)
-                    Positioned(
-                      left: 12,
-                      right: 12,
-                      top: 10,
-                      child: _BoardScoringCallout(
-                        key: ValueKey(
-                          'board-score-$settlementSequenceTick-$activeSettlementStep',
-                        ),
+                    Positioned.fill(
+                      child: _BoardScoringCalloutPlacement(
                         line: activeSettlementLine!,
-                        step: activeSettlementStep,
+                        child: _BoardScoringCallout(
+                          key: ValueKey(
+                            'board-score-$settlementSequenceTick-$activeSettlementStep',
+                          ),
+                          line: activeSettlementLine!,
+                          step: activeSettlementStep,
+                          grade: settlementGrade,
+                        ),
+                      ),
+                    ),
+                  // Jester·타일·Item 발동 요약도 채점 줄을 피한 자리에 띄운다.
+                  if (showsFloatingSettlementBurst &&
+                      activeSettlementLine != null &&
+                      _showsFloatingSettlementBurst(activeSettlementStep))
+                    Positioned.fill(
+                      child: _BoardScoringCalloutPlacement(
+                        line: activeSettlementLine!,
+                        child: GameFloatingSettlementBurst(
+                          key: ValueKey(
+                            'settlement-$settlementSequenceTick-$activeSettlementStep-$activeSettlementEffectIndex-${activeSettlementEffectIndexes.join(",")}',
+                          ),
+                          line: activeSettlementLine,
+                          step: activeSettlementStep,
+                          effectIndex: _floatingSettlementEffectIndex(
+                            activeSettlementEffectIndex,
+                            activeSettlementEffectIndexes,
+                          ),
+                          effectIndexes: activeSettlementEffectIndexes,
+                        ),
                       ),
                     ),
                   if (AppConfig.showDebugFixtures && !suppressDebugChrome)
@@ -626,21 +722,25 @@ class _GameLayout extends StatelessWidget {
             const SizedBox(height: 4),
             _GameTutorialTarget(
               showcaseKey: battleActionsTutorialKey,
-              child: _BattleActionBar(
-                scoringPreview: battle.scoringPreview,
-                canStartBoardMove:
-                    !boardMoveMode &&
-                    selectedBoardRow != null &&
-                    selectedBoardCol != null &&
-                    station.resources.boardMovesRemaining > 0,
-                onConfirm: onConfirm,
-                onClearSelection: onClearSelection,
-                onRunInfo: onRunInfoTap,
-                onStartBoardMove: onStartBoardMove,
-                onBoardDiscard: onBoardDiscard,
-                onHandDiscard: onHandDiscard,
-                confirmEnabled: !boardMoveMode,
-                utilityEnabled: !boardMoveMode,
+              child: GameDenyShake(
+                tick: _denyTickFor(_BattleDenyTarget.actions),
+                child: _BattleActionBar(
+                  scoringPreview: battle.scoringPreview,
+                  canStartBoardMove:
+                      !boardMoveMode &&
+                      selectedBoardRow != null &&
+                      selectedBoardCol != null &&
+                      station.resources.boardMovesRemaining > 0,
+                  onConfirm: onConfirm,
+                  onClearSelection: onClearSelection,
+                  onRunInfo: onRunInfoTap,
+                  onStartBoardMove: onStartBoardMove,
+                  onBoardDiscard: onBoardDiscard,
+                  onHandDiscard: onHandDiscard,
+                  confirmEnabled: !boardMoveMode,
+                  utilityEnabled: !boardMoveMode,
+                  goalHeat: goalHeat,
+                ),
               ),
             ),
             if (boardMoveMode) ...[
@@ -659,15 +759,18 @@ class _GameLayout extends StatelessWidget {
             const SizedBox(height: 6),
             _GameTutorialTarget(
               showcaseKey: battleHandTutorialKey,
-              child: GameHandZone(
-                battle: battle,
-                station: station,
-                hand: battle.hand,
-                selectedHandTile: selectedHandTile,
-                onHandTileTap: onHandTileTap,
-                onHandTileLongPress: onHandTileLongPress,
-                onDraw: onDraw,
-                tileWidth: tileWidth,
+              child: GameDenyShake(
+                tick: _denyTickFor(_BattleDenyTarget.hand),
+                child: GameHandZone(
+                  battle: battle,
+                  station: station,
+                  hand: battle.hand,
+                  selectedHandTile: selectedHandTile,
+                  onHandTileTap: onHandTileTap,
+                  onHandTileLongPress: onHandTileLongPress,
+                  onDraw: onDraw,
+                  tileWidth: tileWidth,
+                ),
               ),
             ),
           ],
@@ -704,14 +807,15 @@ bool _showsBoardScoringCallout(ScoringPresentationStep step) {
   return step == ScoringPresentationStep.boardLine ||
       step == ScoringPresentationStep.handRank ||
       step == ScoringPresentationStep.overlap ||
-      step == ScoringPresentationStep.constraint;
+      step == ScoringPresentationStep.constraint ||
+      step == ScoringPresentationStep.finalScore;
 }
 
+/// finalScore는 등급 callout이 같은 자리에서 합계를 보여 준다.
 bool _showsFloatingSettlementBurst(ScoringPresentationStep step) {
   return step == ScoringPresentationStep.jester ||
       step == ScoringPresentationStep.tile ||
-      step == ScoringPresentationStep.item ||
-      step == ScoringPresentationStep.finalScore;
+      step == ScoringPresentationStep.item;
 }
 
 int? _floatingSettlementEffectIndex(int? effectIndex, List<int> effectIndexes) {

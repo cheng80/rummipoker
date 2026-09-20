@@ -100,11 +100,33 @@
       right: 0;
     }
   </style>
+  <!-- 이 블록은 flutter_native_splash가 재생성한다. 재생성 뒤 fade 재적용 절차는 docs/release/web_build.md 참고 -->
   <script id="splash-screen-script">
+    // T4: 첫 Flutter 프레임 위에서 splash를 짧게 fade한 뒤 지운다(하드컷 방지).
+    // 동작 줄이기에서는 바로 지운다. transitionend가 오지 않아도 타이머로 지운다.
     function removeSplashFromWeb() {
-      document.getElementById("splash")?.remove();
-      document.getElementById("splash-branding")?.remove();
+      var nodes = ["splash", "splash-branding"]
+        .map(function (id) { return document.getElementById(id); })
+        .filter(Boolean);
       document.body.style.background = "transparent";
+      var reduce = window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (reduce) {
+        nodes.forEach(function (n) { n.remove(); });
+        return;
+      }
+      nodes.forEach(function (n) {
+        n.style.position = "fixed";
+        n.style.inset = "0";
+        n.style.zIndex = "2147483647";
+        n.style.pointerEvents = "none";
+        n.style.background = "#ffffff";
+        n.style.transition = "opacity 240ms ease-out";
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () { n.style.opacity = "0"; });
+        });
+        setTimeout(function () { n.remove(); }, 320);
+      });
     }
   </script>
 </head>

@@ -1,8 +1,8 @@
 import 'dart:js_interop';
 
-void initializeWebSfx(String defaultPath) {
+void initializeWebSfx(String path) {
   try {
-    _initialize(defaultPath.toJS);
+    _initialize(path.toJS);
   } catch (_) {}
 }
 
@@ -12,19 +12,19 @@ void unlockWebSfx() {
   } catch (_) {}
 }
 
-bool playWebSfx(String path, double volume) {
+bool playWebSfx(String path, double volume, double rate) {
   try {
-    return _play(path.toJS, volume.toJS).toDart;
+    return _play(path.toJS, volume.toJS, rate.toJS).toDart;
   } catch (_) {
     return false;
   }
 }
 
 @JS('rummiPokerSfx.initialize')
-external void _initialize(JSString defaultPath);
+external void _initialize(JSString path);
 
 @JS('rummiPokerSfx.unlock')
 external void _unlock();
 
 @JS('rummiPokerSfx.play')
-external JSBoolean _play(JSString path, JSNumber volume);
+external JSBoolean _play(JSString path, JSNumber volume, JSNumber rate);

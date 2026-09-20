@@ -8,6 +8,7 @@ import 'package:rummipoker/resources/sound_manager.dart';
 import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/new_run_view.dart';
+import 'package:rummipoker/widgets/fx/fx_ambient.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -27,6 +28,7 @@ void main() {
     GameSettings.bgmMuted = true;
     GameSettings.sfxMuted = true;
     SoundManager.debugResetForTest();
+    FxAmbient.debugReset();
   });
 
   tearDown(() {
@@ -34,6 +36,7 @@ void main() {
   });
 
   testWidgets('new run screen requests menu BGM on entry', (tester) async {
+    FxAmbient.setMood(FxAmbientMood.battle);
     await tester.pumpWidget(
       EasyLocalization(
         supportedLocales: const [Locale('ko'), Locale('en')],
@@ -60,6 +63,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(SoundManager.debugCurrentBgm, AssetPaths.bgmMenu);
+    expect(FxAmbient.controller.mood, FxAmbientMood.menu);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();

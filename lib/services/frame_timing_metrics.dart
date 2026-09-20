@@ -5,6 +5,9 @@ import 'package:flutter/scheduler.dart';
 
 const _frameBudget = Duration(microseconds: 16667);
 
+/// 프레임이 이만큼 끊기면 직전 연속 구간(확정 1회 연출 등)을 한 번에 보고한다.
+const _idleReportGap = Duration(seconds: 1);
+
 class FrameTimingMetrics {
   FrameTimingMetrics._();
 
@@ -13,18 +16,17 @@ class FrameTimingMetrics {
 
   final List<FrameTiming> _timings = <FrameTiming>[];
   bool _started = false;
+  Timer? _idleReportTimer;
 
   void start() {
     if (kReleaseMode || _started) return;
     SchedulerBinding.instance.addTimingsCallback(_record);
-    Timer.periodic(
-      const Duration(seconds: 5),
-      (_) => reportAndReset(),
-    );
     _started = true;
   }
 
   void _record(List<FrameTiming> timings) {
+    _idleReportTimer?.cancel();
+    _idleReportTimer = Timer(_idleReportGap, reportAndReset);
     _timings.addAll(timings);
     if (_timings.length > _maxSamples) {
       _timings.removeRange(0, _timings.length - _maxSamples);
@@ -93,6 +95,7 @@ class FrameTimingStats {
   const FrameTimingStats({
     required this.average,
     required this.p50,
+    required this.p90,
     required this.p95,
     required this.p99,
     required this.max,
@@ -102,6 +105,7 @@ class FrameTimingStats {
   const FrameTimingStats.empty()
     : average = Duration.zero,
       p50 = Duration.zero,
+      p90 = Duration.zero,
       p95 = Duration.zero,
       p99 = Duration.zero,
       max = Duration.zero,
@@ -116,6 +120,7 @@ class FrameTimingStats {
     return FrameTimingStats(
       average: Duration(microseconds: sum ~/ samples.length),
       p50: Duration(microseconds: _percentile(samples, 0.50)),
+      p90: Duration(microseconds: _percentile(samples, 0.90)),
       p95: Duration(microseconds: _percentile(samples, 0.95)),
       p99: Duration(microseconds: _percentile(samples, 0.99)),
       max: Duration(microseconds: samples.last),
@@ -127,6 +132,7 @@ class FrameTimingStats {
 
   final Duration average;
   final Duration p50;
+  final Duration p90;
   final Duration p95;
   final Duration p99;
   final Duration max;
@@ -136,6 +142,7 @@ class FrameTimingStats {
     return <String, Object>{
       'averageUs': average.inMicroseconds,
       'p50Us': p50.inMicroseconds,
+      'p90Us': p90.inMicroseconds,
       'p95Us': p95.inMicroseconds,
       'p99Us': p99.inMicroseconds,
       'maxUs': max.inMicroseconds,

@@ -178,55 +178,61 @@ void showGameOverDialog({
             ],
             if (insightReward > 0) ...[
               const SizedBox(height: 12),
-              GameOverInsightRewardCard(insightReward: insightReward),
+              _GameOverRewardReveal(
+                child: GameOverInsightRewardCard(insightReward: insightReward),
+              ),
             ],
             const SizedBox(height: 18),
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 GameActionButton(
+                  key: const ValueKey('game-over-retry-stake'),
                   label: '현재 전투 재시작',
                   background: GameUiPalette.actionGold,
                   foreground: GameUiPalette.ink,
                   onPressed: () async {
                     Navigator.of(ctx).pop();
                     await WidgetsBinding.instance.endOfFrame;
-                    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                    _leaveGameOverSound(GameCue.runRestore);
                     await onRetryStake();
                   },
                 ),
                 const SizedBox(height: 10),
                 GameActionButton(
+                  key: const ValueKey('game-over-retry-station'),
                   label: '현재 Station 재시작',
                   background: GameUiPalette.menuAccentRestart,
                   foreground: GameUiPalette.ink,
                   onPressed: () async {
                     Navigator.of(ctx).pop();
                     await WidgetsBinding.instance.endOfFrame;
-                    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                    _leaveGameOverSound(GameCue.runRestore);
                     await onRetryStation();
                   },
                 ),
                 const SizedBox(height: 10),
                 GameActionButton(
+                  key: const ValueKey('game-over-new-run'),
                   label: '새 run 준비',
                   background: GameUiPalette.actionSuccess,
                   foreground: GameUiPalette.ink,
                   onPressed: () async {
                     Navigator.of(ctx).pop();
                     await WidgetsBinding.instance.endOfFrame;
-                    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                    _leaveGameOverSound(GameCue.runStart);
                     await onNewRun();
                   },
                 ),
                 const SizedBox(height: 10),
                 GameActionButton(
+                  key: const ValueKey('game-over-exit'),
                   label: _localizedDialogLabel(context, 'exit', '나가기'),
                   background: GameUiPalette.disabledControl,
                   onPressed: () async {
                     Navigator.of(ctx).pop();
                     await WidgetsBinding.instance.endOfFrame;
-                    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+                    _leaveGameOverSound(GameCue.buttonTap);
                     await onExit();
                   },
                 ),
@@ -237,6 +243,83 @@ void showGameOverDialog({
       ),
     ),
   );
+}
+
+/// 결과 창을 떠날 때 전역 pitch를 먼저 되돌린 뒤 버튼 의미에 맞는 소리를 낸다.
+void _leaveGameOverSound(GameCue cue) {
+  SoundManager.rampGlobalPitch(1, Duration.zero);
+  GameFeedback.play(cue);
+}
+
+/// 기억 카드가 결과 창이 열린 뒤 한 번 뒤집히며 공개된다.
+class _GameOverRewardReveal extends StatefulWidget {
+  const _GameOverRewardReveal({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_GameOverRewardReveal> createState() => _GameOverRewardRevealState();
+}
+
+class _GameOverRewardRevealState extends State<_GameOverRewardReveal>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _flip;
+  bool _cuePlayed = false;
+
+  static Duration get _total =>
+      GamePresentationTimings.gameOverRewardRevealDelay +
+      GamePresentationTimings.gameOverRewardReveal;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: _total);
+    final start =
+        GamePresentationTimings.gameOverRewardRevealDelay.inMicroseconds /
+        _total.inMicroseconds;
+    _flip = CurvedAnimation(
+      parent: _controller,
+      curve: Interval(start, 1, curve: Curves.easeOutBack),
+    );
+    if (MotionPolicy.juiceScale <= 0) {
+      _controller.value = 1;
+      return;
+    }
+    _controller.addListener(() {
+      if (_cuePlayed || _controller.value < start) return;
+      _cuePlayed = true;
+      GameFeedback.play(GameCue.unlock);
+    });
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      key: const ValueKey('game-over-reward-reveal'),
+      animation: _flip,
+      child: widget.child,
+      builder: (context, child) {
+        // 옆면(0, 90도)에서 앞면(1)으로 세로축 회전해 공개된다.
+        final t = _flip.value;
+        final angle = (1 - t) * pi / 2;
+        return Transform(
+          alignment: Alignment.center,
+          transform: Matrix4.identity()
+            ..setEntry(3, 2, 0.0012)
+            ..rotateY(angle),
+          child: child,
+        );
+      },
+    );
+  }
 }
 
 class _GameOverTauntPanel extends StatelessWidget {

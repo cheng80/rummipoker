@@ -58,36 +58,32 @@ class _SettlementEffectLinePulseCell extends StatelessWidget {
         );
         final opacity = value < 0.7 ? 1.0 : 1.0 - ((value - 0.7) / 0.3);
         final pulse = value < 0.5 ? value * 2 : (1 - value) * 2;
+        final fade = opacity.clamp(0.0, 1.0);
         return Positioned(
           left: center.dx - 20,
           top: center.dy - 20,
           width: 40,
           height: 40,
-          child: Opacity(
-            opacity: opacity.clamp(0.0, 1.0),
-            child: Transform.scale(
-              scale: 0.82 + pulse * 0.2,
+          child: Transform.scale(
+            scale: 0.82 + pulse * 0.2,
+            child: FxBoxGlow(
+              color: GameUiPalette.settlementActive.withValues(
+                alpha: (0.28 + pulse * 0.18) * fade,
+              ),
+              blurRadius: 14 + pulse * 8,
+              spreadRadius: 1.2 + pulse,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: GameUiPalette.settlementEffectSurface.withValues(
-                    alpha: 0.14,
+                    alpha: 0.14 * fade,
                   ),
                   borderRadius: BorderRadius.circular(7),
                   border: Border.all(
                     color: GameUiPalette.settlementActive.withValues(
-                      alpha: 0.86,
+                      alpha: 0.86 * fade,
                     ),
                     width: 2,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: GameUiPalette.settlementActive.withValues(
-                        alpha: 0.28 + pulse * 0.18,
-                      ),
-                      blurRadius: 14 + pulse * 8,
-                      spreadRadius: 1.2 + pulse,
-                    ),
-                  ],
                 ),
               ),
             ),

@@ -400,9 +400,11 @@ extension _GameViewStageFlow on _GameViewState {
     int index = 0,
   }) async {
     if (!mounted) return;
+    if (index == 0) _resetSettlementPresentation();
     if (lines.isEmpty || index >= lines.length) {
       await _waitWhilePresentationPaused();
       if (!mounted) return;
+      _mutate(_resetSettlementPresentation);
       _gameNotifier.setStageFlow(
         phase: GameStageFlowPhase.none,
         activeSettlementLine: null,
@@ -425,23 +427,40 @@ extension _GameViewStageFlow on _GameViewState {
         settlementGoalBaseScore + settlementGoalAppliedScore;
     final lineGoalDisplayScore =
         settlementGoalBaseScore + settlementGoalAppliedScore + line.finalScore;
-    final jesterIds = {
-      for (final entry in _marketView.ownedEntries) entry.card.id,
+    final ownedEntries = _marketView.ownedEntries;
+    final jesterSlotById = <String, int>{
+      for (var i = ownedEntries.length - 1; i >= 0; i--)
+        ownedEntries[i].card.id: i,
     };
-    final jesterEffectIndexes = <int>[
-      for (var i = 0; i < line.effects.length; i++)
-        if (jesterIds.contains(line.effects[i].jesterId)) i,
-    ];
+    // 왼쪽 슬롯부터 한 장씩 발동한다.
+    final jesterEffectIndexes =
+        <int>[
+          for (var i = 0; i < line.effects.length; i++)
+            if (jesterSlotById.containsKey(line.effects[i].jesterId)) i,
+        ]..sort(
+          (a, b) => jesterSlotById[line.effects[a].jesterId]!.compareTo(
+            jesterSlotById[line.effects[b].jesterId]!,
+          ),
+        );
     final tileEffectIndexes = <int>[
       for (var i = 0; i < line.effects.length; i++)
         if (_isTileSettlementEffect(line.effects[i].jesterId)) i,
     ];
     final itemEffectIndexes = <int>[
       for (var i = 0; i < line.effects.length; i++)
-        if (!jesterIds.contains(line.effects[i].jesterId) &&
+        if (!jesterSlotById.containsKey(line.effects[i].jesterId) &&
             !_isTileSettlementEffect(line.effects[i].jesterId))
           i,
     ];
+    final cellAppearances = <String, int>{
+      for (final other in lines)
+        for (final (row, col) in other.contributingCells) '$row:$col': 0,
+    };
+    for (final other in lines) {
+      for (final (row, col) in other.contributingCells) {
+        cellAppearances.update('$row:$col', (count) => count + 1);
+      }
+    }
 
     await _showSettlementStep(
       totalScore: totalScore,
@@ -449,14 +468,19 @@ extension _GameViewStageFlow on _GameViewState {
       step: ScoringPresentationStep.boardLine,
       settlementGoalDisplayScore: lineGoalStartScore,
       bump: true,
-      delay: GamePresentationTimings.settlementBoardLineStep,
+      delay: Duration.zero,
     );
+    if (!mounted) return;
+    await _playSettlementTileTicks(line, cellAppearances);
+    if (!mounted) return;
+    await _presentationDelay(GamePresentationTimings.settlementBoardLineStep);
     if (!mounted) return;
     await _showSettlementStep(
       totalScore: totalScore,
       line: line,
       step: ScoringPresentationStep.handRank,
       settlementGoalDisplayScore: lineGoalStartScore,
+      cue: GameCue.scoreTick,
       delay: GamePresentationTimings.settlementHandRankStep,
     );
     if (!mounted) return;
@@ -466,6 +490,7 @@ extension _GameViewStageFlow on _GameViewState {
         line: line,
         step: ScoringPresentationStep.overlap,
         settlementGoalDisplayScore: lineGoalStartScore,
+        cue: GameCue.overlapHit,
         delay: GamePresentationTimings.settlementOverlapStep,
       );
       if (!mounted) return;
@@ -477,19 +502,23 @@ extension _GameViewStageFlow on _GameViewState {
         step: ScoringPresentationStep.constraint,
         settlementGoalDisplayScore: lineGoalStartScore,
         bump: true,
+        cue: GameCue.penalty,
+        risingPitch: false,
         delay: GamePresentationTimings.settlementConstraintStep,
       );
       if (!mounted) return;
     }
-    if (jesterEffectIndexes.isNotEmpty) {
+    for (final effectIndex in jesterEffectIndexes) {
       await _showSettlementStep(
         totalScore: totalScore,
         line: line,
         step: ScoringPresentationStep.jester,
-        effectIndexes: jesterEffectIndexes,
+        effectIndexes: [effectIndex],
         settlementGoalDisplayScore: lineGoalStartScore,
         bump: true,
-        delay: GamePresentationTimings.settlementEffectStep,
+        cue: GameCue.jesterFire,
+        pitch: _jesterFirePitch(line.effects[effectIndex]),
+        delay: GamePresentationTimings.settlementJesterFire,
       );
       if (!mounted) return;
     }
@@ -501,6 +530,7 @@ extension _GameViewStageFlow on _GameViewState {
         effectIndexes: tileEffectIndexes,
         settlementGoalDisplayScore: lineGoalStartScore,
         bump: true,
+        cue: GameCue.tileModifierFire,
         delay: GamePresentationTimings.settlementEffectStep,
       );
       if (!mounted) return;
@@ -513,18 +543,47 @@ extension _GameViewStageFlow on _GameViewState {
         effectIndexes: itemEffectIndexes,
         settlementGoalDisplayScore: lineGoalStartScore,
         bump: true,
+        cue: GameCue.itemFire,
         delay: GamePresentationTimings.settlementEffectStep,
       );
       if (!mounted) return;
+    }
+    final grade = GameSettlementPacing.grade(
+      line.finalScore,
+      _stationView.objective.targetScore,
+    );
+    final isFinisher = shouldClearAfter && index == lines.length - 1;
+    _mutate(() {
+      _settlementGrade = grade;
+      _settlementSlowMo = isFinisher;
+    });
+    if (grade >= GameSettlementPacing.impactGrade) {
+      FxAmbient.pulse(grade >= 3 ? 1.0 : 0.6);
+    }
+    if (!_settlementSkipRequested) {
+      if (isFinisher) {
+        _presentationClock.hitStop(
+          GamePresentationTimings.settlementFinisherHitStop,
+        );
+        ScreenShake.instance.add(0.55);
+      } else if (grade >= GameSettlementPacing.impactGrade) {
+        _presentationClock.hitStop(
+          GamePresentationTimings.settlementGradeHitStop,
+        );
+        ScreenShake.instance.add(grade >= 3 ? 0.45 : 0.32);
+      }
     }
     await _showSettlementStep(
       totalScore: totalScore,
       line: line,
       step: ScoringPresentationStep.finalScore,
       settlementGoalDisplayScore: lineGoalDisplayScore,
+      cue: _gradeCues[grade.clamp(0, _gradeCues.length - 1)],
+      risingPitch: false,
       delay: GamePresentationTimings.settlementFinalScoreStep,
     );
     if (!mounted) return;
+    _mutate(() => _settlementSlowMo = false);
 
     await _presentationDelay(GamePresentationTimings.settlementLineTail);
     if (!mounted) return;
@@ -538,6 +597,70 @@ extension _GameViewStageFlow on _GameViewState {
     );
   }
 
+  static const List<GameCue> _gradeCues = [
+    GameCue.bigScore1,
+    GameCue.bigScore2,
+    GameCue.bigScore3,
+    GameCue.bigScore4,
+  ];
+
+  /// 칩 가산은 낮게, % 가산은 중간, ×N 곱연산은 높게.
+  double _jesterFirePitch(RummiJesterEffectBreakdown effect) {
+    if (effect.xmultBonus > 1.0) return 1.25;
+    if (effect.multBonus > 0) return 1.08;
+    return 0.92;
+  }
+
+  /// 한 확정의 연출 전용 상태를 비운다. 게임 결과 state는 건드리지 않는다.
+  void _resetSettlementPresentation() {
+    _settlementSkipRequested = false;
+    _settlementSlowMo = false;
+    _settlementStepCount = 0;
+    _settlementTickIndex = 0;
+    _settlementGrade = 0;
+    _settlementTicks.value = SettlementTileTicks.empty;
+  }
+
+  /// 정산 도중 탭하면 남은 연출을 건너뛴다. 스텝은 그대로 진행되어 최종 상태가 같다.
+  void _skipSettlementPresentation() {
+    if (_stageFlowPhase != GameStageFlowPhase.confirmSettlement) return;
+    if (_settlementSkipRequested) return;
+    _mutate(() => _settlementSkipRequested = true);
+  }
+
+  /// 줄 안의 타일이 하나씩 반응한다. 음높이는 확정 전체에 걸쳐 오른다.
+  ///
+  /// 여러 줄에 기여한 교차 타일은 맞을 때마다 달아오르고 다른 음색을 낸다.
+  Future<void> _playSettlementTileTicks(
+    ConfirmedLineBreakdown line,
+    Map<String, int> cellAppearances,
+  ) async {
+    for (final (row, col) in line.contributingCells) {
+      if (!mounted) return;
+      final key = '$row:$col';
+      final crossing = (cellAppearances[key] ?? 0) > 1;
+      final ticks = _settlementTicks.value;
+      final heat = crossing ? (ticks.heat[key] ?? 0) + 1 : 0;
+      _settlementHitSerial++;
+      _settlementTicks.value = SettlementTileTicks(
+        heat: crossing ? {...ticks.heat, key: heat} : ticks.heat,
+        hitSerial: {...ticks.hitSerial, key: _settlementHitSerial},
+      );
+      if (!_settlementSkipRequested) {
+        final pitch = GameSettlementPacing.tickPitch(_settlementTickIndex);
+        if (heat > 1) {
+          GameFeedback.play(GameCue.overlapHit, pitch: pitch);
+          ScreenShake.instance.add(0.12 + 0.08 * heat);
+        } else {
+          GameFeedback.play(GameCue.scoreTick, pitch: pitch);
+          ScreenShake.instance.add(0.08);
+        }
+      }
+      _settlementTickIndex++;
+      await _presentationDelay(GamePresentationTimings.settlementTileTick);
+    }
+  }
+
   Future<void> _showSettlementStep({
     required int totalScore,
     required ConfirmedLineBreakdown line,
@@ -547,10 +670,22 @@ extension _GameViewStageFlow on _GameViewState {
     List<int> effectIndexes = const [],
     Object? settlementGoalDisplayScore = GameSessionState.unsetValue,
     bool bump = false,
+    GameCue? cue,
+    double pitch = 1,
+    bool risingPitch = true,
   }) async {
     await _waitWhilePresentationPaused();
     if (!mounted) return;
-    SoundManager.playSfx(AssetPaths.sfxCollect);
+    _settlementStepCount++;
+    if (cue != null && !_settlementSkipRequested) {
+      GameFeedback.play(
+        cue,
+        pitch: risingPitch
+            ? pitch * GameSettlementPacing.tickPitch(_settlementTickIndex)
+            : pitch,
+      );
+      if (risingPitch) _settlementTickIndex++;
+    }
     _gameNotifier.setStageFlow(
       phase: GameStageFlowPhase.confirmSettlement,
       stageScoreAdded: totalScore,
@@ -570,6 +705,7 @@ extension _GameViewStageFlow on _GameViewState {
 
   Future<void> _runStageClearFlow(int scoreAdded) async {
     _logStationClear(scoreAdded);
+    FxAmbient.setMood(FxAmbientMood.reward);
     final canContinue = await _runStageClearPresentation(scoreAdded);
     if (!canContinue) return;
     if (widget.debugCompleteRunOnClear) {
@@ -641,7 +777,25 @@ extension _GameViewStageFlow on _GameViewState {
       barrierDismissible: false,
       barrierColor: kGameModalBarrierColor,
       routeSettings: const RouteSettings(name: '정산 결과'),
-      transitionDuration: Duration.zero,
+      transitionDuration: MotionPolicy.reduceMotion
+          ? Duration.zero
+          : GamePresentationTimings.cashOutSheetIn,
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        );
+        return FadeTransition(
+          opacity: curved,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.08),
+              end: Offset.zero,
+            ).animate(curved),
+            child: child,
+          ),
+        );
+      },
       pageBuilder: (dialogContext, animation, secondaryAnimation) {
         return PhoneFrame(
           child: Align(
@@ -806,9 +960,10 @@ extension _GameViewStageFlow on _GameViewState {
     _mutate(() => _nextStationTransitionVisible = false);
   }
 
-  Future<bool?> _showShopScreen({bool autoAdvanceOnLoad = false}) {
+  Future<bool?> _showShopScreen({bool autoAdvanceOnLoad = false}) async {
     _removeBattleTutorialForPause();
-    return Navigator.of(context).push<bool>(
+    FxAmbient.setMood(FxAmbientMood.market);
+    final nextStage = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (context) => GameShopScreen(
@@ -820,6 +975,13 @@ extension _GameViewStageFlow on _GameViewState {
           onBuyOffer: _buyJesterOfferForAnalytics,
           onBuyItemOffer: _buyItemOfferForAnalytics,
           onBuyTileOffer: _buyTileOfferForAnalytics,
+          isFirstAcquisition: (category, contentId) => switch (category) {
+            'jester' => !_runProgressCollection.boughtJesterIds.contains(
+              contentId,
+            ),
+            'item' => !_runProgressCollection.boughtItemIds.contains(contentId),
+            _ => false,
+          },
           onUseMarketItem: _useMarketItemForAnalytics,
           onSellOwnedJester: _sellOwnedJesterForAnalytics,
           onSellMarketItem: _sellMarketItemForAnalytics,
@@ -853,5 +1015,7 @@ extension _GameViewStageFlow on _GameViewState {
         ),
       ),
     );
+    if (mounted) FxAmbient.setMood(_battleAmbientMood);
+    return nextStage;
   }
 }
