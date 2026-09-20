@@ -1,7 +1,7 @@
 part of 'game_session_notifier.dart';
 
 mixin GameSessionNotifierBattleCommands
-    on FamilyNotifier<GameSessionState, GameSessionArgs> {
+    on AutoDisposeFamilyNotifier<GameSessionState, GameSessionArgs> {
   void _replaceState(GameSessionState next);
   void clearSelections();
   void setSelectedBoardCell(int? row, int? col);

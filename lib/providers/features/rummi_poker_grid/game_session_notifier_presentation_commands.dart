@@ -1,7 +1,7 @@
 part of 'game_session_notifier.dart';
 
 mixin GameSessionNotifierPresentationCommands
-    on FamilyNotifier<GameSessionState, GameSessionArgs> {
+    on AutoDisposeFamilyNotifier<GameSessionState, GameSessionArgs> {
   void _replaceState(GameSessionState next);
 
   void _replacePresentationState(GameSessionState next) {
