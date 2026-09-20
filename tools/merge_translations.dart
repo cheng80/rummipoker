@@ -97,6 +97,7 @@ Map<String, String> buildMergedTranslations({
       );
     }
     Set<String>? areaKeys;
+    final argumentSets = <String, Set<String>>{};
     for (final locale in locales) {
       final entries = _readFragment(sourceRoot, area, locale);
       areaKeys ??= entries.keys.toSet();
@@ -110,6 +111,17 @@ Map<String, String> buildMergedTranslations({
         );
       }
       for (final entry in entries.entries) {
+        final arguments = RegExp(
+          r'\{[^{}]*\}',
+        ).allMatches(entry.value).map((match) => match.group(0)!).toSet();
+        final expected = argumentSets.putIfAbsent(entry.key, () => arguments);
+        if (arguments.length != expected.length ||
+            !arguments.containsAll(expected)) {
+          throw FormatException(
+            'Area "$area" locale "$locale" key "${entry.key}" has '
+            'different interpolation arguments: $arguments, expected $expected',
+          );
+        }
         final owner = owners[entry.key];
         if (owner != null && owner != area) {
           throw FormatException(

@@ -292,6 +292,18 @@ void main() {
       writeFragment('_base', 'en', {'greeting': 'Hi'});
       expect(build().keys, containsAll(['out/ko.json', 'out/en.json']));
     });
+
+    test('a locale cannot drop or rename a named argument', () {
+      writeFragment('_base', 'ko', {'count': '{count}장'});
+      writeFragment('_base', 'en', {'count': '{total} tiles'});
+      expect(build, throwsFormatException);
+    });
+
+    test('named arguments may move in translated sentences', () {
+      writeFragment('_base', 'ko', {'count': '{name}: {count}장'});
+      writeFragment('_base', 'en', {'count': '{count} tiles for {name}'});
+      expect(build().length, 2);
+    });
   });
 
   test('the fragment sources are not declared as bundled assets', () {
