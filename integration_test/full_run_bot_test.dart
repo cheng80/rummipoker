@@ -733,8 +733,6 @@ class _FullRunBot {
           await _tapBoardCell(action.row!, action.col!);
           await _tapText('타일\n이동');
           await _tapBoardCell(action.toRow!, action.toCol!);
-          await _pumpUntilVisible(find.text('보드 이동'));
-          await _tapText('이동');
           await _pumpUntilState(
             (next) =>
                 next.session!.board.cellAt(action.row!, action.col!) == null &&
