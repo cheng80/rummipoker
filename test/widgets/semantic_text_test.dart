@@ -258,10 +258,48 @@ void main() {
     }
   });
 
+  testWidgets(
+    'never needs more lines than a plain Text inside an unbounded Column',
+    (tester) async {
+      // A Column child gets an infinite maxHeight, so the height check inside
+      // the widget always passes. Only a line-count comparison against plain
+      // Text catches a layout that pushed a whole word onto a new line.
+      const sentences = [
+        _sentence,
+        _shortSentence,
+        '상점에서 산 아이템은 다음 전투가 시작될 때 자동으로 적용됩니다.',
+        '보스 제약이 걸린 라인은 점수가 줄어드니 배치 순서를 먼저 확인하세요.',
+        '이번 스테이션을 넘기면 남은 골드는 그대로 다음 스테이션으로 넘어갑니다.',
+      ];
+      for (final width in [120.0, 140.0, 160.0, 200.0, 240.0, 260.0, 300.0]) {
+        for (final sentence in sentences) {
+          await _pump(
+            tester,
+            SizedBox(
+              width: width,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [SemanticText(sentence, style: _style)],
+              ),
+            ),
+          );
+          expect(
+            _lineCount(_paintedText(tester), width),
+            lessThanOrEqualTo(_lineCount(sentence, width)),
+            reason: 'width $width grew the line count for "$sentence"',
+          );
+        }
+      }
+    },
+  );
+
   testWidgets('never breaks inside a word when it wraps', (tester) async {
+    // 200 is a width where the phrase layout needs no more lines than plain
+    // Text, so the widget applies. At 160 this sentence costs one line more and
+    // the widget steps aside on purpose.
     await _pump(
       tester,
-      const SizedBox(width: 160, child: SemanticText(_sentence, style: _style)),
+      const SizedBox(width: 200, child: SemanticText(_sentence, style: _style)),
     );
     final painted = _paintedText(tester);
     expect(painted, isNot(_sentence), reason: 'expected the widget to apply');
@@ -285,7 +323,7 @@ void main() {
       await _pump(
         tester,
         const SizedBox(
-          width: 160,
+          width: 200,
           child: SemanticText(_sentence, style: _style),
         ),
       );

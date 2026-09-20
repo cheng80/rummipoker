@@ -28,12 +28,16 @@ import '../utils/semantic_wrap/semantic_wrap.dart';
 /// 2. Among the layouts that use exactly that many lines, it picks the one with
 ///    the most natural break positions. It never trades a line for a nicer
 ///    break.
-/// 3. If even that layout does not fit the available height or `maxLines`, it
-///    renders like a plain [Text] and lets Flutter break the line as before.
+/// 3. If that layout needs more lines than plain [Text] would need at the same
+///    width, or does not fit the available height or `maxLines`, it renders
+///    like a plain [Text] and lets Flutter break the line as before.
 ///
 /// Step 3 is what keeps this widget from pushing text out of a panel that used
 /// to hold it. Refusing to split a word can push a whole word onto the next
 /// line, and in a panel tuned to the character that is exactly one line too many.
+/// The height check alone does not catch this: a [Column] child is given an
+/// infinite height, so the line-count comparison is the only guard that holds
+/// there.
 ///
 /// Other languages fall through to plain [Text] behaviour: English already
 /// breaks at spaces, and Japanese and Chinese are expected to break between
@@ -299,6 +303,14 @@ String? _resolveWrappedText({
       return painter.width;
     }
 
+    int lineCount(String value) {
+      painter
+        ..text = TextSpan(text: value, style: metrics.style)
+        ..maxLines = null
+        ..layout(maxWidth: maxWidth);
+      return painter.computeLineMetrics().length;
+    }
+
     final selection = selectLineBreaks(
       text: text,
       model: model,
@@ -307,11 +319,17 @@ String? _resolveWrappedText({
     );
     if (selection.applied) {
       final candidate = selection.lines.join('\n');
+      // What Flutter would have drawn here. A Column child has no height limit,
+      // so this is the only thing that stops a phrase break from spending one
+      // more line than the text used before.
+      final plainLines = lineCount(text);
+      final grewALine = lineCount(candidate) > plainLines;
       painter
         ..text = TextSpan(text: candidate, style: metrics.style)
         ..maxLines = metrics.maxLines
         ..layout(maxWidth: maxWidth);
       final fits =
+          !grewALine &&
           !painter.didExceedMaxLines &&
           (!maxHeight.isFinite || painter.height <= maxHeight + 0.01);
       if (fits) result = candidate;
