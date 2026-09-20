@@ -195,11 +195,13 @@ class _TitleViewState extends ConsumerState<TitleView>
         titleState.lastAvailability != ActiveRunAvailability.available) {
       await showGameChoiceDialog<void>(
         context,
-        title: context.translate('runInfoTitle'),
-        message: context.translate('menuNoActiveRun'),
-        actions: [
+        titleBuilder: (dialogContext) =>
+            dialogContext.translate('runInfoTitle'),
+        messageBuilder: (dialogContext) =>
+            dialogContext.translate('menuNoActiveRun'),
+        actionsBuilder: (dialogContext) => [
           GameDialogAction<void>(
-            label: context.translate('ok'),
+            label: dialogContext.translate('ok'),
             value: null,
             accent: GameUiPalette.actionGoldBright,
             textColor: GameUiPalette.ink,
@@ -269,16 +271,17 @@ class _TitleViewState extends ConsumerState<TitleView>
   Future<void> _showCorruptedSaveDialog() async {
     final action = await showGameChoiceDialog<String>(
       context,
-      title: context.translate('menuCheckSave'),
-      message: context.translate('menuInvalidSave'),
-      actions: [
+      titleBuilder: (dialogContext) => dialogContext.translate('menuCheckSave'),
+      messageBuilder: (dialogContext) =>
+          dialogContext.translate('menuInvalidSave'),
+      actionsBuilder: (dialogContext) => [
         GameDialogAction<String>(
-          label: context.translate('cancel'),
+          label: dialogContext.translate('cancel'),
           value: 'cancel',
           accent: GameUiPalette.disabledControl,
         ),
         GameDialogAction<String>(
-          label: context.translate('menuDelete'),
+          label: dialogContext.translate('menuDelete'),
           value: 'delete',
           accent: GameUiPalette.titleDangerAccent,
         ),
@@ -305,7 +308,8 @@ class _TitleViewState extends ConsumerState<TitleView>
 
     final fixtureId = await showGameChoiceDialog<String>(
       context,
-      title: context.translate('menuDebugFixture'),
+      titleBuilder: (dialogContext) =>
+          dialogContext.translate('menuDebugFixture'),
       content: SizedBox(
         width: 360,
         child: SingleChildScrollView(
@@ -329,9 +333,9 @@ class _TitleViewState extends ConsumerState<TitleView>
           ),
         ),
       ),
-      actions: [
+      actionsBuilder: (dialogContext) => [
         GameDialogAction<String>(
-          label: context.translate('cancel'),
+          label: dialogContext.translate('cancel'),
           value: 'cancel',
           accent: GameUiPalette.disabledControl,
         ),

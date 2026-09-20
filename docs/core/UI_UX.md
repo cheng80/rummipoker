@@ -228,7 +228,7 @@ Archive는 마지막으로 확인한 항목 집합을 SharedPreferences의 별�
 - Tool/Gear UI는 3/2 슬롯만 렌더하지만 구매 cap이 없어 숨은 보유가 생길 수 있다.
 - Archive 분모는 Item 91개를 쓰지만 normal Market 노출에서 제외된 5개가 있어 일반 수집 91/91은 도달 불가하다.
 - Battle/Market coach mark만 있고 Blind, Boss 규칙, cash-out, 실패 학습, unlock spend, Archive 온보딩은 없다.
-- locale 설정은 세션 전용(`saveLocale:false`)이다. `assets/translations/`의 번역 값은 5개 locale 모두 채워져 있으나, 화면 코드에 한국어가 그대로 박힌 파일이 65개 남아 있어 다른 언어에서도 한국어로 보인다. 남은 파일 목록은 [no_hardcoded_korean_test.dart](../../test/tools/no_hardcoded_korean_test.dart)의 허용 목록이 소유한다.
+- locale 설정은 세션 전용(`saveLocale:false`)이다. `assets/translations/`는 5개 locale의 화면 문구를 제공한다. 화면의 다국어 추출과 동적 라벨 전환은 반영됐으며, 남아 있는 한국어 문자열에는 호환용 로직·API도 포함된다. 허용 목록의 파일 수를 그대로 화면의 한국어 노출 오류 수로 보지 않는다. 잔여 문자열의 검사 범위는 [no_hardcoded_korean_test.dart](../../test/tools/no_hardcoded_korean_test.dart)의 허용 목록에서 관리한다.
 
 ## Source and Update Trigger
 

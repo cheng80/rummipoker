@@ -98,8 +98,9 @@ class _NewRunViewState extends State<NewRunView> {
     _seedInputController.clear();
     final action = await showGameChoiceDialog<String>(
       context,
-      title: context.translate('seedDialogTitle'),
-      content: DecoratedBox(
+      titleBuilder: (dialogContext) =>
+          dialogContext.translate('seedDialogTitle'),
+      contentBuilder: (dialogContext) => DecoratedBox(
         decoration: BoxDecoration(
           color: MenuSurface.panelFill(alpha: 0.6),
           borderRadius: BorderRadius.circular(14),
@@ -121,7 +122,7 @@ class _NewRunViewState extends State<NewRunView> {
               letterSpacing: 1.2,
             ),
             decoration: InputDecoration(
-              hintText: context.translate('seedHint'),
+              hintText: dialogContext.translate('seedHint'),
               hintStyle: TextStyle(
                 color: GameUiPalette.textPrimary.withValues(alpha: 0.34),
                 fontWeight: FontWeight.w700,
@@ -131,19 +132,19 @@ class _NewRunViewState extends State<NewRunView> {
             autofocus: true,
             onSubmitted: (_) {
               GameFeedback.play(GameCue.runStart);
-              Navigator.of(context).pop('submit');
+              Navigator.of(dialogContext).pop('submit');
             },
           ),
         ),
       ),
-      actions: [
+      actionsBuilder: (dialogContext) => [
         GameDialogAction<String>(
-          label: context.translate('cancel'),
+          label: dialogContext.translate('cancel'),
           value: 'cancel',
           accent: GameUiPalette.disabledControl,
         ),
         GameDialogAction<String>(
-          label: context.translate('ok'),
+          label: dialogContext.translate('ok'),
           value: 'submit',
           cue: GameCue.runStart,
           accent: GameUiPalette.actionGold,
