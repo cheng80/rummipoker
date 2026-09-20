@@ -160,3 +160,8 @@ flutter:
     - family: NexonLv2Gothic
       fonts:
         - asset: assets/fonts/NEXON Lv2 Gothic.ttf
+    # NEXON Lv2 Gothic에 없는 가나·한자용 fallback. 설정 화면의 언어 이름 글자만 담은 서브셋이다.
+    # 생성: tools/build_lang_name_font_subset.py, 라이선스: assets/fonts/NotoSansCjkLangNames-OFL.txt
+    - family: NotoSansCjkLangNames
+      fonts:
+        - asset: assets/fonts/NotoSansCjkLangNames-Regular.otf
