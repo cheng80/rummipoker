@@ -1,7 +1,7 @@
 part of 'game_session_notifier.dart';
 
 mixin GameSessionNotifierStationCommands
-    on FamilyNotifier<GameSessionState, GameSessionArgs> {
+    on AutoDisposeFamilyNotifier<GameSessionState, GameSessionArgs> {
   void _replaceState(GameSessionState next);
   void clearSelections();
   ActiveRunRuntimeState buildSaveRuntimeState({
