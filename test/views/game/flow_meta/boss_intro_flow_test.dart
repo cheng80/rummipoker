@@ -11,7 +11,7 @@ import 'package:rummipoker/logic/rummi_poker_grid/models/poker_deck.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
-import 'package:rummipoker/resources/asset_paths.dart';
+import 'package:rummipoker/views/game/game_feedback_cues.dart';
 import 'package:rummipoker/resources/jester_translation_scope.dart';
 import 'package:rummipoker/resources/sound_manager.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
@@ -120,7 +120,9 @@ void main() {
     expect(_veilHidden(tester), isTrue);
     expect(
       sfx.where(
-        (e) => e.$1 == AssetPaths.sfxStart && (e.$2 - 0.7).abs() < 0.01,
+        (e) =>
+            e.$1 == gameFeedbackCues[GameCue.bossIntro]!.sfx &&
+            (e.$2 - gameFeedbackCues[GameCue.bossIntro]!.pitch).abs() < 0.01,
       ),
       isNotEmpty,
       reason: 'bossIntro cue',
@@ -154,7 +156,7 @@ void main() {
     expect(find.byKey(const ValueKey('boss-mark-flight-layer')), findsNothing);
     expect(_veilHidden(tester), isFalse, reason: '착지하면 보드 도장이 찍힌다');
     expect(
-      sfx.where((e) => e.$1 == AssetPaths.sfxFail),
+      sfx.where((e) => e.$1 == gameFeedbackCues[GameCue.penalty]!.sfx),
       isNotEmpty,
       reason: '착지 penalty cue',
     );
