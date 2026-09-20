@@ -14,6 +14,7 @@ alwaysApply: false
 
 ## 실행 gate
 
+- 풀런봇은 profile 모드로 돌린다(`tools/full_run_bot.sh`, `tools/sub_run_bot.sh`의 기본값). debug(DDC) 모드에서는 봇 페이지의 JS heap이 액션마다 수십 MB씩 늘어 45분 안팎에 V8 한계인 약 4GB에 닿고 renderer가 죽는다. debug는 짧은 진단 실행에만 `FULL_RUN_BOT_FLUTTER_MODE=debug`로 쓴다.
 - fresh 실행과 checkpoint resume을 명확히 구분한다. fresh는 S1부터 시작하며 profile cookie, localStorage, sessionStorage와 앱 저장 상태를 초기화한다.
 - release locale gate는 `ko → en → ja → zh-CN → zh-TW` 순서다. locale마다 표준 S1~S8 뒤 같은 cycle에서 도전 S1~S8과 S8 정산 직전까지 이어가고, cycle 결과를 검토·보고한 뒤 다음 locale 승인을 받는다.
 - 첫 Battle·Market tutorial은 각 locale의 표준 run에서 실제 `Next/Done`까지 확인한다. 도전 run은 seen flag를 유지한다.

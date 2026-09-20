@@ -14,6 +14,7 @@ TARGET_STAGE=1
 TARGET_TIER="small"
 TARGET_SCENE="cashOut"
 REQUIRED_EVIDENCE=""
+FLUTTER_DRIVE_MODE="${FULL_RUN_BOT_FLUTTER_MODE:-profile}"
 CHROMEDRIVER_PORT="${CHROMEDRIVER_PORT:-4444}"
 WEB_PORT="${FULL_RUN_BOT_WEB_PORT:-7357}"
 BROWSER_PROFILE_DIR="${FULL_RUN_BOT_BROWSER_PROFILE_DIR:-/tmp/rummipoker_full_run_bot/chrome_profile}"
@@ -287,6 +288,7 @@ fi
 
 run_flutter_drive_and_capture "$OUTPUT_DIR/10_sub_run_bot.log" \
   flutter drive \
+    --"$FLUTTER_DRIVE_MODE" \
     --driver=test_driver/integration_test.dart \
     --target=integration_test/full_run_bot_test.dart \
     -d chrome \

@@ -22,7 +22,10 @@ PROGRESS_PORT="${FULL_RUN_BOT_PROGRESS_PORT:-7358}"
 PROGRESS_URL=""
 BROWSER_PROFILE_DIR="${FULL_RUN_BOT_BROWSER_PROFILE_DIR:-/tmp/rummipoker_full_run_bot/chrome_profile}"
 FLUTTER_BIN="${FLUTTER_BIN:-/Users/cheng80/flutter/bin/flutter}"
-FLUTTER_DRIVE_MODE="${FULL_RUN_BOT_FLUTTER_MODE:-debug}"
+# 기본을 profile로 둔다. debug(DDC) 모드에서는 봇 페이지의 JS heap이 액션마다
+# 수십 MB씩 늘어 45분쯤에 V8 한계(약 4GB)에 닿아 renderer가 죽는다. profile
+# 모드에서는 같은 봇이 33분 동안 평평했다. 디버깅이 필요할 때만 debug로 바꾼다.
+FLUTTER_DRIVE_MODE="${FULL_RUN_BOT_FLUTTER_MODE:-profile}"
 RESUME_ACTIVE_RUN=false
 RESTART_STAGE_ON_RESUME=false
 TUTORIALS_ALREADY_SEEN=false
@@ -85,6 +88,8 @@ Environment:
   CHROMEDRIVER_PORT         WebDriver port. Default: 4444.
   FLUTTER_BIN               Flutter executable. Default: /Users/cheng80/flutter/bin/flutter.
   FULL_RUN_BOT_FLUTTER_MODE Flutter drive mode: debug | profile | release.
+                            Default: profile. debug는 긴 실행에서 페이지 heap이
+                            4GB까지 자라 renderer가 죽으므로 짧은 진단에만 쓴다.
                             Default: debug.
   FULL_RUN_BOT_PROGRESS_PORT
                             Port for the in-run progress collector. The bot
