@@ -1,6 +1,8 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_notifier.dart';
+import 'package:rummipoker/providers/features/rummi_poker_grid/game_session_state.dart';
 
 /// 전투 화면은 들어갈 때마다 거의 언제나 새 [GameSessionArgs]로 세션 provider를
 /// 만든다. family 구성원이 autoDispose되지 않으면 그 구성원이 컨테이너에 남아
@@ -29,4 +31,74 @@ void main() {
         .length;
     expect(remaining, 0);
   });
+
+  testWidgets('initState의 ref.read는 첫 build의 ref.watch 전에 상태를 잃지 않는다', (
+    tester,
+  ) async {
+    // GameView는 initState에서 notifier를 ref.read로 잡고, 같은 프레임의 build에서
+    // ref.watch로 구독한다. autoDispose가 그 사이에 구성원을 버리면 initState에서
+    // 만든 상태가 사라진다. 이 테스트가 그 순서를 지킨다.
+    await tester.pumpWidget(
+      const ProviderScope(child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: _ReadThenWatchProbe(),
+      )),
+    );
+
+    final probe = tester.state(find.byType(_ReadThenWatchProbe))
+        as _ReadThenWatchProbeState;
+    expect(probe.notifierInInitState, isNotNull);
+    expect(
+      identical(probe.notifierInBuild, probe.notifierInInitState),
+      isTrue,
+      reason: 'initState와 build가 같은 notifier를 봐야 한다',
+    );
+    expect(
+      identical(probe.stateInBuild, probe.stateInInitState),
+      isTrue,
+      reason: 'initState에서 읽은 state 객체가 첫 build까지 그대로 남아야 한다',
+    );
+
+    await tester.pump();
+    expect(
+      identical(probe.stateInBuild, probe.stateInInitState),
+      isTrue,
+      reason: '다음 프레임에도 구성원이 버려지지 않아야 한다',
+    );
+  });
+}
+
+/// initState에서 세션 provider를 읽고 상태를 한 번 바꾼 뒤, build에서 같은
+/// provider를 구독하는 최소 위젯. GameView의 읽기 순서를 그대로 흉내 낸다.
+class _ReadThenWatchProbe extends ConsumerStatefulWidget {
+  const _ReadThenWatchProbe();
+
+  @override
+  ConsumerState<_ReadThenWatchProbe> createState() =>
+      _ReadThenWatchProbeState();
+}
+
+class _ReadThenWatchProbeState extends ConsumerState<_ReadThenWatchProbe> {
+  static const _args = GameSessionArgs(runSeed: 4242);
+
+  GameSessionNotifier? notifierInInitState;
+  GameSessionNotifier? notifierInBuild;
+  GameSessionState? stateInInitState;
+  GameSessionState? stateInBuild;
+
+  @override
+  void initState() {
+    super.initState();
+    notifierInInitState = ref.read(
+      gameSessionNotifierProvider(_args).notifier,
+    );
+    stateInInitState = ref.read(gameSessionNotifierProvider(_args));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    stateInBuild = ref.watch(gameSessionNotifierProvider(_args));
+    notifierInBuild = ref.read(gameSessionNotifierProvider(_args).notifier);
+    return const SizedBox.shrink();
+  }
 }
