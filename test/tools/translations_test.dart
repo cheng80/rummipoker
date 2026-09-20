@@ -182,6 +182,34 @@ void main() {
       expect(offenders, isEmpty, reason: 'The Chinese word for a tile is 牌.');
     });
 
+    // The 2026-09-21 decision: Chips and Jester stay English in Japanese and
+    // Chinese, like Gold, Station and Market. Item and Jester proper nouns
+    // keep their own Latin `Chip` (`Reroll Chip`), which this never touches.
+    test('Japanese and Chinese write Chips and Jester in English', () {
+      const localized = {
+        'ja': ['チップ', 'ジェスター'],
+        'zh-CN': ['筹码', '弄臣'],
+        'zh-TW': ['籌碼', '弄臣'],
+      };
+      final offenders = <String>[];
+      for (final entry in localized.entries) {
+        for (final row in valuesFor(entry.key)) {
+          for (final word in entry.value) {
+            if (row.value.contains(word)) {
+              offenders.add('${entry.key} ${row.key}: $word');
+            }
+          }
+        }
+      }
+      expect(
+        offenders,
+        isEmpty,
+        reason:
+            'Japanese and Chinese keep Chips and Jester in English. See '
+            'docs/tools/I18N_GLOSSARY.md.',
+      );
+    });
+
     test('Japanese calls a battle バトル, not 戦闘', () {
       final offenders = [
         for (final row in valuesFor('ja'))
