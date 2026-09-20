@@ -18,6 +18,8 @@ RETRY_RECOVERY_MIN_ATTEMPT="${FULL_RUN_BOT_RETRY_RECOVERY_MIN_ATTEMPT:-2}"
 ACTION_DELAY_MS="${FULL_RUN_BOT_ACTION_DELAY_MS:-250}"
 CHROMEDRIVER_PORT="${CHROMEDRIVER_PORT:-4444}"
 WEB_PORT="${FULL_RUN_BOT_WEB_PORT:-7357}"
+PROGRESS_PORT="${FULL_RUN_BOT_PROGRESS_PORT:-7358}"
+PROGRESS_URL=""
 BROWSER_PROFILE_DIR="${FULL_RUN_BOT_BROWSER_PROFILE_DIR:-/tmp/rummipoker_full_run_bot/chrome_profile}"
 FLUTTER_BIN="${FLUTTER_BIN:-/Users/cheng80/flutter/bin/flutter}"
 FLUTTER_DRIVE_MODE="${FULL_RUN_BOT_FLUTTER_MODE:-debug}"
@@ -84,6 +86,11 @@ Environment:
   FLUTTER_BIN               Flutter executable. Default: /Users/cheng80/flutter/bin/flutter.
   FULL_RUN_BOT_FLUTTER_MODE Flutter drive mode: debug | profile | release.
                             Default: debug.
+  FULL_RUN_BOT_PROGRESS_PORT
+                            Port for the in-run progress collector. The bot
+                            posts one line per action to it, so progress.log
+                            shows the current Station while the run is alive.
+                            Set to 0 to disable. Default: 7358.
 EOF
 }
 
@@ -242,6 +249,8 @@ port_is_open() {
 
 cleanup_bot_processes() {
   [[ -n "${CHROMEDRIVER_PID:-}" ]] && kill "$CHROMEDRIVER_PID" 2>/dev/null || true
+  [[ -n "${PROGRESS_SERVER_PID:-}" ]] && kill "$PROGRESS_SERVER_PID" 2>/dev/null || true
+  PROGRESS_SERVER_PID=""
   pkill -f 'flutter drive.*integration_test/full_run_bot_test.dart' \
     2>/dev/null || true
   pkill -f 'flutter_tools_chrome_device' 2>/dev/null || true
@@ -287,6 +296,27 @@ cleanup_bot_processes() {
   fi
 }
 trap cleanup_bot_processes EXIT
+
+# 실행 중에 봇이 어느 Station에 있는지 파일로 보이게 한다. 봇은 브라우저 안에서
+# 돌기 때문에 진행 로그가 브라우저 콘솔에만 남는다. 그 콘솔을 밖에서 읽으려면
+# WebDriver 명령을 보내야 하고, 그 명령은 flutter drive가 같은 세션에서 쓰는
+# 명령과 겹친다. 대신 브라우저가 이 수집기로 직접 POST한다.
+start_progress_server() {
+  if [[ "$PROGRESS_PORT" == "0" ]]; then
+    PROGRESS_URL=""
+    return
+  fi
+  local script="$ROOT_DIR/tools/full_run_progress_server.py"
+  if [[ ! -f "$script" ]]; then
+    PROGRESS_URL=""
+    return
+  fi
+  python3 "$script" "$PROGRESS_PORT" "$OUTPUT_DIR/progress.log" \
+    >"$OUTPUT_DIR/progress_server.log" 2>&1 &
+  PROGRESS_SERVER_PID=$!
+  PROGRESS_URL="http://127.0.0.1:$PROGRESS_PORT/"
+  echo "Progress collector on port $PROGRESS_PORT -> $OUTPUT_DIR/progress.log"
+}
 
 start_chromedriver() {
   if port_is_open; then
@@ -437,6 +467,7 @@ fi
 if [[ "$START_CHROMEDRIVER" == "true" ]]; then
   start_chromedriver
 fi
+start_progress_server
 mkdir -p "$BROWSER_PROFILE_DIR"
 if [[ -n "$CARRYOVER_ENV_BACKUP" && -f "$CARRYOVER_ENV_BACKUP" ]]; then
   cp "$CARRYOVER_ENV_BACKUP" "$BROWSER_PROFILE_DIR/latest_challenge_carryover.env"
@@ -493,6 +524,7 @@ while true; do
       --dart-define=FULL_RUN_BOT_RESTART_STAGE_ON_RESUME="$RESTART_STAGE_ON_RESUME" \
       --dart-define=FULL_RUN_BOT_TUTORIALS_ALREADY_SEEN="$TUTORIALS_ALREADY_SEEN" \
       --dart-define=FULL_RUN_BOT_TRACE_PATH="$TRACE_PATH" \
+      --dart-define=FULL_RUN_BOT_PROGRESS_URL="$PROGRESS_URL" \
       --dart-define=FULL_RUN_BOT_TARGET_STAGE="$TARGET_STAGE" \
       --dart-define=FULL_RUN_BOT_TARGET_TIER="$TARGET_TIER" \
       --dart-define=FULL_RUN_BOT_TARGET_SCENE="$TARGET_SCENE" \
@@ -507,6 +539,7 @@ while true; do
       segment_index=$((segment_index + 1))
       cleanup_bot_processes
       start_chromedriver
+      start_progress_server
       continue
     fi
     break
@@ -533,6 +566,7 @@ while true; do
   TRACE_APPEND=1
   cleanup_bot_processes
   start_chromedriver
+  start_progress_server
 done
 
 echo "full_run_bot complete."
