@@ -69,8 +69,11 @@ void main() {
 
   test('cue plays sound and haptic together with its pitch', () {
     GameFeedback.play(GameCue.deny);
-    expect(sfx.single.$1, AssetPaths.sfxFail);
-    expect(sfx.single.$3, closeTo(1.25, 1e-9));
+    expect(sfx.single.$1, gameFeedbackCues[GameCue.deny]!.sfx);
+    expect(
+      sfx.single.$3,
+      closeTo(gameFeedbackCues[GameCue.deny]!.pitch, 1e-9),
+    );
     expect(haptics, [HapticGrade.error]);
 
     GameSettings.hapticsEnabled = false;

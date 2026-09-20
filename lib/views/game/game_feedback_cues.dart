@@ -74,8 +74,10 @@ class GameCueSpec {
   final HapticGrade? haptic;
 }
 
-/// 현재 음원 7개(BtnSnd, Collect, Clear, TimeUp, Start, Fail, TimeTic)와
-/// pitch·변주 조합으로 만든 매핑.
+/// Kenney CC0 팩에서 가져온 효과음 18개와 원래 있던 7개를 계열로 묶은 매핑.
+///
+/// 한 계열 안의 차이는 pitch로 낸다. 네이티브는 pitch 없이 원음으로 재생하므로
+/// 기본값을 1 근처에 두고, 정산 상승처럼 뜻이 있는 사다리만 크게 벌린다.
 const Map<GameCue, GameCueSpec> gameFeedbackCues = {
   GameCue.buttonTap: GameCueSpec(
     sfx: AssetPaths.sfxBtnSnd,
@@ -83,143 +85,132 @@ const Map<GameCue, GameCueSpec> gameFeedbackCues = {
     haptic: HapticGrade.select,
   ),
   GameCue.tileSelect: GameCueSpec(
-    sfx: AssetPaths.sfxTimeTic,
-    pitch: 1.2,
-    pitchVariance: 0.06,
+    sfx: AssetPaths.sfxTilePick,
+    pitchVariance: 0.05,
     haptic: HapticGrade.select,
   ),
   GameCue.tilePlace: GameCueSpec(
-    sfx: AssetPaths.sfxBtnSnd,
-    pitch: 0.85,
-    pitchVariance: 0.08,
-    haptic: HapticGrade.place,
-  ),
-  GameCue.tileDraw: GameCueSpec(
-    sfx: AssetPaths.sfxTimeTic,
-    pitch: 0.9,
-    pitchVariance: 0.1,
-    haptic: HapticGrade.select,
-  ),
-  GameCue.discard: GameCueSpec(
-    sfx: AssetPaths.sfxBtnSnd,
-    pitch: 0.7,
+    sfx: AssetPaths.sfxTilePlace,
     pitchVariance: 0.06,
     haptic: HapticGrade.place,
   ),
+  GameCue.tileDraw: GameCueSpec(
+    sfx: AssetPaths.sfxCardDraw,
+    pitchVariance: 0.06,
+    haptic: HapticGrade.select,
+  ),
+  GameCue.discard: GameCueSpec(
+    sfx: AssetPaths.sfxCardToss,
+    pitchVariance: 0.05,
+    haptic: HapticGrade.place,
+  ),
   GameCue.itemUse: GameCueSpec(
-    sfx: AssetPaths.sfxStart,
-    pitch: 1.15,
+    sfx: AssetPaths.sfxJesterFire,
+    pitch: 1.08,
     pitchVariance: 0.04,
     haptic: HapticGrade.impact,
   ),
   GameCue.buy: GameCueSpec(
-    sfx: AssetPaths.sfxCollect,
-    pitch: 1.1,
-    pitchVariance: 0.04,
+    sfx: AssetPaths.sfxGold,
+    pitch: 0.92,
+    pitchVariance: 0.03,
     haptic: HapticGrade.impact,
   ),
   GameCue.sell: GameCueSpec(
-    sfx: AssetPaths.sfxCollect,
-    pitch: 0.85,
-    pitchVariance: 0.04,
+    sfx: AssetPaths.sfxGold,
+    pitch: 1.06,
+    pitchVariance: 0.03,
     haptic: HapticGrade.place,
   ),
   GameCue.reroll: GameCueSpec(
-    sfx: AssetPaths.sfxTimeTic,
-    pitchVariance: 0.08,
+    sfx: AssetPaths.sfxShuffle,
+    pitchVariance: 0.03,
     haptic: HapticGrade.select,
   ),
   GameCue.deny: GameCueSpec(
-    sfx: AssetPaths.sfxFail,
-    pitch: 1.25,
+    sfx: AssetPaths.sfxDeny,
     haptic: HapticGrade.error,
   ),
   GameCue.scoreTick: GameCueSpec(
-    sfx: AssetPaths.sfxCollect,
+    sfx: AssetPaths.sfxScoreTick,
     haptic: HapticGrade.select,
   ),
   GameCue.overlapHit: GameCueSpec(
-    sfx: AssetPaths.sfxCollect,
-    pitch: 1.3,
+    sfx: AssetPaths.sfxMultHit,
+    pitchVariance: 0.04,
     haptic: HapticGrade.impact,
   ),
   GameCue.jesterFire: GameCueSpec(
-    sfx: AssetPaths.sfxStart,
-    pitchVariance: 0.05,
+    sfx: AssetPaths.sfxJesterFire,
+    pitchVariance: 0.04,
     haptic: HapticGrade.impact,
   ),
   GameCue.penalty: GameCueSpec(
     sfx: AssetPaths.sfxFail,
-    pitch: 0.8,
+    pitch: 0.85,
     haptic: HapticGrade.heavy,
   ),
+  // 정산 단계마다 올라가는 사다리. 여기만 pitch를 크게 벌린다.
   GameCue.bigScore1: GameCueSpec(
-    sfx: AssetPaths.sfxClear,
-    pitch: 0.9,
+    sfx: AssetPaths.sfxScoreImpact,
+    pitch: 0.92,
     haptic: HapticGrade.impact,
   ),
   GameCue.bigScore2: GameCueSpec(
-    sfx: AssetPaths.sfxClear,
+    sfx: AssetPaths.sfxScoreImpact,
     haptic: HapticGrade.impact,
   ),
   GameCue.bigScore3: GameCueSpec(
-    sfx: AssetPaths.sfxClear,
-    pitch: 1.12,
+    sfx: AssetPaths.sfxScoreImpact,
+    pitch: 1.1,
     haptic: HapticGrade.heavy,
   ),
   GameCue.bigScore4: GameCueSpec(
-    sfx: AssetPaths.sfxClear,
-    pitch: 1.25,
+    sfx: AssetPaths.sfxScoreImpact,
+    pitch: 1.2,
     haptic: HapticGrade.heavy,
   ),
   GameCue.unlock: GameCueSpec(
-    sfx: AssetPaths.sfxClear,
-    pitch: 1.2,
+    sfx: AssetPaths.sfxReward,
     haptic: HapticGrade.impact,
   ),
   GameCue.marketEntry: GameCueSpec(
-    sfx: AssetPaths.sfxStart,
-    pitch: 1.05,
-    pitchVariance: 0.03,
+    sfx: AssetPaths.sfxPanelOpen,
+    pitch: 0.92,
     haptic: HapticGrade.impact,
   ),
   GameCue.marketTab: GameCueSpec(
-    sfx: AssetPaths.sfxTimeTic,
-    pitch: 1.08,
+    sfx: AssetPaths.sfxUiToggle,
     pitchVariance: 0.03,
     haptic: HapticGrade.select,
   ),
   GameCue.marketPage: GameCueSpec(
-    sfx: AssetPaths.sfxTimeTic,
-    pitch: 0.96,
-    pitchVariance: 0.04,
+    sfx: AssetPaths.sfxUiToggle,
+    pitch: 0.94,
+    pitchVariance: 0.03,
     haptic: HapticGrade.select,
   ),
   GameCue.stationAdvance: GameCueSpec(
-    sfx: AssetPaths.sfxClear,
-    pitch: 1.08,
+    sfx: AssetPaths.sfxStationTick,
     haptic: HapticGrade.impact,
   ),
   GameCue.menuNavigate: GameCueSpec(
     sfx: AssetPaths.sfxBtnSnd,
-    pitch: 0.9,
-    pitchVariance: 0.04,
+    pitch: 0.95,
+    pitchVariance: 0.03,
     haptic: HapticGrade.select,
   ),
   GameCue.cashOutCollect: GameCueSpec(
     sfx: AssetPaths.sfxCollect,
-    pitch: 1.06,
     haptic: HapticGrade.impact,
   ),
   GameCue.newReveal: GameCueSpec(
-    sfx: AssetPaths.sfxStart,
-    pitch: 1.28,
-    pitchVariance: 0.03,
+    sfx: AssetPaths.sfxReward,
+    pitch: 1.12,
     haptic: HapticGrade.impact,
   ),
   GameCue.bossIntro: GameCueSpec(
-    sfx: AssetPaths.sfxStart,
-    pitch: 0.7,
+    sfx: AssetPaths.sfxBossIntro,
     haptic: HapticGrade.heavy,
   ),
   GameCue.victory: GameCueSpec(
@@ -238,59 +229,58 @@ const Map<GameCue, GameCueSpec> gameFeedbackCues = {
   ),
   GameCue.battleStart: GameCueSpec(
     sfx: AssetPaths.sfxStart,
-    pitch: 0.9,
+    pitch: 0.95,
     haptic: HapticGrade.heavy,
   ),
   GameCue.runRestore: GameCueSpec(
     sfx: AssetPaths.sfxStart,
-    pitch: 1.1,
+    pitch: 1.05,
     haptic: HapticGrade.impact,
   ),
   GameCue.choiceSelect: GameCueSpec(
-    sfx: AssetPaths.sfxTimeTic,
-    pitch: 1.1,
+    sfx: AssetPaths.sfxTilePick,
+    pitch: 1.05,
     pitchVariance: 0.03,
     haptic: HapticGrade.select,
   ),
   GameCue.panelOpen: GameCueSpec(
-    sfx: AssetPaths.sfxBtnSnd,
-    pitch: 1.15,
+    sfx: AssetPaths.sfxPanelOpen,
     haptic: HapticGrade.select,
   ),
-  GameCue.noticeTop: GameCueSpec(sfx: AssetPaths.sfxTimeTic, pitch: 1.35),
-  GameCue.noticeBottom: GameCueSpec(sfx: AssetPaths.sfxTimeTic, pitch: 1.6),
+  GameCue.noticeTop: GameCueSpec(sfx: AssetPaths.sfxPanelOpen, pitch: 1.1),
+  GameCue.noticeBottom: GameCueSpec(sfx: AssetPaths.sfxPanelClose),
 
   // ── 전투 레인 ──
-  GameCue.countTick: GameCueSpec(sfx: AssetPaths.sfxTimeTic, pitch: 1.35),
+  GameCue.countTick: GameCueSpec(sfx: AssetPaths.sfxTimeTic),
   GameCue.tileModifierFire: GameCueSpec(
-    sfx: AssetPaths.sfxTimeTic,
-    pitch: 1.5,
+    sfx: AssetPaths.sfxMultHit,
+    pitch: 1.2,
+    pitchVariance: 0.05,
     haptic: HapticGrade.select,
   ),
   GameCue.itemFire: GameCueSpec(
-    sfx: AssetPaths.sfxStart,
-    pitch: 1.3,
+    sfx: AssetPaths.sfxJesterFire,
+    pitch: 1.15,
     haptic: HapticGrade.impact,
   ),
   GameCue.tileMove: GameCueSpec(
-    sfx: AssetPaths.sfxBtnSnd,
-    pitch: 1.1,
-    pitchVariance: 0.06,
+    sfx: AssetPaths.sfxTilePlace,
+    pitch: 1.08,
+    pitchVariance: 0.05,
     haptic: HapticGrade.place,
   ),
   GameCue.lineTransform: GameCueSpec(
-    sfx: AssetPaths.sfxStart,
+    sfx: AssetPaths.sfxLineLoad,
     pitch: 0.95,
     haptic: HapticGrade.impact,
   ),
   GameCue.previewChange: GameCueSpec(
-    sfx: AssetPaths.sfxTimeTic,
-    pitch: 1.6,
-    pitchVariance: 0.05,
+    sfx: AssetPaths.sfxScoreTick,
+    pitch: 1.25,
+    pitchVariance: 0.04,
   ),
   GameCue.confirmPress: GameCueSpec(
-    sfx: AssetPaths.sfxCollect,
-    pitch: 0.9,
+    sfx: AssetPaths.sfxLineLoad,
     haptic: HapticGrade.impact,
   ),
 };
