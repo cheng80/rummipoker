@@ -45,23 +45,17 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final strong = find
-        .descendant(
-          of: find.byKey(const ValueKey('setting-fx-intensity')),
-          matching: find.byType(ChoiceChip),
-        )
-        .at(FxIntensity.strong.index);
+    final strong = find.byKey(
+      ValueKey('setting-fx-intensity-${FxIntensity.strong.name}'),
+    );
     await tester.scrollUntilVisible(strong, 200);
     await tester.tap(strong);
     await tester.pumpAndSettle();
     expect(GameSettings.fxIntensity, FxIntensity.strong);
 
-    final instant = find
-        .descendant(
-          of: find.byKey(const ValueKey('setting-settlement-speed')),
-          matching: find.byType(ChoiceChip),
-        )
-        .at(SettlementSpeed.instant.index);
+    final instant = find.byKey(
+      ValueKey('setting-settlement-speed-${SettlementSpeed.instant.name}'),
+    );
     await tester.scrollUntilVisible(instant, 200);
     await tester.tap(instant);
     await tester.pumpAndSettle();

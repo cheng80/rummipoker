@@ -100,11 +100,9 @@ class _NewRunViewState extends State<NewRunView> {
       title: context.tr('seedDialogTitle'),
       content: DecoratedBox(
         decoration: BoxDecoration(
-          color: GameUiPalette.ink.withValues(alpha: 0.18),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: GameUiPalette.textPrimary.withValues(alpha: 0.08),
-          ),
+          color: MenuSurface.panelFill(alpha: 0.6),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: MenuSurface.border(alpha: 0.34)),
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
@@ -114,9 +112,12 @@ class _NewRunViewState extends State<NewRunView> {
               signed: true,
               decimal: false,
             ),
+            cursorColor: MenuSurface.goldBright,
             style: const TextStyle(
               color: GameUiPalette.textPrimary,
+              fontSize: 16,
               fontWeight: FontWeight.w800,
+              letterSpacing: 1.2,
             ),
             decoration: InputDecoration(
               hintText: context.tr('seedHint'),
@@ -140,7 +141,8 @@ class _NewRunViewState extends State<NewRunView> {
         GameDialogAction<String>(
           label: context.tr('ok'),
           value: 'submit',
-          accent: GameUiPalette.rarityUncommon,
+          accent: GameUiPalette.actionGold,
+          textColor: GameUiPalette.textOnGold,
         ),
       ],
     );
@@ -275,25 +277,27 @@ class _NewRunViewState extends State<NewRunView> {
           children: [
             Row(
               children: [
-                IconButton(
+                GameIconButtonChip(
+                  icon: Icons.arrow_back_rounded,
                   onPressed: _goBack,
-                  icon: const Icon(Icons.arrow_back_rounded),
-                  color: GameUiPalette.textPrimary,
                 ),
+                Expanded(
+                  child: Text(
+                    '새 게임 시작',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: AssetPaths.fontNexonLv2Gothic,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: MenuSurface.goldText.withValues(alpha: 0.96),
+                      letterSpacing: 1.6,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 38),
               ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              '새 게임 시작',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: AssetPaths.fontNexonLv2Gothic,
-                fontSize: 38,
-                color: GameUiPalette.textPrimary.withValues(alpha: 0.96),
-                letterSpacing: 1.8,
-              ),
-            ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 18),
             if (_availableDifficulties.length > 1) ...[
               HomeSection(
                 title: '난이도',
@@ -337,16 +341,15 @@ class _NewRunViewState extends State<NewRunView> {
                   HomeEntryCard(
                     title: context.tr('entryRandomSeed'),
                     description: '무작위 시드로 바로 시작',
-                    accent: GameUiPalette.actionInfoBlue,
+                    primary: true,
                     cue: GameCue.runStart,
                     decision: true,
                     onTap: _startRandomRun,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   HomeEntryCard(
                     title: context.tr('entryInputSeed'),
                     description: '시드를 직접 입력해 시작',
-                    accent: GameUiPalette.rarityUncommon,
                     onTap: _openSeedInputDialog,
                   ),
                 ],
@@ -491,15 +494,13 @@ class _RunModifierCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = modifier == NewRunModifier.highStakes
-        ? GameUiPalette.actionOrangeSoft
-        : GameUiPalette.specialBlue;
+    final accent = MenuSurface.goldBright;
     final borderColor = selected
         ? accent
-        : GameUiPalette.textPrimary.withValues(alpha: unlocked ? 0.12 : 0.07);
+        : MenuSurface.border(alpha: unlocked ? 0.26 : 0.14);
     final fillColor = selected
-        ? accent.withValues(alpha: 0.15)
-        : GameUiPalette.textPrimary.withValues(alpha: unlocked ? 0.05 : 0.025);
+        ? MenuSurface.gold.withValues(alpha: 0.18)
+        : MenuSurface.panelFill(alpha: unlocked ? 0.56 : 0.34);
     final status = unlocked
         ? (selected ? '선택됨' : '선택 가능')
         : (canUnlock ? '기억 카드로 해금' : '기억 카드 필요');
@@ -647,11 +648,11 @@ class _DifficultyButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final setup = NewRunSetup(difficulty: difficulty);
     final borderColor = selected
-        ? GameUiPalette.specialBlue
-        : GameUiPalette.textPrimary.withValues(alpha: 0.08);
+        ? MenuSurface.goldBright
+        : MenuSurface.border(alpha: 0.26);
     final fillColor = selected
-        ? GameUiPalette.specialBlue.withValues(alpha: 0.16)
-        : GameUiPalette.textPrimary.withValues(alpha: 0.04);
+        ? MenuSurface.gold.withValues(alpha: 0.18)
+        : MenuSurface.panelFill(alpha: 0.56);
     return PressFeedback(
       onTap: onTap,
       haptic: null,
@@ -676,7 +677,7 @@ class _DifficultyButton extends StatelessWidget {
                     ? Icons.check_circle_rounded
                     : Icons.circle_outlined,
                 color: selected
-                    ? GameUiPalette.specialBlue
+                    ? MenuSurface.goldBright
                     : GameUiPalette.textPrimary.withValues(alpha: 0.5),
               ),
               const SizedBox(height: 6),
