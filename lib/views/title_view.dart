@@ -314,7 +314,7 @@ class _TitleViewState extends ConsumerState<TitleView>
                 .entries
                 .map(
                   (entry) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.only(bottom: 6),
                     child: _DebugFixtureOption(
                       number: entry.key + 1,
                       label: entry.value.label,
@@ -395,11 +395,11 @@ class _TitleViewState extends ConsumerState<TitleView>
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: Padding(
-                padding: const EdgeInsets.only(bottom: 18),
+                padding: const EdgeInsets.only(bottom: 6),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 12),
                     EntranceIn(
                       enabled: _playEntrance,
                       duration: GamePresentationTimings.titleLogoSettle,
@@ -414,33 +414,30 @@ class _TitleViewState extends ConsumerState<TitleView>
                           image: true,
                           child: Image.asset(
                             AssetPaths.uiRummiPokerLogo,
-                            width: 318,
+                            width: 242,
                             fit: BoxFit.contain,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 6),
                     Text(
                       context.tr('gameSubtitle'),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: AssetPaths.fontNexonLv2Gothic,
-                        fontSize: 17,
+                        fontSize: 14,
                         fontWeight: FontWeight.w800,
-                        color: GameUiPalette.textPrimary.withValues(
-                          alpha: 0.72,
+                        letterSpacing: 1.2,
+                        color: GameUiPalette.actionGoldText.withValues(
+                          alpha: 0.76,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 18),
                     _entrance(
                       0,
                       HomeSection(
                         title: context.tr('homeContinueSectionTitle'),
-                        subtitle: hasStoredActiveRun
-                            ? context.tr('homeContinueSectionReady')
-                            : context.tr('homeContinueSectionEmpty'),
                         child: Column(
                           children: [
                             HomeEntryCard(
@@ -455,110 +452,117 @@ class _TitleViewState extends ConsumerState<TitleView>
                                       : context.tr(
                                           'homeContinueEmptyDescription',
                                         )),
-                              accent: GameUiPalette.actionGold,
+                              primary: true,
                               enabled: hasStoredActiveRun,
                               onTap: _openContinueMenu,
                             ),
-                            const SizedBox(height: 12),
-                            HomeEntryCard(
-                              title: context.tr('runInfoTitle'),
-                              description: hasStoredActiveRun
-                                  ? context.tr('homeRunInfoReadyDescription')
-                                  : context.tr('homeRunInfoEmptyDescription'),
-                              accent: GameUiPalette.actionGoldBright,
-                              onTap: _openTitleRunInfo,
-                            ),
-                            const SizedBox(height: 12),
-                            HomeEntryCard(
-                              title: '북마크 불러오기',
-                              description: '저장해 둔 3개 슬롯 중 하나에서 런을 복원합니다.',
-                              accent: GameUiPalette.titleDebugBlue,
-                              onTap: _openBookmarkLoadMenu,
+                            const SizedBox(height: 8),
+                            Row(
+                              spacing: 8,
+                              children: [
+                                Expanded(
+                                  child: HomeEntryCard(
+                                    key: const ValueKey('home-entry-run-info'),
+                                    title: context.tr('runInfoTitle'),
+                                    compact: true,
+                                    onTap: _openTitleRunInfo,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: HomeEntryCard(
+                                    key: const ValueKey('home-entry-bookmark'),
+                                    title: '북마크 불러오기',
+                                    compact: true,
+                                    onTap: _openBookmarkLoadMenu,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 12),
                     _entrance(
                       1,
                       HomeSection(
                         title: context.tr('homeNewRunSectionTitle'),
-                        subtitle: context.tr('homeNewRunSectionSubtitle'),
-                        child: Column(
-                          children: [
-                            HomeEntryCard(
-                              title: context.tr('homeNewRunTitle'),
-                              description: context.tr('homeNewRunDescription'),
-                              accent: GameUiPalette.actionInfoBlue,
-                              onTap: () => context.push(RoutePaths.newRun),
-                            ),
-                          ],
+                        child: HomeEntryCard(
+                          key: const ValueKey('home-entry-new-run'),
+                          title: context.tr('homeNewRunTitle'),
+                          description: context.tr('homeNewRunDescription'),
+                          primary: true,
+                          decision: true,
+                          onTap: () => context.push(RoutePaths.newRun),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 12),
                     _entrance(
                       2,
                       HomeSection(
                         title: context.tr('homeOtherMenuSectionTitle'),
-                        subtitle: context.tr('homeOtherMenuSectionSubtitle'),
-                        child: HomeEntryCard(
-                          title: context.tr('archiveTitle'),
-                          description: context.tr('homeArchiveDescription'),
-                          accent: GameUiPalette.titleDebugBlue,
-                          onTap: () => context.push(RoutePaths.archive),
+                        child: Row(
+                          spacing: 8,
+                          children: [
+                            Expanded(
+                              child: HomeEntryCard(
+                                key: const ValueKey('home-entry-archive'),
+                                title: context.tr('archiveTitle'),
+                                compact: true,
+                                onTap: () => context.push(RoutePaths.archive),
+                              ),
+                            ),
+                            if (_showDebugEntries)
+                              Expanded(
+                                child: HomeEntryCard(
+                                  key: const ValueKey(
+                                    'home-entry-special-mode',
+                                  ),
+                                  title: context.tr('homeSpecialModeTitle'),
+                                  compact: true,
+                                  accent: GameUiPalette.titleDebugPurple,
+                                  onTap: () => context.push(RoutePaths.trial),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     ),
                     if (_showDebugEntries) ...[
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 12),
                       _entrance(
                         3,
                         HomeSection(
                           title: '디버그',
-                          subtitle: '개발과 검증용 진입만 모아 둔 영역',
-                          child: Column(
-                            children: [
-                              HomeEntryCard(
-                                title: context.tr('homeSpecialModeTitle'),
-                                description: context.tr(
-                                  'homeSpecialModeDescription',
-                                ),
-                                accent: GameUiPalette.titleDebugPurple,
-                                onTap: () => context.push(RoutePaths.trial),
-                              ),
-                              const SizedBox(height: 12),
-                              HomeEntryCard(
-                                title: '디버그 픽스처',
-                                description: '검증용 런 상태로 바로 시작',
-                                accent: GameUiPalette.titleDebugPurpleDark,
-                                onTap: _openDebugFixtureMenu,
-                              ),
-                            ],
+                          child: HomeEntryCard(
+                            key: const ValueKey('home-entry-debug-fixture'),
+                            title: '디버그 픽스처',
+                            description: '검증용 런 상태로 바로 시작',
+                            accent: GameUiPalette.titleDebugPurpleDark,
+                            onTap: _openDebugFixtureMenu,
                           ),
                         ),
                       ),
                     ],
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 12),
                     _entrance(
                       4,
                       HomeSection(
                         title: context.tr('settings'),
-                        subtitle: context.tr('homeSettingsSectionSubtitle'),
                         child: HomeEntryCard(
+                          key: const ValueKey('home-entry-setting'),
                           title: context.tr('settings'),
                           description: context.tr('homeSettingsDescription'),
-                          accent: GameUiPalette.titleExternalBlue,
                           onTap: () {
                             context.push(RoutePaths.setting);
                           },
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 10),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 2),
                       child: FutureBuilder<PackageInfo>(
                         future: _packageInfoFuture,
                         builder: (context, snapshot) {
@@ -576,7 +580,7 @@ class _TitleViewState extends ConsumerState<TitleView>
                                 color: GameUiPalette.textPrimary.withValues(
                                   alpha: 0.58,
                                 ),
-                                fontSize: 13,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

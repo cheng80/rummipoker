@@ -65,14 +65,20 @@ void main() {
 
     expect(FxAmbient.controller.mood, FxAmbientMood.menu);
     expect(find.text('버전 1.0.0+1'), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-entry-archive')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-entry-bookmark')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-entry-run-info')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-entry-new-run')), findsOneWidget);
+    expect(find.byKey(const ValueKey('home-entry-setting')), findsOneWidget);
     expect(find.text('도감'), findsWidgets);
-    expect(find.text('보상 카드, Jester, Item 수집 상태 확인'), findsOneWidget);
     expect(find.text('북마크 불러오기'), findsOneWidget);
-    expect(find.text('저장해 둔 3개 슬롯 중 하나에서 런을 복원합니다.'), findsOneWidget);
-    expect(find.text('특별 모드'), findsNothing);
-    expect(find.text('디버그 픽스처'), findsNothing);
+    expect(find.byKey(const ValueKey('home-entry-special-mode')), findsNothing);
+    expect(
+      find.byKey(const ValueKey('home-entry-debug-fixture')),
+      findsNothing,
+    );
 
-    await tester.tap(find.text('런 정보').first);
+    await tester.tap(find.byKey(const ValueKey('home-entry-run-info')));
     await tester.pumpAndSettle();
 
     expect(find.text('런 정보'), findsWidgets);
