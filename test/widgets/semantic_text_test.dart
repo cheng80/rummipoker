@@ -1,6 +1,11 @@
 // Checks the space rule that SemanticText promises: it never needs more lines
 // than plain space breaking would, it never breaks inside a word, and it steps
 // aside when the text no longer fits.
+//
+// It also checks that swapping a Text for a SemanticText does not break the
+// tests of the screen around it. `find.text('원문')` and the accessibility
+// label must keep seeing one whole sentence whether or not the widget rewrapped
+// it.
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -32,11 +37,16 @@ Future<void> _pump(
   );
 }
 
-/// The text the widget actually handed to Flutter.
-String _renderedText(WidgetTester tester) {
-  final texts = tester.widgetList<Text>(find.byType(Text));
-  expect(texts.length, 1);
-  return texts.single.data!;
+/// The string the widget actually drew, newlines included.
+String _paintedText(WidgetTester tester) {
+  final painted = tester.widgetList<RichText>(
+    find.descendant(
+      of: find.byType(SemanticText),
+      matching: find.byType(RichText),
+    ),
+  );
+  expect(painted.length, 1);
+  return painted.single.text.toPlainText();
 }
 
 /// How many lines Flutter draws for [text] at [width].
@@ -82,9 +92,8 @@ void main() {
           child: const SemanticText(_sentence, style: _style),
         ),
       );
-      final rendered = _renderedText(tester);
       expect(
-        _lineCount(rendered, width),
+        _lineCount(_paintedText(tester), width),
         lessThanOrEqualTo(_spaceOnlyMinimumLines(_sentence, width)),
         reason: 'width $width grew the line count',
       );
@@ -96,9 +105,9 @@ void main() {
       tester,
       const SizedBox(width: 160, child: SemanticText(_sentence, style: _style)),
     );
-    final rendered = _renderedText(tester);
-    expect(rendered, isNot(_sentence), reason: 'expected the widget to apply');
-    for (final line in rendered.split('\n')) {
+    final painted = _paintedText(tester);
+    expect(painted, isNot(_sentence), reason: 'expected the widget to apply');
+    for (final line in painted.split('\n')) {
       expect(line.trim(), line, reason: 'line kept surrounding whitespace');
       expect(
         _sentence.contains(line),
@@ -108,7 +117,63 @@ void main() {
     }
     // Every inserted newline replaced a space, so removing them restores the
     // original sentence.
-    expect(rendered.replaceAll('\n', ' '), _sentence);
+    expect(painted.replaceAll('\n', ' '), _sentence);
+  });
+
+  group('screen tests keep finding the whole sentence', () {
+    testWidgets('find.text matches once while the text is rewrapped', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        const SizedBox(
+          width: 160,
+          child: SemanticText(_sentence, style: _style),
+        ),
+      );
+      expect(
+        _paintedText(tester),
+        contains('\n'),
+        reason: 'this case is only meaningful once the widget has rewrapped',
+      );
+      expect(find.text(_sentence), findsOneWidget);
+      expect(tester.widget<Text>(find.text(_sentence)).data, _sentence);
+    });
+
+    testWidgets('find.text matches once when the text fits on one line', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        const SizedBox(
+          width: 900,
+          child: SemanticText(_sentence, style: _style),
+        ),
+      );
+      expect(_paintedText(tester), _sentence);
+      expect(find.text(_sentence), findsOneWidget);
+    });
+
+    testWidgets('the accessibility label stays the whole sentence', (
+      tester,
+    ) async {
+      final handle = tester.ensureSemantics();
+      for (final width in [160.0, 900.0]) {
+        await _pump(
+          tester,
+          SizedBox(
+            width: width,
+            child: const SemanticText(_sentence, style: _style),
+          ),
+        );
+        expect(
+          find.bySemanticsLabel(_sentence),
+          findsOneWidget,
+          reason: 'width $width lost the sentence for screen readers',
+        );
+      }
+      handle.dispose();
+    });
   });
 
   testWidgets('falls back to Flutter line breaking when maxLines is too low', (
@@ -121,7 +186,27 @@ void main() {
         child: SemanticText(_sentence, style: _style, maxLines: 2),
       ),
     );
-    expect(_renderedText(tester), _sentence);
+    expect(_paintedText(tester), _sentence);
+  });
+
+  testWidgets('follows a maxLines that comes from DefaultTextStyle', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      const DefaultTextStyle(
+        style: _style,
+        maxLines: 2,
+        child: SizedBox(width: 160, child: SemanticText(_sentence)),
+      ),
+    );
+    expect(
+      _paintedText(tester),
+      _sentence,
+      reason:
+          'an inherited maxLines must block the rewrap just like an '
+          'explicit one',
+    );
   });
 
   testWidgets('falls back when the bounded height cannot hold the lines', (
@@ -135,12 +220,10 @@ void main() {
         child: SemanticText(_sentence, style: _style),
       ),
     );
-    expect(_renderedText(tester), _sentence);
+    expect(_paintedText(tester), _sentence);
   });
 
-  testWidgets('renders a plain Text for maxLines: 1 without measuring', (
-    tester,
-  ) async {
+  testWidgets('renders like a plain Text for maxLines: 1', (tester) async {
     await _pump(
       tester,
       const SizedBox(
@@ -148,7 +231,20 @@ void main() {
         child: SemanticText(_sentence, style: _style, maxLines: 1),
       ),
     );
-    expect(_renderedText(tester), _sentence);
+    expect(_paintedText(tester), _sentence);
+  });
+
+  testWidgets('keeps Flutter line breaking when softWrap is off', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      const SizedBox(
+        width: 160,
+        child: SemanticText(_sentence, style: _style, softWrap: false),
+      ),
+    );
+    expect(_paintedText(tester), _sentence);
   });
 
   testWidgets('keeps Flutter line breaking for non-Korean locales', (
@@ -163,7 +259,7 @@ void main() {
         ),
         locale: locale,
       );
-      expect(_renderedText(tester), _sentence, reason: '$locale was rewrapped');
+      expect(_paintedText(tester), _sentence, reason: '$locale was rewrapped');
     }
   });
 
@@ -178,7 +274,7 @@ void main() {
       );
       expect(tester.takeException(), isNull);
       final painter = TextPainter(
-        text: TextSpan(text: _renderedText(tester), style: _style),
+        text: TextSpan(text: _paintedText(tester), style: _style),
         textDirection: TextDirection.ltr,
       )..layout(maxWidth: width);
       expect(painter.didExceedMaxLines, isFalse);
@@ -194,11 +290,11 @@ void main() {
       tester,
       const SizedBox(width: 260, child: SemanticText(_sentence, style: _style)),
     );
-    final wide = _renderedText(tester);
+    final wide = _paintedText(tester);
     await _pump(
       tester,
       const SizedBox(width: 130, child: SemanticText(_sentence, style: _style)),
     );
-    expect(_renderedText(tester), isNot(wide));
+    expect(_paintedText(tester), isNot(wide));
   });
 }

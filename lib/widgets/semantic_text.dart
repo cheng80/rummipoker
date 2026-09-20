@@ -4,13 +4,18 @@ import 'package:flutter/widgets.dart';
 
 import '../utils/semantic_wrap/semantic_wrap.dart';
 
-/// A drop-in replacement for [Text] that breaks Korean lines at phrase
-/// boundaries instead of in the middle of a word.
+/// A [Text] that breaks Korean lines at phrase boundaries instead of in the
+/// middle of a word.
 ///
 /// Flutter's default line breaking may split a Korean word between two
 /// syllables, because Unicode allows a break there. This widget instead asks a
 /// small phrase model where the natural boundaries are, and breaks only at
 /// spaces.
+///
+/// It subclasses [Text] on purpose. `data` stays the original string, so
+/// `find.text('원문')` and `tester.widget<Text>(...)` keep working after a
+/// screen swaps its `Text` for this. Only [build] is different, and the
+/// rewrapped string never reaches the widget tree as another [Text].
 ///
 /// ## The rule it follows
 ///
@@ -23,96 +28,112 @@ import '../utils/semantic_wrap/semantic_wrap.dart';
 /// 2. Among the layouts that use exactly that many lines, it picks the one with
 ///    the most natural break positions. It never trades a line for a nicer
 ///    break.
-/// 3. If even that layout does not fit the available height or [maxLines], it
-///    renders a plain [Text] and lets Flutter break the line as before.
+/// 3. If even that layout does not fit the available height or `maxLines`, it
+///    renders like a plain [Text] and lets Flutter break the line as before.
 ///
 /// Step 3 is what keeps this widget from pushing text out of a panel that used
 /// to hold it. Refusing to split a word can push a whole word onto the next
-/// line, and in a panel tuned to the character is exactly one line too many.
+/// line, and in a panel tuned to the character that is exactly one line too many.
 ///
-/// Other languages fall through to a plain [Text]: English already breaks at
-/// spaces, and Japanese and Chinese are expected to break between characters.
-class SemanticText extends StatelessWidget {
+/// Other languages fall through to plain [Text] behaviour: English already
+/// breaks at spaces, and Japanese and Chinese are expected to break between
+/// characters.
+///
+/// ## Where it must not be used
+///
+/// Measuring needs the real width, so this widget uses a [LayoutBuilder]. A
+/// [LayoutBuilder] asserts in debug builds when an ancestor asks it for an
+/// intrinsic size. Keep a plain [Text] under [IntrinsicWidth], [IntrinsicHeight],
+/// `AlertDialog` and `SimpleDialog` (Material's dialogs use [IntrinsicWidth]
+/// internally), or move the screen onto this project's own `GameModalCard`.
+/// `test/widgets/semantic_text_usage_test.dart` checks this per file.
+class SemanticText extends Text {
   const SemanticText(
-    this.data, {
+    super.data, {
     super.key,
-    this.style,
-    this.strutStyle,
-    this.textAlign,
-    this.maxLines,
-    this.overflow,
-    this.softWrap,
-    this.textScaler,
-    this.semanticsLabel,
+    super.style,
+    super.strutStyle,
+    super.textAlign,
+    super.textDirection,
+    super.locale,
+    super.softWrap,
+    super.overflow,
+    super.textScaler,
+    super.maxLines,
+    super.semanticsLabel,
+    super.textWidthBasis,
+    super.textHeightBehavior,
+    super.selectionColor,
     this.phraseModels,
   });
 
-  final String data;
-  final TextStyle? style;
-  final StrutStyle? strutStyle;
-  final TextAlign? textAlign;
-  final int? maxLines;
-  final TextOverflow? overflow;
-  final bool? softWrap;
-  final TextScaler? textScaler;
-  final String? semanticsLabel;
-
   /// Phrase model per language code. Injectable so another language can be
-  /// added later without changing this widget. Null means [koreanOnlyPhraseModels].
+  /// added later without changing this widget. Null means
+  /// [koreanOnlyPhraseModels].
   final Map<String, PhraseModel>? phraseModels;
 
   @override
   Widget build(BuildContext context) {
-    final defaultTextStyle = DefaultTextStyle.of(context);
-    final effectiveMaxLines = maxLines ?? defaultTextStyle.maxLines;
-    // A single line has nothing to break, so skip the measuring entirely.
-    if (effectiveMaxLines == 1 || data.trim().isEmpty) return _plain(data);
+    final text = data!;
+    final defaults = DefaultTextStyle.of(context);
 
-    final locale = Localizations.maybeLocaleOf(context);
-    final models = phraseModels ?? koreanOnlyPhraseModels;
-    final model = models[locale?.languageCode];
-    if (model == null) return _plain(data);
-    if (!_hasEnoughSpaces(data)) return _plain(data);
-
-    final effectiveStyle = style?.inherit ?? true
-        ? defaultTextStyle.style.merge(style)
-        : style!;
-    final effectiveScaler = textScaler ?? MediaQuery.textScalerOf(context);
+    // A single line has nothing to break, and softWrap: false means the caller
+    // wants one line no matter what, so skip the measuring entirely.
+    if ((maxLines ?? defaults.maxLines) == 1 ||
+        !(softWrap ?? defaults.softWrap) ||
+        text.trim().isEmpty) {
+      return super.build(context);
+    }
+    final uiLocale = locale ?? Localizations.maybeLocaleOf(context);
+    final model =
+        (phraseModels ?? koreanOnlyPhraseModels)[uiLocale?.languageCode];
+    if (model == null || !_hasEnoughSpaces(text)) return super.build(context);
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (!constraints.maxWidth.isFinite || constraints.maxWidth <= 0) {
-          return _plain(data);
+        if (!constraints.maxWidth.isFinite || constraints.maxWidth < 1) {
+          return super.build(context);
         }
         final wrapped = _resolveWrappedText(
-          text: data,
+          text: text,
           model: model,
-          style: effectiveStyle,
-          strutStyle: strutStyle,
-          textAlign: textAlign ?? defaultTextStyle.textAlign ?? TextAlign.start,
-          textDirection: Directionality.of(context),
-          textScaler: effectiveScaler,
-          locale: locale,
-          maxWidth: constraints.maxWidth,
-          maxHeight: constraints.maxHeight,
-          maxLines: effectiveMaxLines,
+          metrics: _TextMetrics.of(context, this),
+          // Round the available box down to whole logical pixels. During a size
+          // animation the raw value moves by a fraction every frame, which would
+          // miss the cache and remeasure on every one of them. Rounding down is
+          // the safe direction: a layout that fits a narrower box also fits the
+          // real one.
+          // ponytail: whole pixels, go finer only if a screen shows visible slack.
+          maxWidth: constraints.maxWidth.floorToDouble(),
+          maxHeight: constraints.maxHeight.isFinite
+              ? constraints.maxHeight.floorToDouble()
+              : double.infinity,
         );
-        return _plain(wrapped ?? data);
+        if (wrapped == null) return super.build(context);
+        // Build the rewrapped string through a throwaway Text so this widget
+        // follows every DefaultTextStyle rule Text follows, then hand back that
+        // widget's own output. No second Text reaches the tree, so
+        // find.text(원문) still matches exactly one widget: this one.
+        return Text(
+          wrapped,
+          style: style,
+          strutStyle: strutStyle,
+          textAlign: textAlign,
+          textDirection: textDirection,
+          locale: locale,
+          softWrap: softWrap,
+          overflow: overflow,
+          textScaler: textScaler,
+          maxLines: maxLines,
+          // Screen readers and find.bySemanticsLabel keep seeing one sentence.
+          semanticsLabel: semanticsLabel ?? text,
+          textWidthBasis: textWidthBasis,
+          textHeightBehavior: textHeightBehavior,
+          selectionColor: selectionColor,
+        ).build(context);
       },
     );
   }
-
-  Widget _plain(String text) => Text(
-    text,
-    style: style,
-    strutStyle: strutStyle,
-    textAlign: textAlign,
-    maxLines: maxLines,
-    overflow: overflow,
-    softWrap: softWrap,
-    textScaler: textScaler,
-    semanticsLabel: semanticsLabel ?? (text == data ? null : data),
-  );
 }
 
 /// The only model shipped today. Korean uses the phrase model; every other
@@ -132,39 +153,117 @@ bool _hasEnoughSpaces(String text) {
   return spaces.isNotEmpty && spaces.length <= _maxSpaceBoundaries;
 }
 
-/// Results are keyed by everything that can change the answer, so a cache hit
-/// is always safe to reuse.
+/// Everything [Text.build] resolves from the surrounding context before it
+/// hands the work to `RichText`.
+///
+/// Measuring has to use the very same values the rendering will use. If the two
+/// drift apart, the promise that the text does not grow a line and does not
+/// overflow stops holding.
+class _TextMetrics {
+  const _TextMetrics({
+    required this.style,
+    required this.strutStyle,
+    required this.textAlign,
+    required this.textDirection,
+    required this.textScaler,
+    required this.locale,
+    required this.maxLines,
+    required this.textWidthBasis,
+    required this.textHeightBehavior,
+  });
+
+  factory _TextMetrics.of(BuildContext context, Text widget) {
+    final defaults = DefaultTextStyle.of(context);
+    var effectiveStyle = widget.style;
+    if (widget.style == null || widget.style!.inherit) {
+      effectiveStyle = defaults.style.merge(widget.style);
+    }
+    if (MediaQuery.boldTextOf(context)) {
+      effectiveStyle = effectiveStyle!.merge(
+        const TextStyle(fontWeight: FontWeight.bold),
+      );
+    }
+    return _TextMetrics(
+      style: effectiveStyle!,
+      strutStyle: widget.strutStyle,
+      textAlign: widget.textAlign ?? defaults.textAlign ?? TextAlign.start,
+      textDirection: widget.textDirection ?? Directionality.of(context),
+      textScaler: widget.textScaler ?? MediaQuery.textScalerOf(context),
+      locale: widget.locale ?? Localizations.maybeLocaleOf(context),
+      maxLines: widget.maxLines ?? defaults.maxLines,
+      textWidthBasis: widget.textWidthBasis ?? defaults.textWidthBasis,
+      textHeightBehavior:
+          widget.textHeightBehavior ??
+          defaults.textHeightBehavior ??
+          DefaultTextHeightBehavior.maybeOf(context),
+    );
+  }
+
+  final TextStyle style;
+  final StrutStyle? strutStyle;
+  final TextAlign textAlign;
+  final TextDirection textDirection;
+  final TextScaler textScaler;
+  final Locale? locale;
+  final int? maxLines;
+  final TextWidthBasis textWidthBasis;
+  final TextHeightBehavior? textHeightBehavior;
+
+  TextPainter newPainter() => TextPainter(
+    textAlign: textAlign,
+    textDirection: textDirection,
+    textScaler: textScaler,
+    strutStyle: strutStyle,
+    locale: locale,
+    textWidthBasis: textWidthBasis,
+    textHeightBehavior: textHeightBehavior,
+  );
+}
+
+/// Everything that can change the answer. The parts are compared by value, not
+/// by hash, so a hash collision cannot hand back another style's layout.
+typedef _CacheKey = ({
+  String text,
+  TextStyle style,
+  StrutStyle? strutStyle,
+  TextAlign textAlign,
+  TextDirection textDirection,
+  TextScaler textScaler,
+  Locale? locale,
+  int? maxLines,
+  TextWidthBasis textWidthBasis,
+  TextHeightBehavior? textHeightBehavior,
+  double maxWidth,
+  double maxHeight,
+});
+
 const int _cacheCapacity = 512;
-final LinkedHashMap<String, String?> _wrapCache =
-    LinkedHashMap<String, String?>();
+final LinkedHashMap<_CacheKey, String?> _wrapCache =
+    LinkedHashMap<_CacheKey, String?>();
 
 /// Returns the text with newlines inserted, or null to keep Flutter's own
 /// line breaking.
 String? _resolveWrappedText({
   required String text,
   required PhraseModel model,
-  required TextStyle style,
-  required StrutStyle? strutStyle,
-  required TextAlign textAlign,
-  required TextDirection textDirection,
-  required TextScaler textScaler,
-  required Locale? locale,
+  required _TextMetrics metrics,
   required double maxWidth,
   required double maxHeight,
-  required int? maxLines,
 }) {
-  final key = [
-    text,
-    style.hashCode,
-    strutStyle?.hashCode ?? 0,
-    textAlign.index,
-    textDirection.index,
-    textScaler.hashCode,
-    locale?.toString() ?? '',
-    maxWidth,
-    maxHeight,
-    maxLines ?? -1,
-  ].join('\u0000');
+  final key = (
+    text: text,
+    style: metrics.style,
+    strutStyle: metrics.strutStyle,
+    textAlign: metrics.textAlign,
+    textDirection: metrics.textDirection,
+    textScaler: metrics.textScaler,
+    locale: metrics.locale,
+    maxLines: metrics.maxLines,
+    textWidthBasis: metrics.textWidthBasis,
+    textHeightBehavior: metrics.textHeightBehavior,
+    maxWidth: maxWidth,
+    maxHeight: maxHeight,
+  );
   if (_wrapCache.containsKey(key)) {
     // Refresh the entry so the cap evicts the least recently used text.
     final cached = _wrapCache.remove(key);
@@ -172,18 +271,12 @@ String? _resolveWrappedText({
     return cached;
   }
 
-  final painter = TextPainter(
-    textDirection: textDirection,
-    textAlign: textAlign,
-    textScaler: textScaler,
-    strutStyle: strutStyle,
-    locale: locale,
-  );
+  final painter = metrics.newPainter();
   String? result;
   try {
     double measure(String segment) {
       painter
-        ..text = TextSpan(text: segment, style: style)
+        ..text = TextSpan(text: segment, style: metrics.style)
         ..maxLines = null
         ..layout(maxWidth: double.infinity);
       return painter.width;
@@ -198,8 +291,8 @@ String? _resolveWrappedText({
     if (selection.applied) {
       final candidate = selection.lines.join('\n');
       painter
-        ..text = TextSpan(text: candidate, style: style)
-        ..maxLines = maxLines
+        ..text = TextSpan(text: candidate, style: metrics.style)
+        ..maxLines = metrics.maxLines
         ..layout(maxWidth: maxWidth);
       final fits =
           !painter.didExceedMaxLines &&
