@@ -141,5 +141,6 @@
   "marketUnavailable": "Unavailable",
   "marketUnusedDiscards": "Unused discards",
   "marketUse": "Use",
-  "marketUseMarketManual": "Use manually in Market"
+  "marketUseMarketManual": "Use manually in Market",
+  "marketOverlapTag": "Overlap"
 }

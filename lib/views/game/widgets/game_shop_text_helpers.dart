@@ -224,7 +224,7 @@ String _itemEffectTag(BuildContext context, String op) {
     'chips_bonus' => context.translate('marketChipsTag'),
     'mult_bonus' => context.translate('marketScorePercentTag'),
     'xmult_bonus' => context.translate('marketScoreMultiplierTag'),
-    'temporary_overlap_cap_bonus' => 'Overlap',
+    'temporary_overlap_cap_bonus' => context.translate('marketOverlapTag'),
     'gain_gold' ||
     'add_hand_rank_progress' ||
     'board_discard_reward_bonus' ||
@@ -262,7 +262,7 @@ String _catalogItemTagLabel(BuildContext context, String tag) {
     'straight' => 'Run',
     'flush' => 'Color',
     'two_pair' => 'Two Pair',
-    'overlap' => 'Overlap',
+    'overlap' => context.translate('marketOverlapTag'),
     'discard' => 'Discard',
     'draw' => 'Draw',
     'safety' => 'Safety',

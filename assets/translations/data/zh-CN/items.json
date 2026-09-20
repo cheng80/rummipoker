@@ -3,11 +3,11 @@
     "items": {
       "reroll_token": {
         "displayName": "Reroll Chip",
-        "effectText": "下一次商店重抽少花1 Gold。"
+        "effectText": "下一次 Market 重抽少花 1 Gold。"
       },
       "coupon_stamp": {
         "displayName": "Discount Stamp",
-        "effectText": "下一次Item或Jester购买少花2 Gold。"
+        "effectText": "下一次 Item 或 Jester 购买少花 2 Gold。"
       },
       "coin_cache": {
         "displayName": "Coin Cache",
@@ -15,31 +15,31 @@
       },
       "two_pair_study": {
         "displayName": "Two Pair Study",
-        "effectText": "在商店使用，使Two Pair成长+1。"
+        "effectText": "在 Market 使用，使 Two Pair 成长+1。"
       },
       "triple_study": {
         "displayName": "Triple Study",
-        "effectText": "在商店使用，使Triple成长+1。"
+        "effectText": "在 Market 使用，使 Triple 成长+1。"
       },
       "straight_study": {
         "displayName": "Straight Study",
-        "effectText": "在商店使用，使Straight成长+1。"
+        "effectText": "在 Market 使用，使 Straight 成长+1。"
       },
       "flush_study": {
         "displayName": "Flush Study",
-        "effectText": "在商店使用，使Flush成长+1。"
+        "effectText": "在 Market 使用，使 Flush 成长+1。"
       },
       "full_house_study": {
         "displayName": "Full House Study",
-        "effectText": "在商店使用，使Full House成长+1。"
+        "effectText": "在 Market 使用，使 Full House 成长+1。"
       },
       "four_kind_study": {
         "displayName": "Four Kind Study",
-        "effectText": "在商店使用，使Four of a Kind成长+1。"
+        "effectText": "在 Market 使用，使 Four of a Kind 成长+1。"
       },
       "straight_flush_study": {
         "displayName": "Straight Flush Study",
-        "effectText": "在商店使用，使Straight Flush成长+1。"
+        "effectText": "在 Market 使用，使 Straight Flush 成长+1。"
       },
       "line_memory": {
         "displayName": "Line Memory",
@@ -47,11 +47,11 @@
       },
       "board_scrap": {
         "displayName": "Board Pass",
-        "effectText": "本Station获得+1次棋盘弃牌。"
+        "effectText": "本 Station 获得+1次棋盘弃牌。"
       },
       "hand_scrap": {
         "displayName": "Hand Pass",
-        "effectText": "本Station获得+1次手牌弃牌。"
+        "effectText": "本 Station 获得+1次手牌弃牌。"
       },
       "chip_capsule": {
         "displayName": "Chip Charge",
@@ -63,11 +63,11 @@
       },
       "line_polish": {
         "displayName": "Score Polish",
-        "effectText": "下一次确认最终分数x1.25。"
+        "effectText": "下一次确认最终分数 x1.25。"
       },
       "straight_oil": {
         "displayName": "Run Primer",
-        "effectText": "下一次Run线确认获得+40 Chips。"
+        "effectText": "下一次 Run 线确认获得+40 Chips。"
       },
       "flush_powder": {
         "displayName": "Color Primer",
@@ -75,7 +75,7 @@
       },
       "pair_splint": {
         "displayName": "Pair Brace",
-        "effectText": "下一次Two Pair确认获得+35 Chips。"
+        "effectText": "下一次 Two Pair 确认获得+35 Chips。"
       },
       "overlap_pin": {
         "displayName": "Overlap Pin",
@@ -83,75 +83,75 @@
       },
       "emergency_draw": {
         "displayName": "Emergency Draw",
-        "effectText": "如果手牌为空，不消耗牌库并生成1张随机牌块。"
+        "effectText": "如果手牌为空，不消耗牌库并生成 1张随机牌。"
       },
       "ledger_clip": {
         "displayName": "Ledger Clip",
-        "effectText": "进入商店时获得+1 Gold。"
+        "effectText": "进入 Market 时获得+1 Gold。"
       },
       "discard_glove": {
         "displayName": "Board Glove",
-        "effectText": "每个Station开始时，棋盘弃牌+1。"
+        "effectText": "每个 Station 开始时，棋盘弃牌+1。"
       },
       "mulligan_sleeve": {
         "displayName": "Hand Sleeve",
-        "effectText": "每个Station开始时，手牌弃牌+1。"
+        "effectText": "每个 Station 开始时，手牌弃牌+1。"
       },
       "jester_hook": {
         "displayName": "Jester Hook",
-        "effectText": "Jester出售价格+1 Gold。"
+        "effectText": "Jester 出售价格+1 Gold。"
       },
       "score_abacus": {
         "displayName": "Score Abacus",
-        "effectText": "每个Station第一次确认获得+30 Chips。"
+        "effectText": "每个 Station 第一次确认获得+30 Chips。"
       },
       "thin_caliper": {
         "displayName": "Short Caliper",
-        "effectText": "用3张或更少牌确认时获得分数 +20%。"
+        "effectText": "用 3张或更少牌确认时获得分数 +20%。"
       },
       "stage_map": {
         "displayName": "Station Map",
-        "effectText": "清除Showdown后奖励+1 Gold。"
+        "effectText": "清除 Showdown 后奖励+1 Gold。"
       },
       "merchant_stamp": {
         "displayName": "Shop Stamp",
-        "effectText": "进入商店后第一次重抽少花1 Gold。"
+        "effectText": "进入 Market 后第一次重抽少花 1 Gold。"
       },
       "safety_net": {
         "displayName": "Failsafe Net",
-        "effectText": "每个Station一次，防止第一次会结束run的战斗锁定。"
+        "effectText": "每个 Station 一次，防止第一次会结束 run 的战斗锁定。"
       },
       "coin_funnel": {
         "displayName": "Board Funnel",
-        "effectText": "结算时，每次未使用棋盘弃牌给予+1奖励Gold。"
+        "effectText": "结算时，每次未使用棋盘弃牌给予+1 奖励 Gold。"
       },
       "hand_funnel": {
         "displayName": "Hand Funnel",
-        "effectText": "结算时，每次未使用手牌弃牌给予+1奖励Gold。"
+        "effectText": "结算时，每次未使用手牌弃牌给予+1 奖励 Gold。"
       },
       "echo_bell": {
         "displayName": "Echo Bell",
-        "effectText": "每个Station第二次确认追加第一次确认分数的10%。"
+        "effectText": "每个 Station 第二次确认追加第一次确认分数的 10%。"
       },
       "boss_trophy": {
         "displayName": "Showdown Trophy",
-        "effectText": "清除Showdown后，下个商店Jester候选+1。"
+        "effectText": "清除 Showdown 后，下个 MarketJester 候选+1。"
       },
       "thin_wallet": {
         "displayName": "Empty Wallet",
-        "effectText": "仅在3 Gold以下可用。获得+5 Gold。"
+        "effectText": "仅在 3 Gold 以下可用。获得+5 Gold。"
       },
       "trade_ticket": {
         "displayName": "Item Ticket",
-        "effectText": "只重抽Item候选。"
+        "effectText": "只重抽 Item 候选。"
       },
       "jester_invoice": {
         "displayName": "Jester Invoice",
-        "effectText": "下一次Jester购买少花4 Gold。"
+        "effectText": "下一次 Jester 购买少花 4 Gold。"
       },
       "item_invoice": {
         "displayName": "Item Invoice",
-        "effectText": "下一次Item购买少花4 Gold。"
+        "effectText": "下一次 Item 购买少花 4 Gold。"
       },
       "red_swatch": {
         "displayName": "Red Swatch",
@@ -175,19 +175,19 @@
       },
       "deck_needle": {
         "displayName": "Deck Needle",
-        "effectText": "查看牌库顶部3张牌并弃掉1张。"
+        "effectText": "查看牌库顶部 3张牌并弃掉 1张。"
       },
       "battle_pouch": {
         "displayName": "Battle Pouch",
-        "effectText": "本Battle最大手牌+1。"
+        "effectText": "本 Battle 最大手牌+1。"
       },
       "tile_polisher": {
         "displayName": "Tile Polisher",
-        "effectText": "每个Station第一张得分牌获得+20 Chips。"
+        "effectText": "每个 Station 第一张得分牌获得+20 Chips。"
       },
       "move_token": {
         "displayName": "Move Chip",
-        "effectText": "本Station棋盘移动+1。"
+        "effectText": "本 Station 棋盘移动+1。"
       },
       "slide_wax": {
         "displayName": "Slide Wax",
@@ -195,7 +195,7 @@
       },
       "board_lift": {
         "displayName": "Move Reserve",
-        "effectText": "为下个Station保留+1棋盘移动。"
+        "effectText": "为下个 Station 保留+1 棋盘移动。"
       },
       "undo_seal": {
         "displayName": "Undo Seal",
@@ -203,7 +203,7 @@
       },
       "organizer_glove": {
         "displayName": "Organizer Glove",
-        "effectText": "每个Station开始时，棋盘移动+1。"
+        "effectText": "每个 Station 开始时，棋盘移动+1。"
       },
       "travel_pouch": {
         "displayName": "Travel Pouch",
@@ -211,19 +211,19 @@
       },
       "wide_grip": {
         "displayName": "Wide Grip",
-        "effectText": "每个Station开始时，最大手牌+1，棋盘弃牌-1。"
+        "effectText": "每个 Station 开始时，最大手牌+1，棋盘弃牌-1。"
       },
       "grand_satchel": {
         "displayName": "Grand Satchel",
-        "effectText": "每个Station开始时，最大手牌+2，手牌弃牌-1。"
+        "effectText": "每个 Station 开始时，最大手牌+2，手牌弃牌-1。"
       },
       "market_compass": {
         "displayName": "Shop Compass",
-        "effectText": "进入商店时，Item/Jester候选中较便宜的第一个候选便宜1 Gold。"
+        "effectText": "进入 Market 时，Item/Jester 候选中较便宜的第一个候选便宜 1 Gold。"
       },
       "cross_memory": {
         "displayName": "Cross Memory",
-        "effectText": "标记1个交叉计分牌。之后该牌作为重叠线计分时，获得额外牌型成长。"
+        "effectText": "标记 1个交叉计分牌。之后该牌作为重叠线计分时，获得额外牌型成长。"
       },
       "keystone_copy": {
         "displayName": "Keystone Copy",
@@ -311,7 +311,7 @@
       },
       "trim_color": {
         "displayName": "颜色修剪",
-        "effectText": "选择棋盘线内的一个牌块。移除该线中不同颜色的牌块，并将等量同色牌块放到牌堆顶。"
+        "effectText": "选择棋盘线内的一张牌。移除该线中不同颜色的牌，并将等量同色牌放到牌堆顶。"
       },
       "trim_rank": {
         "displayName": "Two-Pair Fate",
@@ -319,11 +319,11 @@
       },
       "deadwood_burn": {
         "displayName": "枯枝焚烧",
-        "effectText": "清空一条棋盘线。移除该线的棋盘牌块并获得金币 +3。"
+        "effectText": "清空一条棋盘线。移除该线的棋盘牌并获得 Gold +3。"
       },
       "sacrifice_line": {
         "displayName": "献祭仪式",
-        "effectText": "清空一条棋盘线。将该线 2 个牌块复制到牌堆顶。"
+        "effectText": "清空一条棋盘线。将该线的 2张牌复制到牌堆顶。"
       },
       "cross_rite": {
         "displayName": "Cross Rite",

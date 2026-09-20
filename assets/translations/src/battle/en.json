@@ -178,7 +178,7 @@
   "battleUnmetItems": "Item conditions unmet 0/{total}",
   "battleTileEffects": "Tile effects: {count}",
   "battlePreviewEffects": "Chips {chips} · J{jesters}/I{items}",
-  "battlePreviewEffectsOverlap": "Chips {chips} · overlap +{overlap} · J{jesters}/I{items}",
+  "battlePreviewEffectsOverlap": "Chips {chips} · Overlap +{overlap} · J{jesters}/I{items}",
   "battleDebugFixture": "Debug fixture mode: progress will not be saved.",
   "battleStart": "Start battle",
   "battleDebugItemMissing": "Debug item not found: {id}",

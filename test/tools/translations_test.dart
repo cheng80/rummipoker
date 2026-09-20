@@ -61,6 +61,91 @@ void main() {
     }
   });
 
+  // The 2026-09-20 terminology decision: Chinese puts a half-width space
+  // between a Han character and a Latin letter or digit, the Chinese tile word
+  // is 牌, and Japanese says バトル rather than 戦闘. See
+  // docs/tools/I18N_GLOSSARY.md.
+  group('the 5-locale terminology and spacing decision holds', () {
+    // Every string a locale ships, fragments and data files alike.
+    List<({String file, String key, String value})> valuesFor(String locale) {
+      final out = <({String file, String key, String value})>[];
+      void walk(String file, String key, Object? node) {
+        if (node is Map) {
+          for (final entry in node.entries) {
+            walk(file, key.isEmpty ? '${entry.key}' : '$key.${entry.key}',
+                entry.value);
+          }
+        } else if (node is List) {
+          for (var i = 0; i < node.length; i++) {
+            walk(file, '$key[$i]', node[i]);
+          }
+        } else if (node is String) {
+          out.add((file: file, key: key, value: node));
+        }
+      }
+
+      for (final dir in Directory(_sourceRoot).listSync().whereType<Directory>()) {
+        final file = File('${dir.path}/$locale.json');
+        if (file.existsSync()) walk(file.path, '', jsonDecode(file.readAsStringSync()));
+      }
+      final dataDir = Directory('$_outputRoot/data/$locale');
+      if (dataDir.existsSync()) {
+        for (final file in dataDir.listSync().whereType<File>()) {
+          if (file.path.endsWith('.json')) {
+            walk(file.path, '', jsonDecode(file.readAsStringSync()));
+          }
+        }
+      }
+      return out;
+    }
+
+    test('Chinese keeps a space between a Han character and Latin', () {
+      // A measure word or a percent sign stays against its number, and the
+      // decision left `run` in the subtitle as it was.
+      final allowed = RegExp(r'[0-9}][张張个個条條次种種局回%％]');
+      final tight = RegExp(
+        r'([㐀-䶿一-鿿][A-Za-z0-9{])'
+        r'|([A-Za-z0-9}][㐀-䶿一-鿿])',
+      );
+      final offenders = <String>[];
+      for (final locale in ['zh-CN', 'zh-TW']) {
+        for (final row in valuesFor(locale)) {
+          for (final match in tight.allMatches(row.value)) {
+            if (allowed.hasMatch(match.group(0)!)) continue;
+            offenders.add('$locale ${row.key}: ...${match.group(0)}...');
+          }
+        }
+      }
+      expect(
+        offenders,
+        isEmpty,
+        reason:
+            'Chinese puts a half-width space between a Han character and a '
+            'Latin letter or digit. See docs/tools/I18N_GLOSSARY.md.',
+      );
+    });
+
+    test('Chinese calls a tile 牌, not 牌块 or 牌塊', () {
+      final offenders = <String>[];
+      for (final locale in ['zh-CN', 'zh-TW']) {
+        for (final row in valuesFor(locale)) {
+          if (row.value.contains('牌块') || row.value.contains('牌塊')) {
+            offenders.add('$locale ${row.key}');
+          }
+        }
+      }
+      expect(offenders, isEmpty, reason: 'The Chinese word for a tile is 牌.');
+    });
+
+    test('Japanese calls a battle バトル, not 戦闘', () {
+      final offenders = [
+        for (final row in valuesFor('ja'))
+          if (row.value.contains('戦闘')) row.key,
+      ];
+      expect(offenders, isEmpty, reason: 'Japanese says バトル.');
+    });
+  });
+
   test('the per-locale data files carry the same ids', () {
     for (final name in ['items', 'jesters']) {
       final reference =

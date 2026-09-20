@@ -31,7 +31,7 @@
   "coreItemPendingBuy": "次の購入で発動します。",
   "coreItemPendingConfirm": "次の確定で発動します。",
   "coreItemPendingConsumed": "消費済み · {effect}",
-  "coreItemPendingMarket": "次のマーケットで発動します。",
+  "coreItemPendingMarket": "次のMarketで発動します。",
   "coreItemPendingReroll": "次のリロールで発動します。",
   "coreItemPendingSettlement": "精算時に発動します。",
   "coreItemPurchase": "購入価格 −{count}G",
@@ -50,7 +50,7 @@
   "coreItemTargetGold": "Gold",
   "coreItemTargetHand": "手札",
   "coreItemTargetItemOffer": "アイテム候補",
-  "coreItemTargetMarketOffer": "マーケット",
+  "coreItemTargetMarketOffer": "Market",
   "coreItemTargetMarketReroll": "次のリロール",
   "coreItemTargetSettlement": "精算",
   "coreItemUndo": "移動を取り消し"

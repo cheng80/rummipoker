@@ -19,6 +19,7 @@
 // These are the same exclusions the hardcoded-string survey used, so the count
 // here and the count in that report line up.
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -213,8 +214,59 @@ void main() {
   });
 
   // The Korean check above cannot see an English literal. The settlement
-  // callout once shipped the bare word 'overlap' as the step title, and it
-  // showed in all five languages. Every arm of that switch has to read its
+  // callout once shipped the bare word 'overlap' as the step title, and the
+  // scoring preview bar and the Market tags shipped it too, so it showed in
+  // all five languages. The word names a scoring concept that already has
+  // keys, so it must never appear as text again.
+  test('the word overlap never reaches a screen as a literal', () {
+    final offenders = <String>[];
+
+    // Dart: a quoted 'overlap'/'Overlap' that is not an id or an effect op.
+    // An op string sits next to `=>` on the left of a switch arm, or inside
+    // effect.value(...), so only the right-hand side is display text.
+    final displayLiteral = RegExp(r"=>\s*'([^']*[Oo]verlap[^']*)'");
+    for (final path in _libraryFiles()) {
+      if (!path.startsWith('lib/views/')) continue;
+      for (final match in displayLiteral.allMatches(
+        File(path).readAsStringSync(),
+      )) {
+        offenders.add('$path: ${match.group(1)}');
+      }
+    }
+
+    // Translations: the bare word, not the longer English 'overlapping'.
+    final bareWord = RegExp(r'(?<![A-Za-z])[Oo]verlap(?![A-Za-z])');
+    for (final locale in ['ko', 'en', 'ja', 'zh-CN', 'zh-TW']) {
+      for (final dir in Directory(
+        'assets/translations/src',
+      ).listSync().whereType<Directory>()) {
+        final file = File('${dir.path}/$locale.json');
+        if (!file.existsSync()) continue;
+        final entries =
+            jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+        for (final entry in entries.entries) {
+          final value = entry.value as String;
+          // English may say Overlap, every other language must not.
+          if (locale == 'en') continue;
+          // A placeholder name is not text anyone reads.
+          final text = value.replaceAll(RegExp(r'\{[^{}]*\}'), '');
+          if (bareWord.hasMatch(text)) {
+            offenders.add('$locale ${entry.key}: $value');
+          }
+        }
+      }
+    }
+
+    expect(
+      offenders,
+      isEmpty,
+      reason:
+          'Read the overlap label from coreSettlementOverlap or '
+          'marketOverlapTag instead. See docs/core/I18N.md.',
+    );
+  });
+
+  // Every arm of the settlement step switch has to read its
   // title from a translation key or from the line it describes.
   test('the settlement step titles never hold a bare literal', () {
     const path = 'lib/views/game/game_view_battle_widgets.dart';

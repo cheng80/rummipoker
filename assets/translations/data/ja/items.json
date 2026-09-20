@@ -3,7 +3,7 @@
     "items": {
       "reroll_token": {
         "displayName": "Reroll Chip",
-        "effectText": "次のショップリロールはGoldコスト-1。"
+        "effectText": "次のMarketリロールはGoldコスト-1。"
       },
       "coupon_stamp": {
         "displayName": "Discount Stamp",
@@ -15,31 +15,31 @@
       },
       "two_pair_study": {
         "displayName": "Two Pair Study",
-        "effectText": "ショップで使うとTwo Pair成長+1。"
+        "effectText": "Marketで使うとTwo Pair成長+1。"
       },
       "triple_study": {
         "displayName": "Triple Study",
-        "effectText": "ショップで使うとTriple成長+1。"
+        "effectText": "Marketで使うとTriple成長+1。"
       },
       "straight_study": {
         "displayName": "Straight Study",
-        "effectText": "ショップで使うとStraight成長+1。"
+        "effectText": "Marketで使うとStraight成長+1。"
       },
       "flush_study": {
         "displayName": "Flush Study",
-        "effectText": "ショップで使うとFlush成長+1。"
+        "effectText": "Marketで使うとFlush成長+1。"
       },
       "full_house_study": {
         "displayName": "Full House Study",
-        "effectText": "ショップで使うとFull House成長+1。"
+        "effectText": "Marketで使うとFull House成長+1。"
       },
       "four_kind_study": {
         "displayName": "Four Kind Study",
-        "effectText": "ショップで使うとFour of a Kind成長+1。"
+        "effectText": "Marketで使うとFour of a Kind成長+1。"
       },
       "straight_flush_study": {
         "displayName": "Straight Flush Study",
-        "effectText": "ショップで使うとStraight Flush成長+1。"
+        "effectText": "Marketで使うとStraight Flush成長+1。"
       },
       "line_memory": {
         "displayName": "Line Memory",
@@ -87,7 +87,7 @@
       },
       "ledger_clip": {
         "displayName": "Ledger Clip",
-        "effectText": "ショップ入場時に+1 Gold。"
+        "effectText": "Market入場時に+1 Gold。"
       },
       "discard_glove": {
         "displayName": "Board Glove",
@@ -115,11 +115,11 @@
       },
       "merchant_stamp": {
         "displayName": "Shop Stamp",
-        "effectText": "ショップ入場後、最初のリロールはGoldコスト-1。"
+        "effectText": "Market入場後、最初のリロールはGoldコスト-1。"
       },
       "safety_net": {
         "displayName": "Failsafe Net",
-        "effectText": "各Stationで1回、run終了になる最初の戦闘ロックを防ぐ。"
+        "effectText": "各Stationで1回、run終了になる最初のバトルロックを防ぐ。"
       },
       "coin_funnel": {
         "displayName": "Board Funnel",
@@ -135,7 +135,7 @@
       },
       "boss_trophy": {
         "displayName": "Showdown Trophy",
-        "effectText": "Showdownクリア後、次のショップのJester候補+1。"
+        "effectText": "Showdownクリア後、次のMarketのJester候補+1。"
       },
       "thin_wallet": {
         "displayName": "Empty Wallet",
@@ -219,7 +219,7 @@
       },
       "market_compass": {
         "displayName": "Shop Compass",
-        "effectText": "ショップ入場時、Item/Jester候補のうち安い最初の候補を1 Gold割引。"
+        "effectText": "Market入場時、Item/Jester候補のうち安い最初の候補を1 Gold割引。"
       },
       "cross_memory": {
         "displayName": "Cross Memory",
@@ -319,7 +319,7 @@
       },
       "deadwood_burn": {
         "displayName": "枯れ枝の焼却",
-        "effectText": "ボード線1本を消します。その線のボードタイルを除去し、ゴールド +3。"
+        "effectText": "ボード線1本を消します。その線のボードタイルを除去し、Gold +3。"
       },
       "sacrifice_line": {
         "displayName": "供物の儀式",

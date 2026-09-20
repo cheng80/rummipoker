@@ -67,7 +67,7 @@
   "marketMainMenu": "主菜单",
   "marketMarketUse": "Market 使用",
   "marketNamedBonus": "{name} 奖励",
-  "marketNamedLine": "{line}线",
+  "marketNamedLine": "{line} 线",
   "marketNamedTile": "牌 {tile}",
   "marketNextConfirm": "下次确定",
   "marketNextItemPurchaseAuto": "下次购买 Item 时自动生效",
@@ -141,5 +141,6 @@
   "marketUnavailable": "不可用",
   "marketUnusedDiscards": "未用弃牌",
   "marketUse": "使用",
-  "marketUseMarketManual": "在 Market 中手动使用"
+  "marketUseMarketManual": "在 Market 中手动使用",
+  "marketOverlapTag": "重叠"
 }
