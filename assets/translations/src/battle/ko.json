@@ -98,7 +98,7 @@
   "battleLineChipsTiles": "칩 {chips} · 타일 {count}",
   "battleIncompleteTiles": "미완성/무득점 · 타일 {count}",
   "battleTileRemoved": "{tile} 제거",
-  "battleTargetGrowth": "{target} 성장 +{amount}",
+  "battleTargetGrowth": "{line} {rank} 성장 +{amount}",
   "battleBoardDiscardAdded": "보드 버림 +{amount}",
   "battleHandDiscardAdded": "손패 버림 +{amount}",
   "battleTileMoveAdded": "타일 이동 +{amount}",
@@ -188,5 +188,9 @@
   "battlePassive": "패시브",
   "battleDeckAdded": "덱 +{count}",
   "battleSettlementResult": "정산 결과",
-  "battleRitualLinePrompt": "보드 선을 선택합니다. 미완성/무득점 선도 효과에 따라 사용할 수 있습니다."
+  "battleRitualLinePrompt": "보드 선을 선택합니다. 미완성/무득점 선도 효과에 따라 사용할 수 있습니다.",
+  "battleLineRankLabel": "{line} · {rank}",
+  "battleSelectedLineTile": "{line} · {tile}",
+  "battleTargetRitual": "{line} {rank} · {tile} · {action}",
+  "battleTargetRitualNoTile": "{line} {rank} · {action}"
 }

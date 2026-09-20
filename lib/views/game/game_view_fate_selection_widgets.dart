@@ -93,7 +93,15 @@ class _FateLineSelectionPanel extends StatelessWidget {
     final targetText = selectedLine == null
         ? context.translate('battleNoSelection')
         : selection.needsTileTarget
-        ? '${_lineLabel(context, selectedLine.ref)} · ${selectedTile?.code ?? context.translate('battleTileRequired')}'
+        ? context.translate(
+            'battleSelectedLineTile',
+            namedArgs: {
+              'line': _lineLabel(context, selectedLine.ref),
+              'tile':
+                  selectedTile?.code ??
+                  context.translate('battleTileRequired'),
+            },
+          )
         : context.translate(
             'battleSelectedLineSummary',
             namedArgs: {

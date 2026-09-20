@@ -93,8 +93,10 @@ void main() {
         expect(
           detail,
           contains(
+            // The key names the line and the rank itself, so the tail after
+            // {rank} is the part that does not depend on the chosen line.
             (strings['battleTargetGrowth'] as String)
-                .split('{target}')
+                .split('{rank}')
                 .last
                 .replaceAll('{amount}', '1')
                 .trim(),

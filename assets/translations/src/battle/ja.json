@@ -98,7 +98,7 @@
   "battleLineChipsTiles": "チップ {chips} · タイル {count}",
   "battleIncompleteTiles": "未完成／得点なし · タイル {count}",
   "battleTileRemoved": "{tile}を除去",
-  "battleTargetGrowth": "{target} 成長 +{amount}",
+  "battleTargetGrowth": "{line} {rank} 成長 +{amount}",
   "battleBoardDiscardAdded": "盤面の捨て回数 +{amount}",
   "battleHandDiscardAdded": "手札の捨て回数 +{amount}",
   "battleTileMoveAdded": "タイル移動 +{amount}",
@@ -188,5 +188,9 @@
   "battlePassive": "パッシブ",
   "battleDeckAdded": "デッキ +{count}",
   "battleSettlementResult": "精算結果",
-  "battleRitualLinePrompt": "盤面のラインを選びます。効果によっては未完成や得点なしのラインも使えます。"
+  "battleRitualLinePrompt": "盤面のラインを選びます。効果によっては未完成や得点なしのラインも使えます。",
+  "battleLineRankLabel": "{line} · {rank}",
+  "battleSelectedLineTile": "{line} · {tile}",
+  "battleTargetRitual": "{line} {rank} · {tile} · {action}",
+  "battleTargetRitualNoTile": "{line} {rank} · {action}"
 }

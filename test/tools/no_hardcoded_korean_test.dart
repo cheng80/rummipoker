@@ -164,6 +164,54 @@ void main() {
     );
   });
 
+  // docs/core/I18N.md asks for whole sentences in one key. Gluing two
+  // translated fragments together with a space or a middle dot reads wrong in
+  // English ("Row 1 One Pair growth +1") and is simply incorrect in a language
+  // that orders the parts differently. The list below only shrinks.
+  test('no new sentence built from translated fragments', () {
+    const stillAssembling = <String>{
+      'lib/logic/rummi_poker_grid/item_presentation_event.dart',
+      'lib/logic/rummi_poker_grid/rummi_settlement_facade.dart',
+      'lib/providers/features/rummi_poker_grid/game_session_notifier_market_commands.dart',
+      'lib/providers/features/rummi_poker_grid/game_session_notifier_station_commands.dart',
+      'lib/services/active_run_save_facade.dart',
+      'lib/views/archive/archive_detail_widgets.dart',
+      'lib/views/game/widgets/game_shared_tile_widgets.dart',
+    };
+    final assembled = RegExp(
+      r"'[^'\n]*\$\{[^}]*(?:context\.translate|\.translate\(|Label\(|displayName)"
+      r"[^}]*\}[^'\n]*'",
+    );
+
+    final offenders = <String>{};
+    for (final path in _libraryFiles()) {
+      final lines = File(path).readAsStringSync().split('\n');
+      for (final line in lines) {
+        if (line.trimLeft().startsWith('//')) continue;
+        if (assembled.hasMatch(line)) {
+          offenders.add(path);
+          break;
+        }
+      }
+    }
+
+    expect(
+      offenders.difference(stillAssembling),
+      isEmpty,
+      reason:
+          'These files glue translated fragments into one string. Put the '
+          'whole sentence in one key and fill it with namedArgs. '
+          'See docs/core/I18N.md.',
+    );
+    expect(
+      stillAssembling.difference(offenders),
+      isEmpty,
+      reason:
+          'These files no longer assemble sentences. Delete their lines from '
+          'stillAssembling in this file.',
+    );
+  });
+
   // The Korean check above cannot see an English literal. The settlement
   // callout once shipped the bare word 'overlap' as the step title, and it
   // showed in all five languages. Every arm of that switch has to read its

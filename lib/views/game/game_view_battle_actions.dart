@@ -451,7 +451,13 @@ extension _GameViewBattleActions on _GameViewState {
                   ListTile(
                     dense: true,
                     title: Text(
-                      '${_lineChoiceLabel(line.ref)} · ${_lineChoiceRankLabel(line)}',
+                      context.translate(
+                        'battleLineRankLabel',
+                        namedArgs: {
+                          'line': _lineChoiceLabel(line.ref),
+                          'rank': _lineChoiceRankLabel(line),
+                        },
+                      ),
                     ),
                     subtitle: Text(
                       line.isScoringLine
@@ -530,8 +536,6 @@ extension _GameViewBattleActions on _GameViewState {
       parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
     );
     GameFeedback.play(GameCue.itemUse);
-    final targetLabel =
-        '${_lineChoiceLabel(selected.ref)} ${_lineChoiceRankLabel(selected)}';
     _showSnack(
       context.translate('battleItemUsed', namedArgs: {'item': itemName}),
       silent: true,
@@ -543,13 +547,13 @@ extension _GameViewBattleActions on _GameViewState {
       ).resolveDisplayName(slot.contentId, slot.displayName),
       detailBuilder: (context) => _scoringLineTargetFeedbackDetail(
         slot.item,
-        '${_lineLabel(context, selected.ref)} ${context.translate(rummiHandRankKey(selected.rank))}',
+        selected,
         selectedTile,
         feedbackContext: context,
       ),
       detail: _scoringLineTargetFeedbackDetail(
         slot.item,
-        targetLabel,
+        selected,
         selectedTile,
       ),
       sourceLabel: slot.slotLabel,
@@ -663,7 +667,7 @@ extension _GameViewBattleActions on _GameViewState {
     );
     final feedbackDetail = _scoringLineTargetFeedbackDetail(
       selection.slot.item,
-      '${_lineChoiceLabel(selected.ref)} ${_lineChoiceRankLabel(selected)}',
+      selected,
       selection.selectedTile,
     );
     final feedbackDelay = _ritualFlightDurationForEvents(useResult.events);
@@ -676,7 +680,7 @@ extension _GameViewBattleActions on _GameViewState {
         titleBuilder: selection.displayName,
         detailBuilder: (context) => _scoringLineTargetFeedbackDetail(
           selection.slot.item,
-          '${_lineLabel(context, selected.ref)} ${selected.isScoringLine ? context.translate(rummiHandRankKey(selected.rank)) : context.translate('battleNoScoringLine')}',
+          selected,
           selection.selectedTile,
           feedbackContext: context,
         ),
@@ -693,7 +697,7 @@ extension _GameViewBattleActions on _GameViewState {
             titleBuilder: selection.displayName,
             detailBuilder: (context) => _scoringLineTargetFeedbackDetail(
               selection.slot.item,
-              '${_lineLabel(context, selected.ref)} ${selected.isScoringLine ? context.translate(rummiHandRankKey(selected.rank)) : context.translate('battleNoScoringLine')}',
+              selected,
               selection.selectedTile,
               feedbackContext: context,
             ),
@@ -1012,24 +1016,52 @@ extension _GameViewBattleActions on _GameViewState {
     };
   }
 
+  /// Takes the line itself, not a label built by the caller. A sentence that
+  /// names a line, its rank and an action belongs to one key, so a language
+  /// that orders those parts differently can say so. See docs/core/I18N.md.
   String _scoringLineTargetFeedbackDetail(
     ItemDefinition item,
-    String targetLabel,
+    RummiScoringLineSummary line,
     Tile? tile, {
     BuildContext? feedbackContext,
   }) {
     final context = feedbackContext ?? this.context;
+    final lineLabel = _lineLabel(context, line.ref);
+    final rankLabel = line.isScoringLine
+        ? context.translate(rummiHandRankKey(line.rank))
+        : context.translate('battleNoScoringLine');
     if (item.effect.op != 'ritual_line_effect') {
       return context.translate(
         'battleTargetGrowth',
         namedArgs: {
-          'target': targetLabel,
+          'line': lineLabel,
+          'rank': rankLabel,
           'amount': '${item.effect.value('amount') ?? 1}',
         },
       );
     }
-    final tileLabel = tile == null ? '' : ' · ${tile.code}';
-    return '$targetLabel$tileLabel · ${_ritualActionLabel(item.effect.value('ritualAction'), feedbackContext: context)}';
+    final action = _ritualActionLabel(
+      item.effect.value('ritualAction'),
+      feedbackContext: context,
+    );
+    return tile == null
+        ? context.translate(
+            'battleTargetRitualNoTile',
+            namedArgs: {
+              'line': lineLabel,
+              'rank': rankLabel,
+              'action': action,
+            },
+          )
+        : context.translate(
+            'battleTargetRitual',
+            namedArgs: {
+              'line': lineLabel,
+              'rank': rankLabel,
+              'tile': tile.code,
+              'action': action,
+            },
+          );
   }
 
   String _ritualActionLabel(

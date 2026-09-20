@@ -98,7 +98,7 @@
   "battleLineChipsTiles": "Chips {chips} · 牌 {count}",
   "battleIncompleteTiles": "未完成／无得分 · 牌 {count}",
   "battleTileRemoved": "已移除{tile}",
-  "battleTargetGrowth": "{target} 成长 +{amount}",
+  "battleTargetGrowth": "{line} {rank} 成长 +{amount}",
   "battleBoardDiscardAdded": "棋盘丢弃 +{amount}",
   "battleHandDiscardAdded": "手牌丢弃 +{amount}",
   "battleTileMoveAdded": "牌移动 +{amount}",
@@ -188,5 +188,9 @@
   "battlePassive": "被动",
   "battleDeckAdded": "牌库 +{count}",
   "battleSettlementResult": "结算结果",
-  "battleRitualLinePrompt": "请选择棋盘线。部分效果也可用于未完成或不得分的线。"
+  "battleRitualLinePrompt": "请选择棋盘线。部分效果也可用于未完成或不得分的线。",
+  "battleLineRankLabel": "{line} · {rank}",
+  "battleSelectedLineTile": "{line} · {tile}",
+  "battleTargetRitual": "{line} {rank} · {tile} · {action}",
+  "battleTargetRitualNoTile": "{line} {rank} · {action}"
 }

@@ -130,5 +130,6 @@
   "flowVictoryJesters": "購買的 Jester",
   "flowVictoryInsight": "獲得的記憶卡",
   "flowVictorySkipHint": "點擊繼續",
-  "flowArchiveNew": "NEW"
+  "flowArchiveNew": "NEW",
+  "appVersionValue": "版本 {version}"
 }

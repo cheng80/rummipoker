@@ -98,7 +98,7 @@
   "battleLineChipsTiles": "Chips {chips} · Tiles {count}",
   "battleIncompleteTiles": "Incomplete / no score · Tiles {count}",
   "battleTileRemoved": "Removed {tile}",
-  "battleTargetGrowth": "{target} growth +{amount}",
+  "battleTargetGrowth": "{line} {rank} growth +{amount}",
   "battleBoardDiscardAdded": "Board discards +{amount}",
   "battleHandDiscardAdded": "Hand discards +{amount}",
   "battleTileMoveAdded": "Tile moves +{amount}",
@@ -188,5 +188,9 @@
   "battlePassive": "Passive",
   "battleDeckAdded": "Deck +{count}",
   "battleSettlementResult": "Settlement result",
-  "battleRitualLinePrompt": "Select a board line. Some effects also accept incomplete or non-scoring lines."
+  "battleRitualLinePrompt": "Select a board line. Some effects also accept incomplete or non-scoring lines.",
+  "battleLineRankLabel": "{line} · {rank}",
+  "battleSelectedLineTile": "{line} · {tile}",
+  "battleTargetRitual": "{line} {rank} · {tile} · {action}",
+  "battleTargetRitualNoTile": "{line} {rank} · {action}"
 }

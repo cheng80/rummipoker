@@ -130,5 +130,6 @@
   "flowVictoryJesters": "Jesters bought",
   "flowVictoryInsight": "Memory cards earned",
   "flowVictorySkipHint": "Tap to continue",
-  "flowArchiveNew": "NEW"
+  "flowArchiveNew": "NEW",
+  "appVersionValue": "Version {version}"
 }

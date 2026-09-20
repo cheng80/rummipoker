@@ -130,5 +130,6 @@
   "flowVictoryJesters": "購入したJester",
   "flowVictoryInsight": "獲得した記憶カード",
   "flowVictorySkipHint": "タップして続ける",
-  "flowArchiveNew": "NEW"
+  "flowArchiveNew": "NEW",
+  "appVersionValue": "バージョン {version}"
 }

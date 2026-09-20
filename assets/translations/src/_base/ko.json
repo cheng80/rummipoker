@@ -130,5 +130,6 @@
   "flowVictoryJesters": "구매한 Jester",
   "flowVictoryInsight": "받은 기억 카드",
   "flowVictorySkipHint": "탭해서 계속",
-  "flowArchiveNew": "NEW"
+  "flowArchiveNew": "NEW",
+  "appVersionValue": "버전 {version}"
 }

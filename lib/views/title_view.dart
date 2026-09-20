@@ -573,9 +573,17 @@ class _TitleViewState extends ConsumerState<TitleView>
                         future: _packageInfoFuture,
                         builder: (context, snapshot) {
                           final v = snapshot.data;
-                          final text = v != null
-                              ? '${context.translate('appVersion')} ${v.version}+${v.buildNumber}'
-                              : context.translate('appVersion');
+                          // The noun alone ("Version") is not a sentence, so
+                          // show nothing until the value arrives.
+                          final text = v == null
+                              ? ''
+                              : context.translate(
+                                  'appVersionValue',
+                                  namedArgs: {
+                                    'version':
+                                        '${v.version}+${v.buildNumber}',
+                                  },
+                                );
                           // 버전 값이 늦게 와도 툭 튀지 않게 fade로 바꾼다.
                           return AnimatedSwitcher(
                             duration: GamePresentationTimings.flowEntranceIn,
