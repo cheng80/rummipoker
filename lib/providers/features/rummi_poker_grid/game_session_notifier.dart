@@ -32,8 +32,12 @@ part 'game_session_notifier_market_commands.dart';
 part 'game_session_notifier_station_commands.dart';
 
 /// 전투 화면의 세션/선택/UI 잠금 상태를 한곳에서 관리한다.
+///
+/// [GameSessionArgs]는 `restoredRun` 객체의 동일성까지 키에 넣으므로, 화면에
+/// 들어갈 때마다 거의 언제나 새 family 구성원이 만들어진다. autoDispose가 없으면
+/// 그 구성원이 컨테이너에 그대로 남아 세션 state와 Jester catalog를 붙잡는다.
 final gameSessionNotifierProvider =
-    NotifierProvider.family<
+    NotifierProvider.autoDispose.family<
       GameSessionNotifier,
       GameSessionState,
       GameSessionArgs
@@ -84,7 +88,7 @@ class DeckPeekBattleUseResult {
 }
 
 class GameSessionNotifier
-    extends FamilyNotifier<GameSessionState, GameSessionArgs>
+    extends AutoDisposeFamilyNotifier<GameSessionState, GameSessionArgs>
     with
         GameSessionNotifierSaveCommands,
         GameSessionNotifierPresentationCommands,

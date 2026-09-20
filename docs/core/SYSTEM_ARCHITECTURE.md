@@ -6,7 +6,9 @@
 
 [main.dart](../../lib/main.dart)는 Flutter, Firebase, 번역, 저장소, 리뷰 상태, 사운드를 준비한다. 그 다음 `ProviderScope → EasyLocalization → App` 순서로 앱을 만든다. [app.dart](../../lib/app.dart)의 `MaterialApp.router`는 화면 공통 설정을, [router.dart](../../lib/router.dart)는 7개 화면으로 이동하는 방법과 저장된 게임을 다시 넣는 일을 맡는다.
 
-게임 상태를 담는 container는 `NotifierProvider.family<GameSessionNotifier, GameSessionState, GameSessionArgs>`다. 여기에 seed, 난이도, modifier, Blind 단계, 복원할 게임 상태를 넣는다. notifier는 현재 게임 상태를 화면에서 읽기 쉬운 facade로 바꿔 전달한다. Settings와 Title의 저장 확인은 별도 Riverpod notifier가 맡아 게임 진행과 섞이지 않게 한다.
+게임 상태는 `NotifierProvider.autoDispose.family<GameSessionNotifier, GameSessionState, GameSessionArgs>`가 관리한다. 여기에 seed, 난이도, modifier, Blind 단계, 복원할 게임 상태를 넣는다. notifier는 현재 게임 상태를 화면에서 읽기 쉬운 facade로 바꿔 전달한다. Settings와 Title의 저장 확인은 별도 Riverpod notifier가 맡아 게임 진행과 섞이지 않게 한다.
+
+복원 객체의 동일성도 family 키에 포함하므로 같은 seed라도 새 복원 객체는 별도 구성원을 만든다. GameView가 구독하는 동안 세션을 유지하고 마지막 구독이 끝나면 구성원을 해제해 이전 세션과 Jester catalog가 컨테이너에 쌓이지 않게 한다. 저장과 다음 화면 전달에 필요한 runtime은 화면을 떠나기 전에 확보한다.
 
 ## 세 영역이 맡는 일
 
