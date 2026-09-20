@@ -27,7 +27,7 @@ Boss 28종의 이름·규칙·표시는 `assets/translations/src/core/<locale>.j
 | 도감 | Archive | 図鑑 | 图鉴 | 圖鑑 | `archiveTitle` |
 | 게임결과 | Game Result | ゲーム結果 | 游戏结果 | 遊戲結果 | `gameResult` |
 
-숫자를 끼워 쓰는 자리에서 칩은 `칩 {score}` / `Chips {score}`처럼 쓴다(`runInfoCurrentChips`). 일본어와 중국어도 `Chips`를 그대로 두는 것이 기존 번역의 선택이다.
+숫자를 끼워 쓰는 자리에서 칩은 `칩 {score}` / `Chips {score}`처럼 쓴다(`runInfoCurrentChips`). 일본어·중국어의 `Chips`와 `Jester`는 **결정됨: 영어 유지(2026-09-21 사용자 결정)**다. 문장과 합성어에도 적용하며 한국어 `칩`과 `Reroll Chip` 같은 고유명은 유지한다.
 
 ### 화면과 메뉴
 
@@ -111,7 +111,7 @@ I1·I2·I3·I4의 조각과 대조한 실제 표시값이다. 같은 북마크 �
 | 북마크 불러오기 | Bookmarks | ブックマーク | 书签 | 書籤 | `menuBookmarks` |
 | 정산 완료 | Cash out complete | 精算完了 | 结算完成 | 結算完成 | `marketCashoutComplete` |
 | 첫 리롤 무료 | First reroll free | 初回無料 | 首次免费重掷 | 首次免費重擲 | `marketRerollFirstFree` |
-| 칩 박힘 | Chip Inlay | Chips埋め込み | Chips镶嵌 | Chips鑲嵌 | `battleWidgetsTileEnhancementChip` |
+| 칩 박힘 | Chip Inlay | Chips埋め込み | Chips 镶嵌 | Chips 鑲嵌 | `battleWidgetsTileEnhancementChip` |
 | 점수 도금 | Score Gilding | 得点メッキ | 分数镀金 | 分數鍍金 | `battleWidgetsTileEnhancementScore` |
 | 유리 | Glass | ガラス | 玻璃 | 玻璃 | `battleWidgetsTileEnhancementGlass` |
 | 경제형 | Economy | 経済型 | 经济型 | 經濟型 | `battleWidgetsCategoryEconomy` |
@@ -276,5 +276,5 @@ I1·I2·I3·I4의 조각과 대조한 실제 표시값이다. 같은 북마크 �
 
 - 족보 이름이 포커의 통용 표기와 맞는지. 특히 `스티플`, `로우 스티플`, `크라운 포카드`, `프리즘 스트레이트`처럼 이 게임에만 있는 이름. 한국어 족보 이름의 정본은 `lib/logic/rummi_poker_grid/rummi_settlement_facade.dart`다.
 - 희귀도 4단계의 영어 이름이 서로 겹치지 않는지.
-- 일본어·중국어에서 `Chips`와 `Jester`처럼 영어를 그대로 둔 용어를 계속 영어로 둘지. `Gold`, `Station`, `Market`은 **결정됨: 영어 유지(2026-09-20 사용자 결정)**이라 이 목록에서 뺐다.
+- 일본어·중국어의 `Chips`와 `Jester`는 **결정됨: 영어 유지(2026-09-21 사용자 결정)**. `Gold`, `Station`, `Market`의 **결정됨: 영어 유지(2026-09-20 사용자 결정)**도 유지한다. 다섯 용어는 추가 검수 대상이 아니다.
 - Item·Jester 이름을 영어 고유명으로 통일한 기존 방식을 유지할지.
