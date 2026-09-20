@@ -217,6 +217,11 @@ extension _GameViewRunEndFlow on _GameViewState {
     await _playRunVictory(summary);
     if (!mounted) return;
     _resumePresentation();
+    // 승리 장면을 끝까지 본 뒤에만 첫 클리어 리뷰를 요청한다. 결과를 기다리지 않으므로
+    // 타이틀 복귀와 입력을 막지 않는다. 디버그 픽스처는 저장 상태를 바꾸지 않는다.
+    if (!_isDebugFixtureRun) {
+      unawaited(InAppReviewService.maybeRequestReviewAfterFirstClear());
+    }
     await SoundManager.fadeOutBgm(GamePresentationTimings.runVictoryBgmFadeOut);
     if (!mounted) return;
     await WidgetsBinding.instance.endOfFrame;

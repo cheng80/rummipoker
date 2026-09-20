@@ -12,6 +12,19 @@ class InAppReviewService {
 
   static final InAppReview _instance = InAppReview.instance;
 
+  /// 테스트에서 실제 스토어 팝업 대신 요청 호출만 확인하는 자리.
+  @visibleForTesting
+  static Future<void> Function()? debugRequestSink;
+
+  /// 팝업 요청 한 번. 테스트에서는 [debugRequestSink]로 바꿔 끼운다.
+  static Future<void> _requestReview() async {
+    final sink = debugRequestSink;
+    if (sink != null) return sink();
+    if (await _instance.isAvailable()) {
+      _instance.requestReview();
+    }
+  }
+
   /// 스토어 이동 버튼을 보여줄 수 있는지 여부.
   static bool get hasStoreListingId => AppConfig.appStoreId.isNotEmpty;
 
@@ -45,9 +58,7 @@ class InAppReviewService {
 
     StorageHelper.write(StorageKeys.reviewRequestedAfterFirstClear, true);
 
-    if (await _instance.isAvailable()) {
-      _instance.requestReview();
-    }
+    await _requestReview();
   }
 
   /// TitleView 진입 시, 첫 실행 3일 경과 후 인앱 리뷰 팝업 요청.
@@ -72,9 +83,7 @@ class InAppReviewService {
 
     StorageHelper.write(StorageKeys.reviewRequestedOnTitle, true);
 
-    if (await _instance.isAvailable()) {
-      _instance.requestReview();
-    }
+    await _requestReview();
   }
 
   /// 스토어 리뷰 화면으로 이동. 설정의 "평점 남기기" 버튼에서 호출.
