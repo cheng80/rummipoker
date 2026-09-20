@@ -697,7 +697,7 @@ class _GamePopDialogRoute<T> extends DialogRoute<T> {
 }
 
 /// Builders run inside the dialog route so an open dialog follows locale changes.
-/// A builder takes precedence over its legacy string/list argument.
+/// A builder takes precedence over its legacy string/list/widget argument.
 Future<T?> showGameChoiceDialog<T>(
   BuildContext context, {
   String title = '',
@@ -705,6 +705,7 @@ Future<T?> showGameChoiceDialog<T>(
   String Function(BuildContext)? titleBuilder,
   String Function(BuildContext)? messageBuilder,
   Widget? content,
+  WidgetBuilder? contentBuilder,
   List<GameDialogAction<T>> actions = const [],
   List<GameDialogAction<T>> Function(BuildContext)? actionsBuilder,
   bool barrierDismissible = true,
@@ -728,6 +729,7 @@ Future<T?> showGameChoiceDialog<T>(
     builder: (dialogContext) {
       final resolvedTitle = titleBuilder?.call(dialogContext) ?? title;
       final resolvedMessage = messageBuilder?.call(dialogContext) ?? message;
+      final resolvedContent = contentBuilder?.call(dialogContext) ?? content;
       final resolvedActions = actionsBuilder?.call(dialogContext) ?? actions;
       return _GameDialogFrame(
         semanticLabel: resolvedTitle,
@@ -756,9 +758,9 @@ Future<T?> showGameChoiceDialog<T>(
                 ),
               ),
             ],
-            if (content != null) ...[
+            if (resolvedContent != null) ...[
               const SizedBox(height: 14),
-              Flexible(child: content),
+              Flexible(child: resolvedContent),
             ],
             const SizedBox(height: 18),
             _GameDialogActionBar<T>(actions: resolvedActions),

@@ -289,24 +289,17 @@ class _BottomResourceText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget text = FittedBox(
-      fit: BoxFit.scaleDown,
-      alignment: switch (textAlign) {
-        TextAlign.left => Alignment.centerLeft,
-        TextAlign.right => Alignment.centerRight,
-        _ => Alignment.center,
-      },
-      child: Text(
-        label,
-        maxLines: 1,
-        textAlign: textAlign,
-        style: TextStyle(
-          color: warning
-              ? GameUiPalette.specialDangerBright
-              : GameUiPalette.textSecondary,
-          fontSize: 9,
-          fontWeight: warning ? FontWeight.w900 : FontWeight.w800,
-        ),
+    Widget text = Text(
+      label,
+      // Resource labels must retain their final count in every locale.
+      softWrap: true,
+      textAlign: textAlign,
+      style: TextStyle(
+        color: warning
+            ? GameUiPalette.specialDangerBright
+            : GameUiPalette.textSecondary,
+        fontSize: 9,
+        fontWeight: warning ? FontWeight.w900 : FontWeight.w800,
       ),
     );
     if (warning) {

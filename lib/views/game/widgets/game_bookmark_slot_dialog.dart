@@ -25,17 +25,19 @@ Future<int?> showBookmarkSlotDialog({
     messageBuilder: messageBuilder,
     content: SizedBox(
       width: 360,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (var i = 0; i < slots.length; i++) ...[
-            _BookmarkSlotOption(
-              slot: slots[i],
-              onTap: () => Navigator.of(context).pop(slots[i].slotIndex),
-            ),
-            if (i != slots.length - 1) const SizedBox(height: 8),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = 0; i < slots.length; i++) ...[
+              _BookmarkSlotOption(
+                slot: slots[i],
+                onTap: () => Navigator.of(context).pop(slots[i].slotIndex),
+              ),
+              if (i != slots.length - 1) const SizedBox(height: 8),
+            ],
           ],
-        ],
+        ),
       ),
     ),
     actionsBuilder: (dialogContext) => [
