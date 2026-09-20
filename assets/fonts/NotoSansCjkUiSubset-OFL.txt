@@ -1,6 +1,6 @@
-Noto Sans CJK JP Regular 에서 언어 이름 글자만 추려낸 서브셋(assets/fonts/NotoSansCjkLangNames-Regular.otf)의 라이선스 원문이다.
+Noto Sans CJK JP Regular 에서 UI 표시 문자열에 쓰인 글자만 추려낸 서브셋(assets/fonts/NotoSansCjkUiSubset-Regular.otf)의 라이선스 원문이다.
 원본: https://github.com/notofonts/noto-cjk (Sans/OTF/Japanese/NotoSansCJKjp-Regular.otf)
-생성 스크립트: tools/build_lang_name_font_subset.py
+생성 스크립트: tools/build_ui_font_subset.py
 
 This Font Software is licensed under the SIL Open Font License,
 Version 1.1.

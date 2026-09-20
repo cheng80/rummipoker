@@ -19,9 +19,9 @@ class AssetPaths {
   /// 폰트 family 이름 (pubspec.yaml에 등록된 이름과 동일)
   static const String fontNexonLv2Gothic = 'NexonLv2Gothic';
 
-  /// 기본 폰트에 없는 가나·한자를 대신 그리는 fallback family.
-  /// 설정 화면의 언어 이름(日本語·简体中文·繁體中文) 글자만 담은 서브셋이다.
-  static const String fontNotoSansCjkLangNames = 'NotoSansCjkLangNames';
+  /// 기본 폰트에 없는 한자를 대신 그리는 fallback family.
+  /// 5개 locale의 표시 문자열에 쓰인 글자만 담은 서브셋이다.
+  static const String fontNotoSansCjkUiSubset = 'NotoSansCjkUiSubset';
 
   /// 데이터 에셋 경로.
   static const String jestersCommon = 'data/common/jesters_common_phase5.json';

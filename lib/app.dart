@@ -21,7 +21,7 @@ import 'widgets/starry_background.dart';
 /// 받기 전까지 빈 네모가 보이고, 오프라인·차단 환경에서는 계속 네모로 남는다.
 /// 텍스트 스타일마다 덧대지 않도록 테마 한 곳에서만 지정한다.
 const List<String> appFontFamilyFallback = <String>[
-  AssetPaths.fontNotoSansCjkLangNames,
+  AssetPaths.fontNotoSansCjkUiSubset,
 ];
 
 /// 앱 전체 테마. 글꼴과 fallback을 여기 한 곳에서만 정한다.
