@@ -12,11 +12,21 @@
 | `/new-run` New Run | 표준/도전, basic/high-stakes, random seed 또는 정수 seed | 난이도와 modifier는 unlock state를 통과해야 하고 seed는 정수여야 함 | 새 `blindSelect` runtime을 저장하고 같은 객체를 `/blind-select`로 전달 | 저장 실패는 기존 active run을 유지한 채 notice; 잠긴 선택은 기본값으로 정규화; 잘못된 seed는 notice; 뒤로가기는 Title |
 | `/blind-select` Blind Select | Scout, Clash, Boss 선택 | 직전 tier clear 뒤에만 다음 tier가 selectable | 선택한 목표·자원·Boss 제약으로 `/game` 진입 | locked card는 비활성·사유 표시; 뒤로가기는 restored run이면 Title, 새 run이면 New Run |
 | `/game` Battle / Settlement / Market host | draw, 타일 선택·배치, 버림, 이동, Item, 확정, options, tutorial, Run 정보 | `GameStageFlowPhase`, board-move mode, scene, 자원·target precondition이 입력을 잠금 | runtime 갱신, 정산 연출, cash-out, Market dialog, 다음 Blind 또는 terminal | options에서 현재 Battle/Station 재시작·북마크·Title; expiry dialog에서 retry/new run/exit; lifecycle 복귀 시 options |
-| `/setting` Settings | 화면 켜짐 유지, locale, BGM/SFX volume·mute, 연출 강도·정산 속도·화면 흔들림·진동, 닫기 | volume은 0..1 clamp; mute 시 slider 비활성; SFX slider를 놓으면 미리듣기 | StorageHelper와 Sound/Wakelock에 즉시 반영 | 닫기로 이전 route 복귀; 플랫폼 Wakelock 실패는 gameplay를 막지 않음 |
+| `/setting` Settings | 화면 켜짐 유지, locale 칩, BGM/SFX volume·mute, 연출 강도·정산 속도·화면 흔들림·진동, 닫기 | volume은 0..1 clamp; mute 시 slider 비활성; SFX slider를 놓으면 미리듣기 | StorageHelper와 Sound/Wakelock에 즉시 반영 | 닫기로 이전 route 복귀; 플랫폼 Wakelock 실패는 gameplay를 막지 않음 |
 | `/trial` Special Mode | 뒤로가기 | gameplay 입력 없음 | 안내용 placeholder를 표시 | 뒤로가기로 이전 route 복귀 |
 | `/archive` Archive | 수집 카드·Jester·Item 상세, 뒤로가기 | detail은 catalog와 수집 state load 뒤 사용 | device의 Insight·수집·Boss 기록을 read-only로 표시 | load 중 skeleton은 있으나 load error 전용 retry/error UI는 없음; 사용자는 뒤로간 뒤 재진입 |
 
 Title의 저장 복구는 [title_view.dart](../../lib/views/title_view.dart), New Run guard는 [new_run_view.dart](../../lib/views/new_run_view.dart), Blind 순서는 [blind_select_view.dart](../../lib/views/blind_select_view.dart)가 소유한다.
+
+### 메뉴 세 화면의 시각 언어
+
+Title, New Run, Settings는 밤하늘 배경(`StarryBackground`)을 그대로 두고 그 위의 패널과 버튼만 전투·Market 화면과 같은 언어로 그린다. 공통 색은 [home_entry_widgets.dart](../../lib/views/home_entry_widgets.dart)의 `MenuSurface`가 한 곳에서 정한다. 어두운 초록 패널과 금색 테두리, 금색 강조 글자를 쓴다.
+
+구획은 카드가 아니라 제목과 가는 금색 구분선으로 나눈다(`HomeSection`). 버튼의 위계는 둘뿐이다. 계속하기와 새 런처럼 화면의 주 동작은 금색으로 채운 `HomeEntryCard(primary: true)`이고 나머지는 어두운 패널에 금색 테두리를 두른 보조 버튼이다. 한 줄에 둘씩 놓는 좁은 버튼은 `compact: true`로 설명문을 접는다. 계속하기는 저장이 없으면 누를 수 없다. 흐린 패널과 자물쇠 아이콘으로 보이되 탭하면 거절 흔들림을 낸다. 디버그 진입만 보라색으로 구분한다.
+
+Title은 논리 프레임 390×750에서 스크롤 없이 한 화면에 들어오는 것을 기준으로 한다. 디버그 진입을 켜면 한 줄이 늘어 스크롤이 생길 수 있다. 이 기준은 [menu_screens_overflow_test.dart](../../test/views/menu_screens_overflow_test.dart)가 ko·en·ja에서 지킨다.
+
+Settings는 `ListTile`·`SwitchListTile`·`ChoiceChip` 기본 모양을 쓰지 않는다. 항목은 패널 한 줄로, 켜고 끄기는 금색 pill 토글로, 값이 몇 개뿐인 설정과 언어 선택은 금색 칩(`SettingChoiceChip`)으로 고른다. 볼륨 슬라이더는 금색 트랙에 현재 값을 백분율로 함께 보여 준다. 저장 키와 동작은 그대로다. New Run도 난이도·modifier 카드와 seed 입력 필드를 같은 패널·칩 색으로 맞춘다.
 
 ## 전투 화면은 위에서 아래로 읽는다
 
