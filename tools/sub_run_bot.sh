@@ -14,6 +14,7 @@ TARGET_STAGE=1
 TARGET_TIER="small"
 TARGET_SCENE="cashOut"
 REQUIRED_EVIDENCE=""
+FLUTTER_BIN="${FLUTTER_BIN:-flutter}"
 FLUTTER_DRIVE_MODE="${FULL_RUN_BOT_FLUTTER_MODE:-profile}"
 CHROMEDRIVER_PORT="${CHROMEDRIVER_PORT:-4444}"
 WEB_PORT="${FULL_RUN_BOT_WEB_PORT:-7357}"
@@ -21,6 +22,7 @@ BROWSER_PROFILE_DIR="${FULL_RUN_BOT_BROWSER_PROFILE_DIR:-/tmp/rummipoker_full_ru
 RESUME_ACTIVE_RUN=false
 PUB_GET=1
 CHROMEDRIVER_PID=""
+PROGRESS_PORT=0
 
 usage() {
   cat <<'EOF'
@@ -49,6 +51,8 @@ Options:
 Environment:
   CHROMEDRIVER_CMD            Custom chromedriver command.
   CHROMEDRIVER_PORT           WebDriver port. Default: 4444.
+  FLUTTER_BIN                 Flutter executable. Default: flutter.
+  FULL_RUN_BOT_FLUTTER_MODE   debug | profile | release. Default: profile.
 EOF
 }
 
@@ -127,48 +131,76 @@ port_is_open() {
   nc -z 127.0.0.1 "$CHROMEDRIVER_PORT" >/dev/null 2>&1
 }
 
-# 이 실행이 띄운 프로세스만 정리한다. 같은 장비에서 다른 봇 실행이나 다른 Chrome
-# 작업이 함께 돌 수 있으므로, 이름 패턴으로 넓게 죽이면 남의 프로세스를 끊는다.
-# 기준은 이 실행이 기억한 PID, 이 실행 전용 user-data-dir, 그리고 자기 포트다.
+case "$FLUTTER_DRIVE_MODE" in
+  debug|profile|release) ;;
+  *) echo "Invalid FULL_RUN_BOT_FLUTTER_MODE: $FLUTTER_DRIVE_MODE" >&2; exit 1 ;;
+esac
+
+for required_command in nc lsof; do
+  command -v "$required_command" >/dev/null 2>&1 || {
+    echo "$required_command is required for bot port ownership checks." >&2
+    exit 1
+  }
+done
+if [[ "$WEB_PORT" == "0" || "$CHROMEDRIVER_PORT" == "0" ||
+      "$WEB_PORT" == "$CHROMEDRIVER_PORT" ||
+      "${PROGRESS_PORT:-0}" == "$WEB_PORT" || "${PROGRESS_PORT:-0}" == "$CHROMEDRIVER_PORT" ]]; then
+  echo "Bot ports must be distinct; only the progress port may be 0." >&2
+  exit 1
+fi
+
+# Only signal live jobs started by this shell. Each helper owns and reaps a
+# private process group, including descendants left behind by Flutter/Chrome.
+PROCESS_HELPER="$ROOT_DIR/tools/full_run_bot_process.py"
+PROFILE_OWNER="$$:$RANDOM:$RANDOM"
+BROWSER_PROFILE_DIR="$(python3 "$PROCESS_HELPER" acquire "$BROWSER_PROFILE_DIR" "$PROFILE_OWNER")"
+
 kill_pids() {
-  [[ "$#" -eq 0 ]] && return 0
-  kill "$@" 2>/dev/null || true
-  sleep 1
-  local alive=()
   local pid
   for pid in "$@"; do
-    kill -0 "$pid" 2>/dev/null && alive+=("$pid")
+    if jobs -pr | grep -qx "$pid"; then
+      kill -TERM "$pid" 2>/dev/null || true
+    fi
+    wait "$pid" 2>/dev/null || true
   done
-  [[ "${#alive[@]}" -gt 0 ]] && kill -9 "${alive[@]}" 2>/dev/null || true
-  return 0
-}
-
-# 이 실행 전용 프로필 경로를 명령줄에 달고 있는 프로세스만 고른다. Chrome 본체와
-# Chrome Helper, flutter tools가 띄운 브라우저가 모두 여기에 해당한다.
-pids_using_browser_profile() {
-  [[ -z "${BROWSER_PROFILE_DIR:-}" ]] && return 0
-  ps -axo pid,command | awk -v profile="$BROWSER_PROFILE_DIR" -v self="$$" \
-    '!/awk/ && $1 != self && index($0, profile) > 0 {print $1}'
 }
 
 cleanup_bot_processes() {
-  [[ -n "${DRIVE_PID:-}" ]] && kill_pids "$DRIVE_PID"
+  local pid
+  for pid in "${DRIVE_PID:-}" "${CHROMEDRIVER_PID:-}" "${PROGRESS_SERVER_PID:-}" "${PUB_GET_PID:-}"; do
+    [[ -z "$pid" ]] || kill_pids "$pid"
+  done
   DRIVE_PID=""
-  [[ -n "${CHROMEDRIVER_PID:-}" ]] && kill_pids "$CHROMEDRIVER_PID"
-  local profile_pids
-  profile_pids="$(pids_using_browser_profile)"
-  [[ -n "$profile_pids" ]] && kill_pids $profile_pids
-  local web_pids
-  web_pids="$(lsof -ti tcp:"$WEB_PORT" 2>/dev/null || true)"
-  [[ -n "$web_pids" ]] && kill_pids $web_pids
-  return 0
+  CHROMEDRIVER_PID=""
+  PROGRESS_SERVER_PID=""
+  PUB_GET_PID=""
 }
-trap cleanup_bot_processes EXIT
+
+cleanup() {
+  cleanup_bot_processes
+  python3 "$PROCESS_HELPER" release "$BROWSER_PROFILE_DIR" "$PROFILE_OWNER"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
+
+# Reject external listeners; a port number never establishes ownership.
+for port in "$WEB_PORT" "$CHROMEDRIVER_PORT" "${PROGRESS_PORT:-0}"; do
+  if [[ ! "$port" =~ ^(0|[1-9][0-9]{0,4})$ ]] || (( 10#$port > 65535 )); then
+    echo "Invalid bot port: $port" >&2
+    exit 1
+  fi
+  if [[ "$port" != "0" ]] && { nc -z 127.0.0.1 "$port" >/dev/null 2>&1 || nc -z ::1 "$port" >/dev/null 2>&1; }; then
+    echo "Bot port already in use: $port" >&2
+    exit 1
+  fi
+done
 
 start_chromedriver() {
   if port_is_open; then
-    echo "Using existing chromedriver on port $CHROMEDRIVER_PORT"
-    return
+    echo "WebDriver port already in use: $CHROMEDRIVER_PORT" >&2
+    exit 1
   fi
 
   local cmd=()
@@ -181,12 +213,20 @@ start_chromedriver() {
   fi
 
   echo "Starting chromedriver on port $CHROMEDRIVER_PORT"
-  "${cmd[@]}" --port="$CHROMEDRIVER_PORT" \
+  python3 "$PROCESS_HELPER" run "${cmd[@]}" --port="$CHROMEDRIVER_PORT" \
     >"$OUTPUT_DIR/chromedriver.log" 2>&1 &
   CHROMEDRIVER_PID=$!
 
   for _ in {1..30}; do
+    if ! kill -0 "$CHROMEDRIVER_PID" 2>/dev/null; then
+      echo "chromedriver exited before startup. Log: $OUTPUT_DIR/chromedriver.log" >&2
+      exit 1
+    fi
     if port_is_open; then
+      if ! python3 "$PROCESS_HELPER" owns-port "$CHROMEDRIVER_PID" "$CHROMEDRIVER_PORT"; then
+        echo "WebDriver listener is not owned by this run: $CHROMEDRIVER_PORT" >&2
+        exit 1
+      fi
       return
     fi
     sleep 1
@@ -221,7 +261,10 @@ run_and_capture() {
   local log_file="$1"
   shift
   echo "Running: $*"
-  "$@" 2>&1 | tee "$log_file"
+  python3 "$PROCESS_HELPER" run "$@" > >(tee "$log_file") 2>&1 &
+  PUB_GET_PID=$!
+  wait "$PUB_GET_PID"
+  PUB_GET_PID=""
 }
 
 run_flutter_drive_and_capture() {
@@ -229,7 +272,7 @@ run_flutter_drive_and_capture() {
   shift
   echo "Running: $*"
   set +e
-  "$@" > >(tee "$log_file") 2>&1 &
+  python3 "$PROCESS_HELPER" run "$@" > >(tee "$log_file") 2>&1 &
   local run_pid=$!
   DRIVE_PID="$run_pid"
 
@@ -241,7 +284,6 @@ run_flutter_drive_and_capture() {
         echo "Detected pass; cleaning up lingering flutter drive session." \
           | tee -a "$log_file"
         cleanup_bot_processes
-        kill_pids "$run_pid"
       fi
       set -e
       return 0
@@ -274,7 +316,13 @@ persist_checkpoint() {
     >"$BROWSER_PROFILE_DIR/latest_checkpoint.env"
 }
 
+export FULL_RUN_BOT_BROWSER_PROFILE_DIR="$BROWSER_PROFILE_DIR"
+
 echo "Output: $OUTPUT_DIR"
+if [[ "$RESUME_ACTIVE_RUN" != "true" ]]; then
+  rm -rf "$BROWSER_PROFILE_DIR/chrome"
+  rm -f "$BROWSER_PROFILE_DIR/latest_checkpoint.env"
+fi
 start_chromedriver
 mkdir -p "$BROWSER_PROFILE_DIR"
 RESUME_DEFINE_ARG=""
@@ -283,15 +331,20 @@ if [[ "$RESUME_ACTIVE_RUN" == "true" && -f "$BROWSER_PROFILE_DIR/latest_checkpoi
 fi
 
 if [[ "$PUB_GET" -eq 1 ]]; then
-  run_and_capture "$OUTPUT_DIR/00_pub_get.log" flutter pub get
+  run_and_capture "$OUTPUT_DIR/00_pub_get.log" "$FLUTTER_BIN" pub get
 fi
 
 run_flutter_drive_and_capture "$OUTPUT_DIR/10_sub_run_bot.log" \
-  flutter drive \
+  "$FLUTTER_BIN" drive \
     --"$FLUTTER_DRIVE_MODE" \
     --driver=test_driver/integration_test.dart \
     --target=integration_test/full_run_bot_test.dart \
-    -d chrome \
+    -d web-server \
+    --no-start-paused \
+    --web-launch-url="http://127.0.0.1:$WEB_PORT/" \
+    --web-browser-flag="--user-data-dir=$BROWSER_PROFILE_DIR/chrome" \
+    --headless \
+    --no-dds \
     --web-port="$WEB_PORT" \
     --driver-port="$CHROMEDRIVER_PORT" \
     --no-keep-app-running \

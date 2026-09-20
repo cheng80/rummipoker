@@ -41,7 +41,6 @@ VERIFY_MARKET_PERSISTENCE=false
 PERSISTENCE_RESUME_STARTED=false
 HEADLESS=true
 DDS=false
-START_CHROMEDRIVER=true
 
 usage() {
   cat <<'EOF'
@@ -79,7 +78,7 @@ Options:
                             bridge failures. Default: 12.
   --no-headless             Run WebDriver Chrome visibly instead of headless.
   --no-dds                  Disable Dart Developer Service for flutter drive.
-  --no-start-chromedriver   Let flutter drive manage WebDriver server startup.
+  --no-start-chromedriver   Unsupported: runner must own its WebDriver server.
   --skip-pub-get            Skip `flutter pub get`.
   -h, --help                Show this help.
 
@@ -90,7 +89,6 @@ Environment:
   FULL_RUN_BOT_FLUTTER_MODE Flutter drive mode: debug | profile | release.
                             Default: profile. debug는 긴 실행에서 페이지 heap이
                             4GB까지 자라 renderer가 죽으므로 짧은 진단에만 쓴다.
-                            Default: debug.
   FULL_RUN_BOT_PROGRESS_PORT
                             Port for the in-run progress collector. The bot
                             posts one line per action to it, so progress.log
@@ -194,8 +192,8 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --no-start-chromedriver)
-      START_CHROMEDRIVER=false
-      shift
+      echo "--no-start-chromedriver is unsafe: omit it so the runner owns WebDriver." >&2
+      exit 1
       ;;
     --skip-pub-get)
       PUB_GET=0
@@ -252,45 +250,66 @@ port_is_open() {
   nc -z 127.0.0.1 "$CHROMEDRIVER_PORT" >/dev/null 2>&1
 }
 
-# 이 실행이 띄운 프로세스만 정리한다. 같은 장비에서 다른 봇 실행이나 다른 Chrome
-# 작업이 함께 돌 수 있으므로, 이름 패턴으로 넓게 죽이면 남의 프로세스를 끊는다.
-# 기준은 이 실행이 기억한 PID, 이 실행 전용 user-data-dir, 그리고 자기 포트다.
+for required_command in nc lsof; do
+  command -v "$required_command" >/dev/null 2>&1 || {
+    echo "$required_command is required for bot port ownership checks." >&2
+    exit 1
+  }
+done
+if [[ "$WEB_PORT" == "0" || "$CHROMEDRIVER_PORT" == "0" ||
+      "$WEB_PORT" == "$CHROMEDRIVER_PORT" ||
+      "${PROGRESS_PORT:-0}" == "$WEB_PORT" || "${PROGRESS_PORT:-0}" == "$CHROMEDRIVER_PORT" ]]; then
+  echo "Bot ports must be distinct; only the progress port may be 0." >&2
+  exit 1
+fi
+
+# Only signal live jobs started by this shell. Each helper owns and reaps a
+# private process group, including descendants left behind by Flutter/Chrome.
+PROCESS_HELPER="$ROOT_DIR/tools/full_run_bot_process.py"
+PROFILE_OWNER="$$:$RANDOM:$RANDOM"
+BROWSER_PROFILE_DIR="$(python3 "$PROCESS_HELPER" acquire "$BROWSER_PROFILE_DIR" "$PROFILE_OWNER")"
+
 kill_pids() {
-  [[ "$#" -eq 0 ]] && return 0
-  kill "$@" 2>/dev/null || true
-  sleep 1
-  local alive=()
   local pid
   for pid in "$@"; do
-    kill -0 "$pid" 2>/dev/null && alive+=("$pid")
+    if jobs -pr | grep -qx "$pid"; then
+      kill -TERM "$pid" 2>/dev/null || true
+    fi
+    wait "$pid" 2>/dev/null || true
   done
-  [[ "${#alive[@]}" -gt 0 ]] && kill -9 "${alive[@]}" 2>/dev/null || true
-  return 0
-}
-
-# 이 실행 전용 프로필 경로를 명령줄에 달고 있는 프로세스만 고른다. Chrome 본체와
-# Chrome Helper, flutter tools가 띄운 브라우저가 모두 여기에 해당한다.
-pids_using_browser_profile() {
-  [[ -z "${BROWSER_PROFILE_DIR:-}" ]] && return 0
-  ps -axo pid,command | awk -v profile="$BROWSER_PROFILE_DIR" -v self="$$" \
-    '!/awk/ && $1 != self && index($0, profile) > 0 {print $1}'
 }
 
 cleanup_bot_processes() {
-  [[ -n "${DRIVE_PID:-}" ]] && kill_pids "$DRIVE_PID"
+  local pid
+  for pid in "${DRIVE_PID:-}" "${CHROMEDRIVER_PID:-}" "${PROGRESS_SERVER_PID:-}" "${PUB_GET_PID:-}"; do
+    [[ -z "$pid" ]] || kill_pids "$pid"
+  done
   DRIVE_PID=""
-  [[ -n "${CHROMEDRIVER_PID:-}" ]] && kill_pids "$CHROMEDRIVER_PID"
-  [[ -n "${PROGRESS_SERVER_PID:-}" ]] && kill_pids "$PROGRESS_SERVER_PID"
+  CHROMEDRIVER_PID=""
   PROGRESS_SERVER_PID=""
-  local profile_pids
-  profile_pids="$(pids_using_browser_profile)"
-  [[ -n "$profile_pids" ]] && kill_pids $profile_pids
-  local web_pids
-  web_pids="$(lsof -ti tcp:"$WEB_PORT" 2>/dev/null || true)"
-  [[ -n "$web_pids" ]] && kill_pids $web_pids
-  return 0
+  PUB_GET_PID=""
 }
-trap cleanup_bot_processes EXIT
+
+cleanup() {
+  cleanup_bot_processes
+  python3 "$PROCESS_HELPER" release "$BROWSER_PROFILE_DIR" "$PROFILE_OWNER"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
+
+# Reject external listeners; a port number never establishes ownership.
+for port in "$WEB_PORT" "$CHROMEDRIVER_PORT" "${PROGRESS_PORT:-0}"; do
+  if [[ ! "$port" =~ ^(0|[1-9][0-9]{0,4})$ ]] || (( 10#$port > 65535 )); then
+    echo "Invalid bot port: $port" >&2
+    exit 1
+  fi
+  if [[ "$port" != "0" ]] && { nc -z 127.0.0.1 "$port" >/dev/null 2>&1 || nc -z ::1 "$port" >/dev/null 2>&1; }; then
+    echo "Bot port already in use: $port" >&2
+    exit 1
+  fi
+done
 
 # 실행 중에 봇이 어느 Station에 있는지 파일로 보이게 한다. 봇은 브라우저 안에서
 # 돌기 때문에 진행 로그가 브라우저 콘솔에만 남는다. 그 콘솔을 밖에서 읽으려면
@@ -306,17 +325,32 @@ start_progress_server() {
     PROGRESS_URL=""
     return
   fi
-  python3 "$script" "$PROGRESS_PORT" "$OUTPUT_DIR/progress.log" \
+  python3 "$PROCESS_HELPER" run python3 "$script" "$PROGRESS_PORT" "$OUTPUT_DIR/progress.log" \
     >"$OUTPUT_DIR/progress_server.log" 2>&1 &
   PROGRESS_SERVER_PID=$!
   PROGRESS_URL="http://127.0.0.1:$PROGRESS_PORT/"
-  echo "Progress collector on port $PROGRESS_PORT -> $OUTPUT_DIR/progress.log"
+  for _ in {1..30}; do
+    if ! kill -0 "$PROGRESS_SERVER_PID" 2>/dev/null; then
+      break
+    fi
+    if nc -z 127.0.0.1 "$PROGRESS_PORT" >/dev/null 2>&1; then
+      if ! python3 "$PROCESS_HELPER" owns-port "$PROGRESS_SERVER_PID" "$PROGRESS_PORT"; then
+        echo "Progress listener is not owned by this run: $PROGRESS_PORT" >&2
+        exit 1
+      fi
+      echo "Progress collector on port $PROGRESS_PORT -> $OUTPUT_DIR/progress.log"
+      return
+    fi
+    sleep 1
+  done
+  echo "Progress collector did not start. Log: $OUTPUT_DIR/progress_server.log" >&2
+  exit 1
 }
 
 start_chromedriver() {
   if port_is_open; then
-    echo "Using existing chromedriver on port $CHROMEDRIVER_PORT"
-    return
+    echo "WebDriver port already in use: $CHROMEDRIVER_PORT" >&2
+    exit 1
   fi
 
   local cmd=()
@@ -329,12 +363,20 @@ start_chromedriver() {
   fi
 
   echo "Starting chromedriver on port $CHROMEDRIVER_PORT"
-  "${cmd[@]}" --port="$CHROMEDRIVER_PORT" \
+  python3 "$PROCESS_HELPER" run "${cmd[@]}" --port="$CHROMEDRIVER_PORT" \
     >"$OUTPUT_DIR/chromedriver.log" 2>&1 &
   CHROMEDRIVER_PID=$!
 
   for _ in {1..30}; do
+    if ! kill -0 "$CHROMEDRIVER_PID" 2>/dev/null; then
+      echo "chromedriver exited before startup. Log: $OUTPUT_DIR/chromedriver.log" >&2
+      exit 1
+    fi
     if port_is_open; then
+      if ! python3 "$PROCESS_HELPER" owns-port "$CHROMEDRIVER_PID" "$CHROMEDRIVER_PORT"; then
+        echo "WebDriver listener is not owned by this run: $CHROMEDRIVER_PORT" >&2
+        exit 1
+      fi
       return
     fi
     sleep 1
@@ -369,7 +411,10 @@ run_and_capture() {
   local log_file="$1"
   shift
   echo "Running: $*"
-  "$@" 2>&1 | tee "$log_file"
+  python3 "$PROCESS_HELPER" run "$@" > >(tee "$log_file") 2>&1 &
+  PUB_GET_PID=$!
+  wait "$PUB_GET_PID"
+  PUB_GET_PID=""
 }
 
 run_flutter_drive_and_capture() {
@@ -377,7 +422,7 @@ run_flutter_drive_and_capture() {
   shift
   echo "Running: $*"
   set +e
-  "$@" > >(tee "$log_file") 2>&1 &
+  python3 "$PROCESS_HELPER" run "$@" > >(tee "$log_file") 2>&1 &
   local run_pid=$!
   DRIVE_PID="$run_pid"
 
@@ -390,7 +435,6 @@ run_flutter_drive_and_capture() {
         echo "Detected pass; cleaning up lingering flutter drive session." \
           | tee -a "$log_file"
         cleanup_bot_processes
-        kill_pids "$run_pid"
       fi
       set -e
       return 0
@@ -444,22 +488,18 @@ persist_checkpoint() {
 }
 
 echo "Output: $OUTPUT_DIR"
-cleanup_bot_processes
 CARRYOVER_ENV_BACKUP=""
 if [[ "$DIFFICULTY" == "challenge" && -f "$BROWSER_PROFILE_DIR/latest_challenge_carryover.env" ]]; then
   CARRYOVER_ENV_BACKUP="$(mktemp /tmp/rummipoker_challenge_carryover.XXXXXX.env)"
   cp "$BROWSER_PROFILE_DIR/latest_challenge_carryover.env" "$CARRYOVER_ENV_BACKUP"
 fi
 if [[ "$RESUME_ACTIVE_RUN" != "true" ]]; then
-  if [[ -z "$BROWSER_PROFILE_DIR" || "$BROWSER_PROFILE_DIR" == "/" ]]; then
-    echo "Refusing to clear unsafe browser profile dir: $BROWSER_PROFILE_DIR" >&2
-    exit 1
-  fi
-  rm -rf "$BROWSER_PROFILE_DIR"
+  # Clear only bot-owned state; retain the lease and unrelated files.
+  rm -rf "$BROWSER_PROFILE_DIR/chrome"
+  rm -f "$BROWSER_PROFILE_DIR/latest_checkpoint.env" \
+    "$BROWSER_PROFILE_DIR/latest_challenge_carryover.env"
 fi
-if [[ "$START_CHROMEDRIVER" == "true" ]]; then
-  start_chromedriver
-fi
+start_chromedriver
 start_progress_server
 mkdir -p "$BROWSER_PROFILE_DIR"
 if [[ -n "$CARRYOVER_ENV_BACKUP" && -f "$CARRYOVER_ENV_BACKUP" ]]; then

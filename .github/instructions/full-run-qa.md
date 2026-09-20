@@ -30,6 +30,7 @@ alwaysApply: false
 ## QA와 정리
 
 - game over뿐 아니라 overflow, 잘림, tutorial target, 다국어, sound, save/restore 결함도 같은 locale gate의 실패다. 수정 뒤 해당 gate를 다시 실행한다.
-- 기존 Chrome/Simulator가 있으면 재사용한다. 성공, 실패, 중단, timeout 모든 종료 경로에서 Chrome Helper, WebDriver, ChromeDriver, Flutter web server 잔류 process를 정리하고 확인 전 다음 실행이나 최종 보고를 하지 않는다.
+- 수동 QA는 기존 Chrome/Simulator를 재사용한다. 자동 runner는 실행 전에 안전한 프로필 경로·프로필 잠금·포트 점유를 검사하고 외부 점유가 있으면 종료한다. 포트 PID나 프로필 부분 문자열만으로 프로세스를 종료하지 않는다.
+- 자동 runner는 자신이 생성한 프로세스 그룹과 자식만 정리한다. 성공, 실패, 중단, timeout마다 Chrome Helper, WebDriver, ChromeDriver, Flutter web server 잔류를 확인한다. PID 재사용을 막는 소유권을 유지하고, runner 변경은 `python3 test/tools/full_run_bot_process_test.py`로 외부 프로세스 보호와 종료 경로를 검증한다.
 - run마다 seed, locale, difficulty/modifier, checkpoint 여부, action trace, console, screenshot/video와 정산 결과를 남긴다. debug chrome이 보이는 캡처를 release evidence로 쓰지 않는다.
 - 테스트·검증 실패 보고는 `failure-reporting.md` 형식을 따르고 원인, 해결책, 재검증 명령을 포함한다.
