@@ -181,7 +181,7 @@ Archive는 마지막으로 확인한 항목 집합을 SharedPreferences의 별�
 | locale | `ko`, `en`, `ja`, `zh-CN`, `zh-TW`; system locale 기본, 한국어 fallback; Settings에서 즉시 변경 | 기본 navigation/settings localization test와 일부 CJK-friendly no-ellipsis widget assertion | 5 locale × 7 route 전체 overflow, 실제 CJK font fallback·줄바꿈·접근성 label 검증 없음 |
 | dynamic layout | MediaQuery textScaler를 보존하고 일부 word-wrap helper가 scaler 반영 | 개별 widget layout test | fixed 390×750 frame 안의 최대 text scale, foldable/tablet/rotation 전체 검증 없음 |
 
-구현됨은 code path가 존재한다는 뜻이고, 보호됨은 명시적 assertion이 있다는 뜻이다. gap 항목은 현재 완료 상태가 아니다. locale bootstrap은 [main.dart](../../lib/main.dart), locale code mapping은 [translation_locale_code.dart](../../lib/resources/translation_locale_code.dart), word wrap은 [game_word_wrap_text.dart](../../lib/views/game/widgets/game_word_wrap_text.dart)가 소유한다.
+구현됨은 code path가 존재한다는 뜻이고, 보호됨은 명시적 assertion이 있다는 뜻이다. gap 항목은 현재 완료 상태가 아니다. locale bootstrap은 [main.dart](../../lib/main.dart), locale code mapping은 [translation_locale_code.dart](../../lib/resources/translation_locale_code.dart)가 소유한다. 한국어 줄바꿈은 [semantic_text.dart](../../lib/widgets/semantic_text.dart)의 `SemanticText`가 소유하고, [game_word_wrap_text.dart](../../lib/views/game/widgets/game_word_wrap_text.dart)는 튜토리얼 오버레이 한 곳에 남은 예전 helper다. 번역 파일 구조, 키 이름 규칙, 번역 호출 표준은 [I18N](I18N.md)이 소유한다.
 
 ## 휴대폰 화면 크기와 안전 영역
 
@@ -212,7 +212,7 @@ Archive는 마지막으로 확인한 항목 집합을 SharedPreferences의 별�
 - Tool/Gear UI는 3/2 슬롯만 렌더하지만 구매 cap이 없어 숨은 보유가 생길 수 있다.
 - Archive 분모는 Item 91개를 쓰지만 normal Market 노출에서 제외된 5개가 있어 일반 수집 91/91은 도달 불가하다.
 - Battle/Market coach mark만 있고 Blind, Boss 규칙, cash-out, 실패 학습, unlock spend, Archive 온보딩은 없다.
-- locale 설정은 세션 전용(`saveLocale:false`)이며 핵심 화면 문자열 일부와 content catalog 번역이 미완이다.
+- locale 설정은 세션 전용(`saveLocale:false`)이다. `assets/translations/`의 번역 값은 5개 locale 모두 채워져 있으나, 화면 코드에 한국어가 그대로 박힌 파일이 65개 남아 있어 다른 언어에서도 한국어로 보인다. 남은 파일 목록은 [no_hardcoded_korean_test.dart](../../test/tools/no_hardcoded_korean_test.dart)의 허용 목록이 소유한다.
 
 ## Source and Update Trigger
 

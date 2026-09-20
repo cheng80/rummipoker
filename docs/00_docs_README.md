@@ -65,6 +65,7 @@
 | `docs/00_docs_README.md` | governance | 문서 경계·권위·작성 규칙 |
 | `docs/core/CONTENT_SYSTEM.md` | core | 콘텐츠 runtime 계약 |
 | `docs/core/GAME_DESIGN.md` | core | 게임 정체성·코어 루프 |
+| `docs/core/I18N.md` | core | 번역 파일·키 규칙·줄바꿈 계약 |
 | `docs/core/GAME_RULES.md` | core | 보드·족보·전투 규칙 |
 | `docs/core/RUN_ECONOMY.md` | core | run·정산·경제 계약 |
 | `docs/core/SAVE_DATA.md` | core | 저장 schema·복원 계약 |
@@ -96,4 +97,5 @@
 | `docs/tools/00_tools_README.md` | tools | 도구 문서군 정의 |
 | `docs/tools/card_assets/CARD_ITEM_ILLUSTRATION_GUIDE.md` | tools | 카드 일러스트 규칙 |
 | `docs/tools/card_assets/CARD_ITEM_IMAGE_PROMPTS.md` | tools | 카드 이미지 prompt |
+| `docs/tools/I18N_GLOSSARY.md` | tools | 5개 언어 게임 용어집 |
 <!-- DOCUMENT_REGISTRY_END -->
