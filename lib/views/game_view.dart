@@ -38,6 +38,7 @@ import '../services/blind_selection_setup.dart';
 import '../services/debug_run_fixture_service.dart';
 import '../services/game_settings.dart';
 import '../services/game_analytics_service.dart';
+import '../services/in_app_review_service.dart';
 import '../services/new_run_setup.dart';
 import '../services/run_progression_service.dart';
 import '../services/run_unlock_state_service.dart';
