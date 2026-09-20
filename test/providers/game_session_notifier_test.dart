@@ -911,10 +911,7 @@ void main() {
           placement: 'inventory',
         ),
       );
-      final basePrice = state.runProgress!.effectiveItemPrice(
-        item,
-        includeCheapestFirstOfferDiscount: false,
-      );
+      final basePrice = state.runProgress!.effectiveItemPrice(item);
       final offer = RummiMarketItemOfferView.fromItemDefinition(
         item,
         slotIndex: 0,

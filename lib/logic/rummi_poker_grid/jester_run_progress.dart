@@ -780,9 +780,39 @@ class RummiRunProgress {
     };
   }
 
+  /// 나침반("가장 싼 첫 offer") 할인을 받을 offer를 한 곳에서 고른다.
+  ///
+  /// 화면에 값을 표시하는 facade와 실제로 골드를 빼는 구매 명령이 각자
+  /// "가장 싼 offer"를 다시 계산하면 두 답이 갈라져서 라벨과 청구 금액이
+  /// 어긋난다. 그래서 어느 경로든 이 함수 하나로만 대상을 정한다.
+  ///
+  /// [jesterPrices]와 [itemPrices]는 모두 나침반 할인을 빼기 전의 유효 가격이다.
+  /// 0 이하인 offer는 이미 공짜라서 후보로 보지 않는다. 가격이 같으면 Jester
+  /// offer가 먼저다. 후보가 없으면 `null`을 준다.
+  static ({bool isItem, int index, int price})?
+  cheapestFirstOfferDiscountTarget({
+    required List<int> jesterPrices,
+    required List<int> itemPrices,
+  }) {
+    ({bool isItem, int index, int price})? best;
+    for (var i = 0; i < jesterPrices.length; i++) {
+      final price = jesterPrices[i];
+      if (price > 0 && (best == null || price < best.price)) {
+        best = (isItem: false, index: i, price: price);
+      }
+    }
+    for (var i = 0; i < itemPrices.length; i++) {
+      final price = itemPrices[i];
+      if (price > 0 && (best == null || price < best.price)) {
+        best = (isItem: true, index: i, price: price);
+      }
+    }
+    return best;
+  }
+
   int effectiveJesterOfferPrice(
     int offerIndex, {
-    bool includeCheapestFirstOfferDiscount = true,
+    bool isCheapestFirstOfferDiscountTarget = false,
   }) {
     if (offerIndex < 0 || offerIndex >= shopOffers.length) return 0;
     final offer = shopOffers[offerIndex];
@@ -790,7 +820,7 @@ class RummiRunProgress {
       basePrice: offer.price,
       category: 'jester',
       jester: offer.card,
-      includeCheapestFirstOfferDiscount: includeCheapestFirstOfferDiscount,
+      isCheapestFirstOfferDiscountTarget: isCheapestFirstOfferDiscountTarget,
     );
   }
 
@@ -805,13 +835,13 @@ class RummiRunProgress {
 
   int effectiveItemPrice(
     ItemDefinition item, {
-    bool includeCheapestFirstOfferDiscount = true,
+    bool isCheapestFirstOfferDiscountTarget = false,
   }) {
     return effectivePurchasePrice(
       basePrice: item.basePrice,
       category: 'item',
       item: item,
-      includeCheapestFirstOfferDiscount: includeCheapestFirstOfferDiscount,
+      isCheapestFirstOfferDiscountTarget: isCheapestFirstOfferDiscountTarget,
     );
   }
 
@@ -831,12 +861,15 @@ class RummiRunProgress {
     );
   }
 
+  /// 나침반 할인은 이 offer가 대상으로 뽑혔을 때만 뺀다.
+  ///
+  /// 대상 선정은 [cheapestFirstOfferDiscountTarget] 한 곳에서만 한다.
   int effectivePurchasePrice({
     required int basePrice,
     required String category,
     RummiJesterCard? jester,
     ItemDefinition? item,
-    bool includeCheapestFirstOfferDiscount = true,
+    bool isCheapestFirstOfferDiscountTarget = false,
   }) {
     final scaledBasePrice = effectivePurchaseBasePrice(
       basePrice: basePrice,
@@ -848,9 +881,7 @@ class RummiRunProgress {
       'item' => marketModifiers.nextItemPurchaseDiscount,
       _ => 0,
     };
-    final cheapestDiscount =
-        includeCheapestFirstOfferDiscount &&
-            _cheapestFirstOfferDiscountApplies(scaledBasePrice, category)
+    final cheapestDiscount = isCheapestFirstOfferDiscountTarget
         ? marketModifiers.cheapestFirstOfferDiscount
         : 0;
     return max(
@@ -1084,7 +1115,7 @@ class RummiRunProgress {
   bool buyOffer(
     int offerIndex, {
     int? price,
-    bool consumeCheapestFirstOfferDiscount = true,
+    bool consumeCheapestFirstOfferDiscount = false,
   }) {
     if (offerIndex < 0 || offerIndex >= shopOffers.length) {
       return false;
@@ -1113,7 +1144,7 @@ class RummiRunProgress {
     ItemDefinition item, {
     int? price,
     ItemCatalog? itemCatalog,
-    bool consumeCheapestFirstOfferDiscount = true,
+    bool consumeCheapestFirstOfferDiscount = false,
   }) {
     final resolvedPrice = price ?? effectiveItemPrice(item);
     if (gold < resolvedPrice) {
@@ -1648,24 +1679,9 @@ class RummiRunProgress {
     return total;
   }
 
-  bool _cheapestFirstOfferDiscountApplies(int basePrice, String category) {
-    if (marketModifiers.cheapestFirstOfferDiscount <= 0) return false;
-    final firstJesterPrice = shopOffers.isEmpty ? null : shopOffers.first.price;
-    final firstItemPrice = category == 'item' ? basePrice : null;
-    return switch (category) {
-      'jester' =>
-        firstJesterPrice != null &&
-            (firstItemPrice == null || firstJesterPrice <= firstItemPrice),
-      'item' =>
-        firstItemPrice != null &&
-            (firstJesterPrice == null || firstItemPrice < firstJesterPrice),
-      _ => false,
-    };
-  }
-
   void _consumePurchaseDiscounts(
     String category, {
-    bool consumeCheapestFirstOfferDiscount = true,
+    bool consumeCheapestFirstOfferDiscount = false,
   }) {
     marketModifiers = marketModifiers.copyWith(
       nextPurchaseDiscount: 0,

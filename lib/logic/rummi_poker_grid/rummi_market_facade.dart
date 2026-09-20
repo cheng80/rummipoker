@@ -69,10 +69,7 @@ class RummiMarketRuntimeFacade {
         RummiMarketOfferView.fromShopOffer(
           progress.shopOffers[index],
           currentGold: progress.gold,
-          price: progress.effectiveJesterOfferPrice(
-            index,
-            includeCheapestFirstOfferDiscount: false,
-          ),
+          price: progress.effectiveJesterOfferPrice(index),
           originalPrice: progress.effectiveJesterOfferBasePrice(index),
         ),
     ];

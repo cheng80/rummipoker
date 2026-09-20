@@ -2,6 +2,12 @@ part of 'rummi_market_facade.dart';
 
 enum RummiMarketCategory { jester, item, tile }
 
+/// 나침반("가장 싼 첫 offer") 할인이 붙은 offer에 표시하는 출처 라벨이다.
+///
+/// 구매 경로가 이 라벨로 "이 offer가 할인 대상이었다"를 읽으므로, 표시와
+/// 청구가 같은 문자열을 쓰도록 한 곳에 둔다.
+const String rummiMarketCompassDiscountLabel = '나침반';
+
 class RummiMarketOwnedEntryView {
   const RummiMarketOwnedEntryView({
     required this.slotIndex,

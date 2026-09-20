@@ -257,37 +257,27 @@ mixin GameSessionNotifierMarketCommands
     return List<ItemPresentationEvent>.unmodifiable(events);
   }
 
+  /// slot index로 사는 경로도 화면에 표시되는 offer를 그대로 거쳐 간다.
+  ///
+  /// 가격과 나침반 할인 대상을 여기서 다시 계산하면 라벨과 청구 금액이
+  /// 어긋나므로, 표시용 facade가 만든 offer를 [buyShopOfferView]에 넘긴다.
   String? buyShopOffer(int offerIndex, {ItemCatalog? itemCatalog}) {
     final runProgress = state.runProgress;
     if (runProgress == null) return '상점 진행 정보가 없습니다.';
     if (offerIndex < 0 || offerIndex >= runProgress.shopOffers.length) {
       return '구매할 오퍼를 찾지 못했습니다.';
     }
-    if (runProgress.ownedJesters.length >= runProgress.jesterSlotCapacity()) {
-      return '제스터 슬롯이 가득 찼습니다. 먼저 판매하세요.';
-    }
-    final marketBuyItem = _nextOwnedMarketBuyItem(
-      catalog: itemCatalog,
-      runProgress: runProgress,
-      category: 'jester',
+    final market = RummiMarketRuntimeFacade.fromRunProgress(
+      runProgress,
+      itemCatalog: itemCatalog,
     );
-    if (marketBuyItem != null) {
-      final result = ItemEffectRuntime.applyMarketBuyItem(
-        item: marketBuyItem,
-        runProgress: runProgress,
-      );
-      if (!result.isSuccess) return result.failMessage;
+    if (offerIndex >= market.offers.length) {
+      return '구매할 오퍼를 찾지 못했습니다.';
     }
-    final price = runProgress.effectiveJesterOfferPrice(offerIndex);
-    if (runProgress.gold < price) {
-      return '골드가 부족합니다.';
-    }
-    final ok = runProgress.buyOffer(offerIndex);
-    if (!ok) {
-      return '구매 처리에 실패했습니다.';
-    }
-    _replaceState(state.copyWith(revision: state.revision + 1));
-    return null;
+    return buyShopOfferView(
+      market.offers[offerIndex],
+      itemCatalog: itemCatalog,
+    );
   }
 
   String? buyShopOfferView(
@@ -310,6 +300,8 @@ mixin GameSessionNotifierMarketCommands
       runProgress: runProgress,
       category: 'jester',
     );
+    final isCompassTarget =
+        offer.discountSourceLabel == rummiMarketCompassDiscountLabel;
     var price = offer.price;
     if (marketBuyItem != null) {
       final result = ItemEffectRuntime.applyMarketBuyItem(
@@ -319,14 +311,8 @@ mixin GameSessionNotifierMarketCommands
       if (!result.isSuccess) return result.failMessage;
       price = runProgress.effectiveJesterOfferPrice(
         offerIndex,
-        includeCheapestFirstOfferDiscount: false,
+        isCheapestFirstOfferDiscountTarget: isCompassTarget,
       );
-      if (offer.discountSourceLabel == '나침반') {
-        price = max(
-          0,
-          price - runProgress.marketModifiers.cheapestFirstOfferDiscount,
-        );
-      }
     }
     if (runProgress.gold < price) {
       return '골드가 부족합니다.';
@@ -334,7 +320,7 @@ mixin GameSessionNotifierMarketCommands
     final ok = runProgress.buyOffer(
       offerIndex,
       price: price,
-      consumeCheapestFirstOfferDiscount: offer.discountSourceLabel == '나침반',
+      consumeCheapestFirstOfferDiscount: isCompassTarget,
     );
     if (!ok) {
       return '구매 처리에 실패했습니다.';
@@ -366,6 +352,8 @@ mixin GameSessionNotifierMarketCommands
       runProgress: runProgress,
       category: 'item',
     );
+    final isCompassTarget =
+        offer.discountSourceLabel == rummiMarketCompassDiscountLabel;
     var price = offer.price;
     if (marketBuyItem != null) {
       final result = ItemEffectRuntime.applyMarketBuyItem(
@@ -375,14 +363,8 @@ mixin GameSessionNotifierMarketCommands
       if (!result.isSuccess) return result.failMessage;
       price = runProgress.effectiveItemPrice(
         offer.item,
-        includeCheapestFirstOfferDiscount: false,
+        isCheapestFirstOfferDiscountTarget: isCompassTarget,
       );
-      if (offer.discountSourceLabel == '나침반') {
-        price = max(
-          0,
-          price - runProgress.marketModifiers.cheapestFirstOfferDiscount,
-        );
-      }
     }
     if (runProgress.gold < price) {
       return '골드가 부족합니다.';
@@ -391,7 +373,7 @@ mixin GameSessionNotifierMarketCommands
       offer.item,
       price: price,
       itemCatalog: itemCatalog,
-      consumeCheapestFirstOfferDiscount: offer.discountSourceLabel == '나침반',
+      consumeCheapestFirstOfferDiscount: isCompassTarget,
     );
     if (!ok) {
       return '아이템 구매 처리에 실패했습니다.';

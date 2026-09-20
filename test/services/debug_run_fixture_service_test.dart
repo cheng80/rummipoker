@@ -268,7 +268,16 @@ void main() {
     expect(fixture!.activeScene, ActiveRunScene.shop);
     expect(fixture.runProgress.gold, 18);
     expect(fixture.runProgress.effectiveRerollCost(), 4);
-    expect(fixture.runProgress.effectiveJesterOfferPrice(0), 2);
+    // 나침반 할인은 어느 offer가 대상인지 아는 facade만 붙인다. 가격 계산은
+    // 대상으로 지정했을 때만 그 할인을 뺀다.
+    expect(fixture.runProgress.effectiveJesterOfferPrice(0), 3);
+    expect(
+      fixture.runProgress.effectiveJesterOfferPrice(
+        0,
+        isCheapestFirstOfferDiscountTarget: true,
+      ),
+      2,
+    );
     expect(fixture.runProgress.marketModifiers.itemOfferSlotCount, 3);
     expect(fixture.runProgress.itemInventory.passiveRelicIds, [
       'merchant_stamp',
