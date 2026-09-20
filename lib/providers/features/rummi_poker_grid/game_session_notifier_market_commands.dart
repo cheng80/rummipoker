@@ -300,8 +300,7 @@ mixin GameSessionNotifierMarketCommands
       runProgress: runProgress,
       category: 'jester',
     );
-    final isCompassTarget =
-        offer.discountSourceLabel == rummiMarketCompassDiscountLabel;
+    final isCompassTarget = offer.isCompassDiscounted;
     var price = offer.price;
     if (marketBuyItem != null) {
       final result = ItemEffectRuntime.applyMarketBuyItem(
@@ -352,8 +351,7 @@ mixin GameSessionNotifierMarketCommands
       runProgress: runProgress,
       category: 'item',
     );
-    final isCompassTarget =
-        offer.discountSourceLabel == rummiMarketCompassDiscountLabel;
+    final isCompassTarget = offer.isCompassDiscounted;
     var price = offer.price;
     if (marketBuyItem != null) {
       final result = ItemEffectRuntime.applyMarketBuyItem(

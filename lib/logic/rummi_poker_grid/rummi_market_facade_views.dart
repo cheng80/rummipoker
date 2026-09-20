@@ -115,6 +115,13 @@ class RummiMarketOfferView {
 
   int get discountAmount => (originalPrice - price).clamp(0, originalPrice);
   bool get hasDiscount => discountAmount > 0;
+
+  /// 이 offer가 나침반 할인 대상으로 뽑혔는지 알려 준다.
+  ///
+  /// 구매 경로는 이 값으로 할인을 소비할지 정한다. 대상 판정을 호출부마다
+  /// 다시 쓰지 않게 한 곳에 둔다.
+  bool get isCompassDiscounted =>
+      discountSourceLabel == rummiMarketCompassDiscountLabel;
 }
 
 class RummiMarketItemOfferView {
@@ -180,6 +187,13 @@ class RummiMarketItemOfferView {
 
   int get discountAmount => (originalPrice - price).clamp(0, originalPrice);
   bool get hasDiscount => discountAmount > 0;
+
+  /// 이 offer가 나침반 할인 대상으로 뽑혔는지 알려 준다.
+  ///
+  /// 구매 경로는 이 값으로 할인을 소비할지 정한다. 대상 판정을 호출부마다
+  /// 다시 쓰지 않게 한 곳에 둔다.
+  bool get isCompassDiscounted =>
+      discountSourceLabel == rummiMarketCompassDiscountLabel;
 }
 
 class RummiMarketTileOfferView {

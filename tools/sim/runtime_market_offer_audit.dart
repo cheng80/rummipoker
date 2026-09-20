@@ -262,7 +262,10 @@ Map<String, Object?> _buildCollectionAudit({
             (offer) => offer.card.id == jesterCandidate.contentId,
           );
           if (index >= 0) {
-            final price = progress.effectiveJesterOfferPrice(index);
+            // 게임 구매 경로와 같은 규칙을 쓴다. 진열된 가격으로 청구하고,
+            // 나침반 할인 대상이었을 때만 그 할인을 소비한다.
+            final isCompassTarget = jesterCandidate.isCompassDiscounted;
+            final price = jesterCandidate.price;
             if (progress.gold < price) {
               _increment(goldBlockedJesters, jesterCandidate.contentId);
               if (allJestersBoughtAtEntry == null) {
@@ -286,7 +289,11 @@ Map<String, Object?> _buildCollectionAudit({
                 }
               }
             }
-            if (progress.buyOffer(index)) {
+            if (progress.buyOffer(
+              index,
+              price: price,
+              consumeCheapestFirstOfferDiscount: isCompassTarget,
+            )) {
               aggregateBoughtJesters.add(jesterCandidate.contentId);
               allJestersBoughtAtEntry ??=
                   aggregateBoughtJesters.length >= jesterIds.length
@@ -311,6 +318,7 @@ Map<String, Object?> _buildCollectionAudit({
         );
         if (itemCandidate != null) {
           final item = itemCandidate.item;
+          final isCompassTarget = itemCandidate.isCompassDiscounted;
           final price = itemCandidate.price;
           if (progress.gold < price) {
             _increment(goldBlockedItems, item.id);
@@ -322,6 +330,7 @@ Map<String, Object?> _buildCollectionAudit({
               item,
               price: price,
               itemCatalog: itemCatalog,
+              consumeCheapestFirstOfferDiscount: isCompassTarget,
             );
             if (bought) {
               aggregateBoughtItems.add(item.id);
@@ -336,6 +345,7 @@ Map<String, Object?> _buildCollectionAudit({
                 item,
                 price: price,
                 itemCatalog: itemCatalog,
+                consumeCheapestFirstOfferDiscount: isCompassTarget,
               )) {
                 aggregateBoughtItems.add(item.id);
                 allItemsBoughtAtEntry ??=
