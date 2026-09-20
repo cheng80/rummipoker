@@ -257,7 +257,7 @@ void main() {
       for (final locale in _locales) {
         await harness.switchLocale(tester, locale);
         expect(tester.element(find.byType(Dialog)), same(dialogElement));
-        for (final key in [title, if (message != null) message, ...actions]) {
+        for (final key in [title, ?message, ...actions]) {
           expect(
             harness.dialogText(key),
             findsOneWidget,
