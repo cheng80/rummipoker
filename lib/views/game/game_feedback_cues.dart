@@ -30,6 +30,7 @@ enum GameCue {
   marketPage,
   stationAdvance,
   menuNavigate,
+  cashOutOpen,
   cashOutCollect,
   newReveal,
   bossIntro,
@@ -58,80 +59,77 @@ enum GameCue {
 /// 의미 키 하나가 내는 소리와 햅틱.
 class GameCueSpec {
   const GameCueSpec({
-    required this.sfx,
+    this.sfx,
     this.pitch = 1,
     this.pitchVariance = 0,
+    this.preserveOriginalPitch = false,
     this.haptic,
   });
 
-  final String sfx;
+  final String? sfx;
 
-  /// 재생 배율(1 = 원음). 웹에서만 음높이가 바뀐다.
+  /// 재생 배율(1 = 원음). 웹과 네이티브에서 음높이·속도가 함께 바뀐다.
   final double pitch;
 
   /// 반복 동작이 기계적으로 들리지 않게 주는 ±무작위 변주 비율.
   final double pitchVariance;
+
+  /// UI 입력은 호출부 변주·전역 감속과 무관하게 원음을 유지한다.
+  final bool preserveOriginalPitch;
   final HapticGrade? haptic;
 }
 
-/// 현재 음원 7개(BtnSnd, Collect, Clear, TimeUp, Start, Fail, TimeTic)와
-/// pitch·변주 조합으로 만든 매핑.
+/// 등록 음원 12개 중 승인된 상황 매핑을 사용한다.
+/// 비언어 효과만 pitch·변주에 사용하며, 소리 없는 시각·햅틱 cue도 허용한다.
 const Map<GameCue, GameCueSpec> gameFeedbackCues = {
   GameCue.buttonTap: GameCueSpec(
+    preserveOriginalPitch: true,
     sfx: AssetPaths.sfxBtnSnd,
-    pitchVariance: 0.04,
     haptic: HapticGrade.select,
   ),
   GameCue.tileSelect: GameCueSpec(
-    sfx: AssetPaths.sfxTimeTic,
-    pitch: 1.2,
-    pitchVariance: 0.06,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxTilePick,
     haptic: HapticGrade.select,
   ),
   GameCue.tilePlace: GameCueSpec(
-    sfx: AssetPaths.sfxBtnSnd,
-    pitch: 0.85,
-    pitchVariance: 0.08,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxTilePlace,
     haptic: HapticGrade.place,
   ),
   GameCue.tileDraw: GameCueSpec(
-    sfx: AssetPaths.sfxTimeTic,
-    pitch: 0.9,
-    pitchVariance: 0.1,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxBtnSnd,
     haptic: HapticGrade.select,
   ),
   GameCue.discard: GameCueSpec(
-    sfx: AssetPaths.sfxBtnSnd,
-    pitch: 0.7,
-    pitchVariance: 0.06,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxCardToss,
     haptic: HapticGrade.place,
   ),
   GameCue.itemUse: GameCueSpec(
-    sfx: AssetPaths.sfxStart,
-    pitch: 1.15,
-    pitchVariance: 0.04,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxBtnSnd,
     haptic: HapticGrade.impact,
   ),
   GameCue.buy: GameCueSpec(
-    sfx: AssetPaths.sfxCollect,
-    pitch: 1.1,
-    pitchVariance: 0.04,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxBtnSnd,
     haptic: HapticGrade.impact,
   ),
   GameCue.sell: GameCueSpec(
-    sfx: AssetPaths.sfxCollect,
-    pitch: 0.85,
-    pitchVariance: 0.04,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxBtnSnd,
     haptic: HapticGrade.place,
   ),
   GameCue.reroll: GameCueSpec(
-    sfx: AssetPaths.sfxTimeTic,
-    pitchVariance: 0.08,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxBtnSnd,
     haptic: HapticGrade.select,
   ),
   GameCue.deny: GameCueSpec(
-    sfx: AssetPaths.sfxFail,
-    pitch: 1.25,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxDeny,
     haptic: HapticGrade.error,
   ),
   GameCue.scoreTick: GameCueSpec(
@@ -144,121 +142,112 @@ const Map<GameCue, GameCueSpec> gameFeedbackCues = {
     haptic: HapticGrade.impact,
   ),
   GameCue.jesterFire: GameCueSpec(
-    sfx: AssetPaths.sfxStart,
+    sfx: AssetPaths.sfxCollect,
     pitchVariance: 0.05,
     haptic: HapticGrade.impact,
   ),
   GameCue.penalty: GameCueSpec(
     sfx: AssetPaths.sfxFail,
-    pitch: 0.8,
     haptic: HapticGrade.heavy,
   ),
   GameCue.bigScore1: GameCueSpec(
-    sfx: AssetPaths.sfxClear,
+    sfx: AssetPaths.sfxCollect,
     pitch: 0.9,
     haptic: HapticGrade.impact,
   ),
   GameCue.bigScore2: GameCueSpec(
-    sfx: AssetPaths.sfxClear,
+    sfx: AssetPaths.sfxCollect,
     haptic: HapticGrade.impact,
   ),
   GameCue.bigScore3: GameCueSpec(
-    sfx: AssetPaths.sfxClear,
+    sfx: AssetPaths.sfxCollect,
     pitch: 1.12,
     haptic: HapticGrade.heavy,
   ),
   GameCue.bigScore4: GameCueSpec(
-    sfx: AssetPaths.sfxClear,
+    sfx: AssetPaths.sfxCollect,
     pitch: 1.25,
     haptic: HapticGrade.heavy,
   ),
   GameCue.unlock: GameCueSpec(
-    sfx: AssetPaths.sfxClear,
-    pitch: 1.2,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxBtnSnd,
     haptic: HapticGrade.impact,
   ),
-  GameCue.marketEntry: GameCueSpec(
-    sfx: AssetPaths.sfxStart,
-    pitch: 1.05,
-    pitchVariance: 0.03,
-    haptic: HapticGrade.impact,
-  ),
+  GameCue.marketEntry: GameCueSpec(haptic: HapticGrade.impact),
   GameCue.marketTab: GameCueSpec(
-    sfx: AssetPaths.sfxTimeTic,
-    pitch: 1.08,
-    pitchVariance: 0.03,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxBtnSnd,
     haptic: HapticGrade.select,
   ),
   GameCue.marketPage: GameCueSpec(
-    sfx: AssetPaths.sfxTimeTic,
-    pitch: 0.96,
-    pitchVariance: 0.04,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxBtnSnd,
     haptic: HapticGrade.select,
   ),
   GameCue.stationAdvance: GameCueSpec(
-    sfx: AssetPaths.sfxClear,
-    pitch: 1.08,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxBtnSnd,
     haptic: HapticGrade.impact,
   ),
   GameCue.menuNavigate: GameCueSpec(
+    preserveOriginalPitch: true,
     sfx: AssetPaths.sfxBtnSnd,
-    pitch: 0.9,
-    pitchVariance: 0.04,
     haptic: HapticGrade.select,
+  ),
+  GameCue.cashOutOpen: GameCueSpec(
+    sfx: AssetPaths.sfxClear,
+    haptic: HapticGrade.impact,
   ),
   GameCue.cashOutCollect: GameCueSpec(
     sfx: AssetPaths.sfxCollect,
     pitch: 1.06,
     haptic: HapticGrade.impact,
   ),
-  GameCue.newReveal: GameCueSpec(
-    sfx: AssetPaths.sfxStart,
-    pitch: 1.28,
-    pitchVariance: 0.03,
-    haptic: HapticGrade.impact,
-  ),
+  GameCue.newReveal: GameCueSpec(haptic: HapticGrade.impact),
   GameCue.bossIntro: GameCueSpec(
-    sfx: AssetPaths.sfxStart,
-    pitch: 0.7,
+    preserveOriginalPitch: true,
     haptic: HapticGrade.heavy,
   ),
   GameCue.victory: GameCueSpec(
-    sfx: AssetPaths.sfxClear,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxReward,
     haptic: HapticGrade.heavy,
   ),
   GameCue.gameOver: GameCueSpec(
-    sfx: AssetPaths.sfxTimeUp,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxDeny,
     haptic: HapticGrade.heavy,
   ),
 
   // --- T0: 공통 입력·팝업·화면 전환 ---
   GameCue.runStart: GameCueSpec(
-    sfx: AssetPaths.sfxStart,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxBtnSnd,
     haptic: HapticGrade.impact,
   ),
   GameCue.battleStart: GameCueSpec(
-    sfx: AssetPaths.sfxStart,
-    pitch: 0.9,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxBtnSnd,
     haptic: HapticGrade.heavy,
   ),
   GameCue.runRestore: GameCueSpec(
-    sfx: AssetPaths.sfxStart,
-    pitch: 1.1,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxBtnSnd,
     haptic: HapticGrade.impact,
   ),
   GameCue.choiceSelect: GameCueSpec(
-    sfx: AssetPaths.sfxTimeTic,
-    pitch: 1.1,
-    pitchVariance: 0.03,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxBtnSnd,
     haptic: HapticGrade.select,
   ),
   GameCue.panelOpen: GameCueSpec(
+    preserveOriginalPitch: true,
     sfx: AssetPaths.sfxBtnSnd,
-    pitch: 1.15,
     haptic: HapticGrade.select,
   ),
-  GameCue.noticeTop: GameCueSpec(sfx: AssetPaths.sfxTimeTic, pitch: 1.35),
-  GameCue.noticeBottom: GameCueSpec(sfx: AssetPaths.sfxTimeTic, pitch: 1.6),
+  GameCue.noticeTop: GameCueSpec(preserveOriginalPitch: true),
+  GameCue.noticeBottom: GameCueSpec(preserveOriginalPitch: true),
 
   // ── 전투 레인 ──
   GameCue.countTick: GameCueSpec(sfx: AssetPaths.sfxTimeTic, pitch: 1.35),
@@ -268,29 +257,24 @@ const Map<GameCue, GameCueSpec> gameFeedbackCues = {
     haptic: HapticGrade.select,
   ),
   GameCue.itemFire: GameCueSpec(
-    sfx: AssetPaths.sfxStart,
+    sfx: AssetPaths.sfxCollect,
     pitch: 1.3,
     haptic: HapticGrade.impact,
   ),
   GameCue.tileMove: GameCueSpec(
+    preserveOriginalPitch: true,
     sfx: AssetPaths.sfxBtnSnd,
-    pitch: 1.1,
-    pitchVariance: 0.06,
     haptic: HapticGrade.place,
   ),
   GameCue.lineTransform: GameCueSpec(
-    sfx: AssetPaths.sfxStart,
-    pitch: 0.95,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxBtnSnd,
     haptic: HapticGrade.impact,
   ),
-  GameCue.previewChange: GameCueSpec(
-    sfx: AssetPaths.sfxTimeTic,
-    pitch: 1.6,
-    pitchVariance: 0.05,
-  ),
+  GameCue.previewChange: GameCueSpec(preserveOriginalPitch: true),
   GameCue.confirmPress: GameCueSpec(
-    sfx: AssetPaths.sfxCollect,
-    pitch: 0.9,
+    preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxBtnSnd,
     haptic: HapticGrade.impact,
   ),
 };
@@ -302,11 +286,15 @@ class GameFeedback {
   /// [pitch]는 cue 기본 pitch에 곱한다. 정산 단계마다 올라가는 음 등에 쓴다.
   static void play(GameCue cue, {double pitch = 1}) {
     final spec = gameFeedbackCues[cue]!;
-    SoundManager.playSfx(
-      spec.sfx,
-      pitch: spec.pitch * pitch,
-      pitchVariance: spec.pitchVariance,
-    );
+    final sfx = spec.sfx;
+    if (sfx != null) {
+      SoundManager.playSfx(
+        sfx,
+        pitch: spec.pitch * pitch,
+        pitchVariance: spec.pitchVariance,
+        preserveOriginalPitch: spec.preserveOriginalPitch,
+      );
+    }
     final haptic = spec.haptic;
     if (haptic != null) GameHaptics.play(haptic);
   }

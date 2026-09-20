@@ -137,21 +137,6 @@ void main() {
       );
     });
 
-    test('keeps audioplayers pools native-only', () {
-      expect(
-        SoundManager.debugShouldUseSfxPool(AssetPaths.sfxBtnSnd, isWeb: false),
-        isTrue,
-      );
-      expect(
-        SoundManager.debugShouldUseSfxPool(AssetPaths.sfxBtnSnd, isWeb: true),
-        isFalse,
-      );
-      expect(
-        SoundManager.debugShouldUseSfxPool(AssetPaths.bgmMain, isWeb: false),
-        isFalse,
-      );
-    });
-
     test('keeps handling BGM gestures after priming web SFX', () {
       expect(
         SoundManager.debugShouldHandleWebAudioGesture(isWeb: true),

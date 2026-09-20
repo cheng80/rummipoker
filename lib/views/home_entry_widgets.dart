@@ -158,6 +158,7 @@ class HomeEntryCard extends StatelessWidget {
       deny: true,
       decision: decision,
       haptic: null,
+      playSound: false,
       builder: (context, onTap) => Material(
         color: GameUiPalette.transparent,
         borderRadius: BorderRadius.circular(14),

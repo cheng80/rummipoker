@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../providers/features/settings/settings_notifier.dart';
 import '../resources/asset_paths.dart';
 import '../resources/game_haptics.dart';
-import '../resources/sound_manager.dart';
 import '../services/game_settings.dart';
 import '../services/in_app_review_service.dart';
 import '../utils/common_ui.dart';
@@ -69,7 +68,6 @@ class SettingView extends StatelessWidget {
                     GameIconButtonChip(
                       icon: Icons.close_rounded,
                       onPressed: () {
-                        SoundManager.playSfx(AssetPaths.sfxBtnSnd);
                         context.pop();
                       },
                     ),
@@ -226,7 +224,7 @@ class _SfxVolumeTile extends ConsumerWidget {
       value: volume,
       enabled: !muted,
       onChanged: notifier.setSfxVolume,
-      onChangeEnd: (_) => SoundManager.playSfx(AssetPaths.sfxBtnSnd),
+      onChangeEnd: (_) => playButtonSound(),
     );
   }
 }
@@ -336,6 +334,7 @@ class _SettingRow extends StatelessWidget {
     this.below,
     this.onTap,
     this.dimmed = false,
+    this.playSound = true,
   });
 
   final String label;
@@ -344,6 +343,7 @@ class _SettingRow extends StatelessWidget {
   final Widget? below;
   final VoidCallback? onTap;
   final bool dimmed;
+  final bool playSound;
 
   @override
   Widget build(BuildContext context) {
@@ -410,7 +410,8 @@ class _SettingRow extends StatelessWidget {
           ? panel
           : PressFeedback(
               onTap: onTap,
-              haptic: null,
+              haptic: playSound ? HapticGrade.select : null,
+              playSound: playSound,
               builder: (context, tap) => Material(
                 color: GameUiPalette.transparent,
                 borderRadius: BorderRadius.circular(14),
@@ -447,13 +448,14 @@ class _ToggleRow extends StatelessWidget {
       toggled: value,
       label: label,
       child: _SettingRow(
+        playSound: false,
         icon: icon,
         label: label,
         dimmed: dimmed ?? !value,
         trailing: _TogglePill(value: value),
         onTap: () {
-          GameFeedback.play(GameCue.choiceSelect);
           onChanged(!value);
+          GameFeedback.play(GameCue.choiceSelect);
         },
       ),
     );
@@ -573,6 +575,7 @@ class SettingChoiceChip extends StatelessWidget {
       child: PressFeedback(
         onTap: onTap,
         haptic: null,
+        playSound: false,
         builder: (context, tap) => Material(
           color: GameUiPalette.transparent,
           borderRadius: BorderRadius.circular(12),

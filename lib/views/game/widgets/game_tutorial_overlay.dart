@@ -1,3 +1,4 @@
+import '../../../utils/common_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
@@ -247,7 +248,7 @@ class _TutorialBubble extends StatelessWidget {
                 Row(
                   children: [
                     TextButton(
-                      onPressed: onSkip,
+                      onPressed: withButtonSound(onSkip),
                       style: TextButton.styleFrom(
                         foregroundColor: GameUiPalette.textPrimary.withValues(
                           alpha: 0.82,
@@ -262,7 +263,7 @@ class _TutorialBubble extends StatelessWidget {
                     ),
                     const Spacer(),
                     FilledButton(
-                      onPressed: onNext,
+                      onPressed: withButtonSound(onNext),
                       style: FilledButton.styleFrom(
                         backgroundColor: GameUiPalette.actionGoldBright,
                         foregroundColor: GameUiPalette.textOnGold,

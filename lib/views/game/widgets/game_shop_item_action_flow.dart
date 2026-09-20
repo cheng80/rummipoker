@@ -429,6 +429,7 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     final item = slot.item;
     if (item == null) return null;
     final sellAction = _MarketActionPane(
+      playSound: false,
       priceLabel: '+${item.sellPrice}',
       buttonLabel: context.translate('marketSell'),
       buttonColor: GameUiPalette.actionDanger,
@@ -461,7 +462,10 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     final startOffset = _flightCenterForKey(_jesterSlotKey(index));
     final endOffset = _flightCenterForKey(_goldChipKey);
     final ok = widget.onSellOwnedJester(index);
-    if (!ok) return;
+    if (!ok) {
+      GameFeedback.play(GameCue.deny);
+      return;
+    }
     showBottomNotice(
       context,
       context.translate('marketJesterSold'),
@@ -494,7 +498,10 @@ extension _GameShopItemActionFlow on _GameShopScreenState {
     final startOffset = _flightCenterForKey(_itemSlotKey(slot.slotLabel));
     final endOffset = _flightCenterForKey(_goldChipKey);
     final ok = widget.onSellMarketItem(item);
-    if (!ok) return;
+    if (!ok) {
+      GameFeedback.play(GameCue.deny);
+      return;
+    }
     showBottomNotice(
       context,
       context.translate('marketItemSold'),

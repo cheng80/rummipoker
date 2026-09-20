@@ -1,3 +1,8 @@
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:rummipoker/resources/asset_paths.dart';
+import 'package:rummipoker/resources/sound_manager.dart';
+import 'package:rummipoker/utils/storage_helper.dart';
+import 'package:rummipoker/services/game_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/item_definition.dart';
@@ -89,10 +94,25 @@ void main() {
             battle: battle,
             difficultyLabel: '도전',
             onOptionsTap: () {},
+            onTutorialTap: () {},
           ),
         ),
       ),
     );
+
+    StorageHelper.resetForTest();
+    SharedPreferences.setMockInitialValues({});
+    await StorageHelper.init();
+    GameSettings.sfxMuted = false;
+    final sounds = <(String, double)>[];
+    SoundManager.debugSfxSink = (path, _, rate) => sounds.add((path, rate));
+    SoundManager.rampGlobalPitch(0.5, Duration.zero);
+    addTearDown(SoundManager.debugResetForTest);
+    for (final key in ['battle-options-button', 'battle-tutorial-button']) {
+      sounds.clear();
+      await tester.tap(find.byKey(ValueKey(key)));
+      expect(sounds, [(AssetPaths.sfxBtnSnd, 1.0)]);
+    }
 
     expect(find.text('S4 · 도전'), findsOneWidget);
     expect(find.text('CLASH'), findsOneWidget);
@@ -239,8 +259,7 @@ void main() {
     final label = tester.widget<RichText>(
       find.byWidgetPredicate(
         (widget) =>
-            widget is RichText &&
-            widget.text.toPlainText() == '∞S9 · 도전 · 하이',
+            widget is RichText && widget.text.toPlainText() == '∞S9 · 도전 · 하이',
       ),
     );
     final labelSpan = label.text as TextSpan;

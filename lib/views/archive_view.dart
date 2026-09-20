@@ -101,7 +101,7 @@ class _ArchiveViewState extends State<ArchiveView> {
             Row(
               children: [
                 IconButton(
-                  onPressed: () => context.pop(),
+                  onPressed: withButtonSound(() => context.pop()),
                   icon: const Icon(Icons.arrow_back_rounded),
                   color: GameUiPalette.textPrimary,
                 ),

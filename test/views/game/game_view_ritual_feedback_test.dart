@@ -1,3 +1,5 @@
+import 'package:rummipoker/resources/sound_manager.dart';
+import 'package:rummipoker/resources/asset_paths.dart';
 import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -57,7 +59,13 @@ void main() {
       expect(find.byKey(candidateKey!), findsOneWidget);
       expect(find.byKey(const ValueKey('ritual-deck-flight')), findsNothing);
 
+      GameSettings.sfxMuted = false;
+      final sounds = <(String, double)>[];
+      SoundManager.debugSfxSink = (path, _, rate) => sounds.add((path, rate));
+      SoundManager.rampGlobalPitch(0.5, Duration.zero);
+      addTearDown(SoundManager.debugResetForTest);
       await tester.tap(find.byKey(candidateKey));
+      expect(sounds, [(AssetPaths.sfxBtnSnd, 1.0)]);
       await tester.pump();
 
       final selectedKey = ValueKey<String>(
@@ -70,7 +78,10 @@ void main() {
       expect(find.byKey(selectedKey), findsOneWidget);
       expect(find.byKey(const ValueKey('ritual-deck-flight')), findsNothing);
 
+      sounds.clear();
       await tester.tap(find.byKey(const ValueKey('fate-line-confirm-button')));
+      expect(sounds, hasLength(1));
+      expect(sounds.single.$1, AssetPaths.sfxBtnSnd);
       await tester.pump();
 
       expect(find.byKey(const ValueKey('ritual-deck-flight')), findsOneWidget);

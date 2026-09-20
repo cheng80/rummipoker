@@ -228,7 +228,6 @@ class _GameShopScreenState extends State<GameShopScreen>
       if (!mounted) return;
       final market = _market;
       _mutate(() => _syncCurrentLaneToAvailableOffers(market));
-      GameFeedback.play(GameCue.marketEntry);
       if (widget.initialItemPresentationEvents.isNotEmpty) {
         widget.onItemPresentationEventsShown?.call();
         _startEffectPresentationSummary(

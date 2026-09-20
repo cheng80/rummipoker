@@ -9,7 +9,6 @@ import '../../../utils/active_run_translation.dart';
 import '../../../utils/app_translation.dart';
 import '../../../utils/common_ui.dart';
 import '../../../widgets/semantic_text.dart';
-import '../game_feedback_cues.dart';
 import 'game_shared_widgets.dart';
 import 'game_ui_palette.dart';
 
@@ -35,7 +34,6 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
   required bool isDebugFixtureRun,
 }) async {
   SoundManager.unlockForWeb();
-  GameFeedback.play(GameCue.panelOpen);
   final action = await showGameFramedDialog<GameOptionsCloseAction>(
     context: context,
     barrierDismissible: false,
@@ -64,7 +62,6 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
                   GameIconButtonChip(
                     tooltip: dialogContext.translate('cancel'),
                     onPressed: () {
-                      SoundManager.playSfx(AssetPaths.sfxBtnSnd);
                       Navigator.of(
                         dialogContext,
                       ).pop(GameOptionsCloseAction.resumeGame);

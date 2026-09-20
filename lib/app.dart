@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/foundation.dart';
@@ -69,6 +71,7 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    unawaited(SoundManager.disposeSfx());
     super.dispose();
   }
 
@@ -80,9 +83,11 @@ class _AppState extends ConsumerState<App> with WidgetsBindingObserver {
       case AppLifecycleState.hidden:
       case AppLifecycleState.detached:
         FrameTimingMetrics.instance.reportAndReset();
+        SoundManager.suspendSfx();
         SoundManager.pauseBgm(recoverOnNextWebGesture: true);
         break;
       case AppLifecycleState.resumed:
+        SoundManager.resumeSfx();
         SoundManager.resumeBgm();
         break;
     }

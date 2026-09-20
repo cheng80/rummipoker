@@ -62,7 +62,7 @@ class _BookmarkSlotOption extends StatelessWidget {
       label: context.activeRunSlotSemantic(slot),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: onTap,
+        onTap: withButtonSound(onTap),
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: GameUiPalette.titlePanelSurface,

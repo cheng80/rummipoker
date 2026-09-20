@@ -18,11 +18,11 @@ import '../services/in_app_review_service.dart';
 import '../utils/active_run_translation.dart';
 import '../utils/app_translation.dart';
 import '../utils/common_ui.dart';
+import 'game/game_feedback_cues.dart';
 import '../widgets/fx/entrance_in.dart';
 import '../widgets/fx/fx_ambient.dart';
 import '../widgets/fx/motion_policy.dart';
 import '../widgets/phone_frame_scaffold.dart';
-import 'game/game_feedback_cues.dart';
 import 'game/game_presentation_timings.dart';
 import 'game/widgets/game_bookmark_slot_dialog.dart';
 import 'game/widgets/game_run_info_dialog.dart';
@@ -142,6 +142,7 @@ class _TitleViewState extends ConsumerState<TitleView>
           GameDialogAction<String>(
             label: dialogContext.translate('homeContinueSectionTitle'),
             value: 'continue',
+            cue: GameCue.runRestore,
             accent: GameUiPalette.actionGold,
             textColor: GameUiPalette.ink,
           ),
@@ -170,7 +171,6 @@ class _TitleViewState extends ConsumerState<TitleView>
         return;
       }
       SoundManager.unlockForWeb();
-      GameFeedback.play(GameCue.runRestore);
       final router = GoRouter.of(context);
       await SoundManager.fadeOutBgm(GamePresentationTimings.titleBgmFadeOut);
       if (!mounted) return;
@@ -243,6 +243,7 @@ class _TitleViewState extends ConsumerState<TitleView>
         namedArgs: {'summary': c.activeRunSlotLabel(selected)},
       ),
       confirmLabelBuilder: (c) => c.translate('menuLoad'),
+      confirmCue: GameCue.runRestore,
     );
     if (!mounted || !confirmed) return;
     final restoredRun = await ActiveRunSaveService.restoreBookmarkToActiveRun(
@@ -254,7 +255,6 @@ class _TitleViewState extends ConsumerState<TitleView>
       return;
     }
     SoundManager.unlockForWeb();
-    GameFeedback.play(GameCue.runRestore);
     final router = GoRouter.of(context);
     await SoundManager.fadeOutBgm(GamePresentationTimings.titleBgmFadeOut);
     if (!mounted) return;
@@ -350,7 +350,7 @@ class _TitleViewState extends ConsumerState<TitleView>
     final runtime = fixture.builder();
     final router = GoRouter.of(context);
     SoundManager.unlockForWeb();
-    SoundManager.playSfx(AssetPaths.sfxBtnSnd);
+
     await ActiveRunSaveService.clearActiveRun();
     await SoundManager.stopBgm();
     if (!mounted) return;
@@ -580,8 +580,7 @@ class _TitleViewState extends ConsumerState<TitleView>
                               : context.translate(
                                   'appVersionValue',
                                   namedArgs: {
-                                    'version':
-                                        '${v.version}+${v.buildNumber}',
+                                    'version': '${v.version}+${v.buildNumber}',
                                   },
                                 );
                           // 버전 값이 늦게 와도 툭 튀지 않게 fade로 바꾼다.

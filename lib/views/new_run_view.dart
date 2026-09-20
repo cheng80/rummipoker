@@ -129,7 +129,10 @@ class _NewRunViewState extends State<NewRunView> {
               border: InputBorder.none,
             ),
             autofocus: true,
-            onSubmitted: (_) => Navigator.of(context).pop('submit'),
+            onSubmitted: (_) {
+              GameFeedback.play(GameCue.runStart);
+              Navigator.of(context).pop('submit');
+            },
           ),
         ),
       ),
@@ -142,6 +145,7 @@ class _NewRunViewState extends State<NewRunView> {
         GameDialogAction<String>(
           label: context.translate('ok'),
           value: 'submit',
+          cue: GameCue.runStart,
           accent: GameUiPalette.actionGold,
           textColor: GameUiPalette.textOnGold,
         ),
@@ -161,7 +165,6 @@ class _NewRunViewState extends State<NewRunView> {
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
     SoundManager.unlockForWeb();
-    GameFeedback.play(GameCue.runStart);
     final runtime = await _saveInitialRun(value);
     if (!mounted || runtime == null) return;
     _logRunStart(seedMode: 'manual', seed: value);
@@ -259,7 +262,9 @@ class _NewRunViewState extends State<NewRunView> {
         _modifierDenyTicks.update(modifier, (v) => v + 1, ifAbsent: () => 1);
       }
     });
-    if (unlocked) GameFeedback.play(GameCue.unlock);
+    if (unlocked) {
+      GameFeedback.play(GameCue.unlock);
+    }
     showTopNotice(
       context,
       unlocked
@@ -526,6 +531,7 @@ class _RunModifierCard extends StatelessWidget {
         onTap: onTap,
         denyTrigger: denyTrigger,
         haptic: null,
+        playSound: false,
         builder: (context, onTap) => Material(
           color: GameUiPalette.transparent,
           borderRadius: BorderRadius.circular(16),
@@ -673,6 +679,7 @@ class _DifficultyButton extends StatelessWidget {
     return PressFeedback(
       onTap: onTap,
       haptic: null,
+      playSound: false,
       builder: (context, onTap) => InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),

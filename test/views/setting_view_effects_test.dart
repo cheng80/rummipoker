@@ -1,3 +1,5 @@
+import 'package:rummipoker/resources/asset_paths.dart';
+import 'package:rummipoker/resources/sound_manager.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,6 +49,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    final sounds = <(String, double)>[];
+    GameSettings.sfxMuted = false;
+    SoundManager.debugSfxSink = (path, _, rate) => sounds.add((path, rate));
+    addTearDown(() => SoundManager.debugSfxSink = null);
+
     final strong = find.byKey(
       ValueKey('setting-fx-intensity-${FxIntensity.strong.name}'),
     );
@@ -54,6 +61,8 @@ void main() {
     await tester.tap(strong);
     await tester.pumpAndSettle();
     expect(GameSettings.fxIntensity, FxIntensity.strong);
+    expect(sounds, [(AssetPaths.sfxBtnSnd, 1.0)]);
+    sounds.clear();
 
     final instant = find.byKey(
       ValueKey('setting-settlement-speed-${SettlementSpeed.instant.name}'),
@@ -62,11 +71,15 @@ void main() {
     await tester.tap(instant);
     await tester.pumpAndSettle();
     expect(GameSettings.settlementSpeed, SettlementSpeed.instant);
+    expect(sounds, [(AssetPaths.sfxBtnSnd, 1.0)]);
+    sounds.clear();
 
     final shake = find.byKey(const ValueKey('setting-screen-shake'));
     await tester.scrollUntilVisible(shake, 200);
     await tester.tap(shake);
     await tester.pumpAndSettle();
     expect(GameSettings.screenShakeEnabled, isFalse);
+    expect(sounds, [(AssetPaths.sfxBtnSnd, 1.0)]);
+    sounds.clear();
   });
 }

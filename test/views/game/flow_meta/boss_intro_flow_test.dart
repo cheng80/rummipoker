@@ -118,15 +118,10 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    expect(sfx.where((e) => e.$1 == AssetPaths.sfxStart), isEmpty);
     expect(find.byType(GameBossIntroCard), findsOneWidget);
     expect(_veilHidden(tester), isTrue);
-    expect(
-      sfx.where(
-        (e) => e.$1 == AssetPaths.sfxStart && (e.$2 - 0.7).abs() < 0.01,
-      ),
-      isNotEmpty,
-      reason: 'bossIntro cue',
-    );
+    expect(sfx, isEmpty, reason: 'boss intro is silent');
 
     for (var i = 0; i < 15; i++) {
       await tester.pump(const Duration(milliseconds: 200));

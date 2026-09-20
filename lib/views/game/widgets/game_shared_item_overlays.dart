@@ -73,7 +73,7 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
                         ),
                       ),
                       IconButton(
-                        onPressed: onClose,
+                        onPressed: withButtonSound(onClose),
                         tooltip: context.translate('battleWidgetsClose'),
                         icon: const Icon(Icons.close_rounded),
                         color: GameUiPalette.textPrimary,
@@ -133,6 +133,7 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
                       width: double.infinity,
                       child: GameActionButton(
                         key: const ValueKey('battle-item-overlay-use-button'),
+                        playSound: false,
                         label: context.translate('battleWidgetsUse'),
                         background: GameUiPalette.actionGold,
                         foreground: GameUiPalette.ink,
@@ -320,7 +321,7 @@ class GameHandTileInfoOverlay extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    onPressed: onClose,
+                    onPressed: withButtonSound(onClose),
                     tooltip: context.translate('battleWidgetsClose'),
                     icon: const Icon(Icons.close_rounded),
                     color: GameUiPalette.textPrimary,

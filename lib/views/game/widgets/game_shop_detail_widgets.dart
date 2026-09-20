@@ -6,6 +6,7 @@ class _MarketActionPane extends StatelessWidget {
     required this.buttonLabel,
     required this.buttonColor,
     this.foreground = GameUiPalette.textPrimary,
+    this.playSound = true,
     this.onPressed,
     this.onDeniedPressed,
     this.disabledReason,
@@ -18,6 +19,7 @@ class _MarketActionPane extends StatelessWidget {
   final String buttonLabel;
   final Color buttonColor;
   final Color foreground;
+  final bool playSound;
   final VoidCallback? onPressed;
   final VoidCallback? onDeniedPressed;
   final String? disabledReason;
@@ -45,6 +47,7 @@ class _MarketActionPane extends StatelessWidget {
           const SizedBox(height: 6),
           GameActionButton(
             key: const ValueKey('market-detail-action'),
+            playSound: playSound,
             label: buttonLabel,
             background: buttonColor,
             foreground: foreground,
@@ -150,6 +153,7 @@ class _MarketUseSellActionPane extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               GameActionButton(
+                playSound: false,
                 label: context.translate('marketUse'),
                 background: GameUiPalette.primaryButtonBlue,
                 compact: true,
@@ -169,6 +173,7 @@ class _MarketUseSellActionPane extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               GameActionButton(
+                playSound: false,
                 label: context.translate('marketSell'),
                 background: GameUiPalette.actionDanger,
                 compact: true,

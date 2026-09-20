@@ -49,6 +49,7 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
                 Expanded(
                   child: GameActionButton(
                     key: const ValueKey('market-reroll-confirm'),
+                    playSound: false,
                     label: _rerollConfirmActionLabel(
                       dialogContext,
                       rerollQuote,
@@ -67,8 +68,12 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
     if (!mounted || confirmed != true) return;
 
     final placement = _placementForOfferLane(lane);
-    if (placement != null && widget.onRerollItemOffers == null) return;
+    if (placement != null && widget.onRerollItemOffers == null) {
+      GameFeedback.play(GameCue.deny);
+      return;
+    }
     if (lane == _MarketOfferLane.tile && widget.onRerollTileOffers == null) {
+      GameFeedback.play(GameCue.deny);
       return;
     }
     final effectPresentation = _marketRerollPresentation(_market, lane);

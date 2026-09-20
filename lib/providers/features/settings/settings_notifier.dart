@@ -37,6 +37,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
   void setSfxVolume(double value) {
     final clamped = value.clamp(0.0, 1.0);
     GameSettings.sfxVolume = clamped;
+    SoundManager.applySfxVolume();
     state = state.copyWith(sfxVolume: clamped);
   }
 
@@ -52,6 +53,7 @@ class SettingsNotifier extends Notifier<SettingsState> {
 
   void setSfxMuted(bool value) {
     GameSettings.sfxMuted = value;
+    SoundManager.applySfxVolume();
     state = state.copyWith(sfxMuted: value);
   }
 

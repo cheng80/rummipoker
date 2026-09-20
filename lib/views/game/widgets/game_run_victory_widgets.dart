@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../../resources/asset_paths.dart';
+import '../../../utils/common_ui.dart';
 import '../../../widgets/fx/entrance_in.dart';
 import '../../../widgets/fx/fx_layer.dart';
 import '../../../widgets/fx/motion_policy.dart';
@@ -108,7 +109,11 @@ class _GameRunVictoryOverlayState extends State<GameRunVictoryOverlay>
     return GestureDetector(
       key: const ValueKey('run-victory-overlay'),
       behavior: HitTestBehavior.opaque,
-      onTap: _finish,
+      onTap: () {
+        if (_done) return;
+        playButtonSound();
+        _finish();
+      },
       child: Stack(
         fit: StackFit.expand,
         children: [

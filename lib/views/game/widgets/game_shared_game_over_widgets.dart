@@ -200,6 +200,7 @@ void showGameOverDialog({
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   GameActionButton(
+                    playSound: false,
                     key: const ValueKey('game-over-retry-stake'),
                     label: ctx.translate('battleWidgetsRetryBattle'),
                     background: GameUiPalette.actionGold,
@@ -213,6 +214,7 @@ void showGameOverDialog({
                   ),
                   const SizedBox(height: 10),
                   GameActionButton(
+                    playSound: false,
                     key: const ValueKey('game-over-retry-station'),
                     label: ctx.translate('battleWidgetsRetryStation'),
                     background: GameUiPalette.menuAccentRestart,
@@ -226,6 +228,7 @@ void showGameOverDialog({
                   ),
                   const SizedBox(height: 10),
                   GameActionButton(
+                    playSound: false,
                     key: const ValueKey('game-over-new-run'),
                     label: ctx.translate('battleWidgetsNewRun'),
                     background: GameUiPalette.actionSuccess,
@@ -239,6 +242,7 @@ void showGameOverDialog({
                   ),
                   const SizedBox(height: 10),
                   GameActionButton(
+                    playSound: false,
                     key: const ValueKey('game-over-exit'),
                     label: ctx.translate('exit'),
                     background: GameUiPalette.disabledControl,

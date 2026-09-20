@@ -11,6 +11,8 @@ import 'package:rummipoker/logic/rummi_poker_grid/models/tile.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_blind_state.dart';
 import 'package:rummipoker/logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import 'package:rummipoker/resources/jester_translation_scope.dart';
+import 'package:rummipoker/resources/asset_paths.dart';
+import 'package:rummipoker/resources/sound_manager.dart';
 import 'package:rummipoker/services/active_run_save_service.dart';
 import 'package:rummipoker/services/game_analytics_service.dart';
 import 'package:rummipoker/services/game_settings.dart';
@@ -36,11 +38,26 @@ void main() {
 
   tearDown(() {
     GameAnalyticsService.debugResetForTest();
+    SoundManager.debugResetForTest();
   });
 
   testWidgets('stage clear settlement sheet와 game over dialog가 함께 뜨지 않는다', (
     tester,
   ) async {
+    GameSettings.sfxMuted = false;
+    final sounds = <String>[];
+    final clearSheetVisible = <bool>[];
+    SoundManager.debugSfxSink = (path, _, _) {
+      sounds.add(path);
+      if (path == AssetPaths.sfxClear) {
+        clearSheetVisible.add(
+          find
+              .byKey(const ValueKey('cashout-sheet-frame'))
+              .evaluate()
+              .isNotEmpty,
+        );
+      }
+    };
     final previousOnError = FlutterError.onError;
     FlutterError.onError = (details) {
       final exceptionText = details.exceptionAsString();
@@ -156,6 +173,9 @@ void main() {
     }
     await tester.pumpAndSettle();
 
+    expect(clearSheetVisible, [
+      true,
+    ], reason: 'Clear only on the first cash-out frame');
     expect(find.text('정산 완료'), findsOneWidget);
     expect(FxAmbient.controller.mood, FxAmbientMood.reward);
     expect(find.text('게임결과'), findsNothing);
@@ -192,6 +212,7 @@ void main() {
     }
     expect(tester.widget<InkWell>(marketButton).onTap, isNotNull);
 
+    sounds.clear();
     tester.widget<InkWell>(marketButton).onTap!();
     for (var i = 0; i < 8; i++) {
       await tester.pump(const Duration(milliseconds: 250));
@@ -209,6 +230,8 @@ void main() {
     expect(marketEntryEvents, hasLength(1));
     expect(marketEntryEvents.single.parameters['gold'], isA<int>());
     expect(FxAmbient.controller.mood, FxAmbientMood.market);
+    expect(sounds, isNot(contains(AssetPaths.sfxStart)));
+    expect(clearSheetVisible, [true]);
 
     // Market을 닫으면 현재 전투(일반)의 분위기로 돌아온다.
     tester.state<NavigatorState>(find.byType(Navigator).first).pop(false);
