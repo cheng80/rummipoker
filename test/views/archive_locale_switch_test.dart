@@ -74,9 +74,11 @@ void main() {
         'Owned · Memory Card',
         'Standard S2',
       ),
-      (Locale('ja'), '所持 4枚 · 収集 1/18', '獲得 · 記憶カード', '標準 S2'),
-      (Locale('zh', 'CN'), '持有4张 · 收集1/18', '已获得 · 记忆卡', '标准 S2'),
-      (Locale('zh', 'TW'), '持有4張 · 收集1/18', '已獲得 · 記憶卡', '標準 S2'),
+      // Japanese writes a number tight against its word; Chinese keeps a
+      // half-width space. See docs/tools/I18N_GLOSSARY.md.
+      (Locale('ja'), '所持4枚 · 収集1/18', '獲得 · 記憶カード', '標準S2'),
+      (Locale('zh', 'CN'), '持有 4张 · 收集 1/18', '已获得 · 记忆卡', '标准 S2'),
+      (Locale('zh', 'TW'), '持有 4張 · 收集 1/18', '已獲得 · 記憶卡', '標準 S2'),
     ];
     for (final (locale, summary, status, title) in cases) {
       await localeContext.setLocale(locale);

@@ -91,7 +91,7 @@
   "marketPurchaseDiscountConsumed": "触发：购买价 -{amount}G · 已消耗",
   "marketPurchaseDiscountTriggered": "触发：购买价 -{amount}G",
   "marketPurchaseLink": "购买联动",
-  "marketRankGrowth": "{rank} 成长 +{amount}",
+  "marketRankGrowth": "{rank}成长 +{amount}",
   "marketRankLine": "{rank} · {line}",
   "marketReloadFixture": "重新加载调试场景",
   "marketReloadFixtureConfirm": "从初始状态重新加载调试场景？\n此屏幕上的更改将被撤销。",
@@ -141,5 +141,6 @@
   "marketUnavailable": "不可用",
   "marketUnusedDiscards": "未用弃牌",
   "marketUse": "使用",
-  "marketUseMarketManual": "在 Market 中手动使用"
+  "marketUseMarketManual": "在 Market 中手动使用",
+  "marketOverlapTag": "重叠"
 }

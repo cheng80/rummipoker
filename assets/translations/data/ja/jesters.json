@@ -83,7 +83,7 @@
       },
       "jester_stencil": {
         "displayName": "Open Socket",
-        "effectText": "空のJester Slot1つごとに得点 x1。",
+        "effectText": "空のJester Slot1つごとに得点x1。",
         "notes": ""
       },
       "abstract_jester": {
@@ -93,7 +93,7 @@
       },
       "green_jester": {
         "displayName": "Momentum Meter",
-        "effectText": "確定するたび得点 +5%。捨てるたび得点 5%を失う。",
+        "effectText": "確定するたび得点 +5%。捨てるたび得点5%を失う。",
         "notes": ""
       },
       "blue_jester": {
@@ -123,7 +123,7 @@
       },
       "popcorn": {
         "displayName": "Fading Boost",
-        "effectText": "得点 +100%。各Station後に得点 20%を失う。",
+        "effectText": "得点 +100%。各Station後に得点20%を失う。",
         "notes": ""
       },
       "ice_cream": {
@@ -193,27 +193,27 @@
       },
       "the_duo": {
         "displayName": "Pair Pact",
-        "effectText": "得点ラインにPair以上があれば、得点 x2。",
+        "effectText": "得点ラインにPair以上があれば、得点x2。",
         "notes": ""
       },
       "the_trio": {
         "displayName": "Triple Pact",
-        "effectText": "得点ラインにThree of a Kind以上があれば、得点 x3。",
+        "effectText": "得点ラインにThree of a Kind以上があれば、得点x3。",
         "notes": ""
       },
       "the_family": {
         "displayName": "Quad Pact",
-        "effectText": "得点ラインにFour of a Kind以上があれば、得点 x4。",
+        "effectText": "得点ラインにFour of a Kind以上があれば、得点x4。",
         "notes": ""
       },
       "the_order": {
         "displayName": "Run Pact",
-        "effectText": "得点ラインにRunがあれば、得点 x3。",
+        "effectText": "得点ラインにRunがあれば、得点x3。",
         "notes": ""
       },
       "the_tribe": {
         "displayName": "Color Pact",
-        "effectText": "得点ラインが1色なら、得点 x2。",
+        "effectText": "得点ラインが1色なら、得点x2。",
         "notes": ""
       }
     }

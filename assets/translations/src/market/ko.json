@@ -141,5 +141,6 @@
   "marketUnavailable": "불가",
   "marketUnusedDiscards": "미사용 버림",
   "marketUse": "사용",
-  "marketUseMarketManual": "상점에서 수동 사용"
+  "marketUseMarketManual": "상점에서 수동 사용",
+  "marketOverlapTag": "겹침"
 }
