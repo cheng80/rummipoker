@@ -7,8 +7,12 @@ extension _GameViewDialogRoutes on _GameViewState {
       preferredOfferIds: _GameViewState._shopInspectOfferIds,
     );
     await _saveActiveRun(scene: ActiveRunScene.shop);
+    if (!mounted) return;
     _showSnack(
-      '검사용 Market 오퍼 ${_GameViewState._shopInspectOfferIds.length}장 표시',
+      context.translate(
+        'battleDebugOffers',
+        namedArgs: {'count': '${_GameViewState._shopInspectOfferIds.length}'},
+      ),
     );
     await _showShopScreen();
     if (!mounted) return;
@@ -127,8 +131,8 @@ extension _GameViewDialogRoutes on _GameViewState {
       context: context,
       backgroundColor: GameUiPalette.transparent,
       isScrollControlled: true,
-      barrierLabel: '디버그 설정',
-      routeSettings: const RouteSettings(name: '디버그 설정'),
+      barrierLabel: context.translate('battleDebugSettings'),
+      routeSettings: const RouteSettings(name: 'debug-settings'),
       builder: (sheetContext) {
         var handSize = _stationView.resources.maxHandSize;
         var debugGold = _gameState.runProgress?.gold ?? 0;
@@ -139,7 +143,7 @@ extension _GameViewDialogRoutes on _GameViewState {
               scopesRoute: true,
               namesRoute: true,
               explicitChildNodes: true,
-              label: '디버그 설정',
+              label: context.translate('battleDebugSettings'),
               child: SafeArea(
                 top: false,
                 child: FractionallySizedBox(
@@ -164,7 +168,7 @@ extension _GameViewDialogRoutes on _GameViewState {
                                 ),
                               ),
                               GameIconButtonChip(
-                                tooltip: '닫기',
+                                tooltip: context.translate('battleClose'),
                                 onPressed: () =>
                                     Navigator.of(sheetContext).pop(),
                                 icon: Icons.close_rounded,
@@ -292,8 +296,12 @@ extension _GameViewDialogRoutes on _GameViewState {
                               child: Column(
                                 children: [
                                   GameMenuActionTile(
-                                    title: '현재 구간 즉시 클리어',
-                                    subtitle: '현재 선택된 구간을 즉시 정산 완료 상태로 넘깁니다.',
+                                    title: context.translate(
+                                      'battleDebugClear',
+                                    ),
+                                    subtitle: context.translate(
+                                      'battleDebugClearDescription',
+                                    ),
                                     icon: Icons.bug_report_rounded,
                                     accentColor:
                                         GameUiPalette.menuAccentRestart,
@@ -305,8 +313,12 @@ extension _GameViewDialogRoutes on _GameViewState {
                                   ),
                                   const SizedBox(height: 8),
                                   GameMenuActionTile(
-                                    title: 'Boss 클리어 후 다음 Station Select',
-                                    subtitle: '다음 Station Select로 바로 이행합니다.',
+                                    title: context.translate(
+                                      'battleDebugNextStation',
+                                    ),
+                                    subtitle: context.translate(
+                                      'battleDebugNextStationDescription',
+                                    ),
                                     icon: Icons.skip_next_rounded,
                                     accentColor:
                                         GameUiPalette.menuAccentTutorial,

@@ -15,6 +15,7 @@ import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/utils/app_translation.dart';
 import 'package:rummipoker/views/game/widgets/game_run_info_dialog.dart';
+import '../support/test_translations.dart';
 
 /// Both labels are const, so nothing marks them dirty when their parent
 /// rebuilds. Only a dependency on `Localizations` can bring them back.
@@ -40,6 +41,7 @@ String _textOf(WidgetTester tester, String key) =>
 Future<void> _pumpApp(WidgetTester tester, Widget home) async {
   await tester.pumpWidget(
     EasyLocalization(
+      assetLoader: const TestTranslationAssetLoader(),
       supportedLocales: const [Locale('ko'), Locale('en')],
       path: 'assets/translations',
       fallbackLocale: const Locale('ko'),
@@ -110,6 +112,10 @@ void main() {
 
     // The dialog is a separate route, and it follows the change too.
     expect(find.text('Chips by tile'), findsOneWidget);
+    expect(find.text('Run Info'), findsNWidgets(2));
+    expect(find.text('Flush'), findsOneWidget);
+    expect(find.text('플러시'), findsNothing);
+    expect(find.text('런 정보'), findsOneWidget);
     expect(find.text('타일 기준 칩'), findsNothing);
 
     expect(_textOf(tester, 'context-label'), 'Run Info');

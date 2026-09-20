@@ -36,7 +36,8 @@ class _GameSurface extends StatelessWidget {
     required this.ritualEffectFlight,
     required this.ritualEffectFlightTick,
     required this.suppressDebugChrome,
-    required this.difficultyLabel,
+    required this.difficulty,
+    required this.runModifier,
     required this.battleBoardTutorialKey,
     required this.battlePreviewTutorialKey,
     required this.battleActionsTutorialKey,
@@ -107,7 +108,8 @@ class _GameSurface extends StatelessWidget {
   final _RitualEffectFlight? ritualEffectFlight;
   final int ritualEffectFlightTick;
   final bool suppressDebugChrome;
-  final String difficultyLabel;
+  final NewRunDifficulty difficulty;
+  final NewRunModifier runModifier;
   final GlobalKey battleBoardTutorialKey;
   final GlobalKey battlePreviewTutorialKey;
   final GlobalKey battleActionsTutorialKey;
@@ -203,7 +205,8 @@ class _GameSurface extends StatelessWidget {
                   selectedJesterOverlayIndex: selectedJesterOverlayIndex,
                   selectedBattleItemSlot: selectedBattleItemSlot,
                   suppressDebugChrome: suppressDebugChrome,
-                  difficultyLabel: difficultyLabel,
+                  difficulty: difficulty,
+                  runModifier: runModifier,
                   battleBoardTutorialKey: battleBoardTutorialKey,
                   battlePreviewTutorialKey: battlePreviewTutorialKey,
                   battleActionsTutorialKey: battleActionsTutorialKey,
@@ -319,6 +322,7 @@ class _GameSurface extends StatelessWidget {
                         runtimeValueText: jesterRuntimeValueText(
                           market.ownedEntries[selectedJesterOverlayIndex!].card,
                           market.runtimeSnapshot,
+                          context: context,
                           slotIndex: selectedJesterOverlayIndex!,
                         ),
                         sellGold: market
@@ -408,7 +412,8 @@ class _GameLayout extends StatelessWidget {
     required this.selectedBattleItemSlot,
     required this.onHandTileLongPress,
     required this.suppressDebugChrome,
-    required this.difficultyLabel,
+    required this.difficulty,
+    required this.runModifier,
     required this.battleBoardTutorialKey,
     required this.battlePreviewTutorialKey,
     required this.battleActionsTutorialKey,
@@ -466,7 +471,8 @@ class _GameLayout extends StatelessWidget {
   final int? selectedJesterOverlayIndex;
   final RummiBattleItemSlotView? selectedBattleItemSlot;
   final bool suppressDebugChrome;
-  final String difficultyLabel;
+  final NewRunDifficulty difficulty;
+  final NewRunModifier runModifier;
   final GlobalKey battleBoardTutorialKey;
   final GlobalKey battlePreviewTutorialKey;
   final GlobalKey battleActionsTutorialKey;
@@ -543,7 +549,8 @@ class _GameLayout extends StatelessWidget {
             GameTopHud(
               station: station,
               battle: battle,
-              difficultyLabel: difficultyLabel,
+              difficulty: difficulty,
+              runModifier: runModifier,
               onOptionsTap: onOptionsTap,
               onBlindInfoTap: onBlindInfoTap,
               stationGoalDisplayScore: settlementGoalDisplayScore,
@@ -699,7 +706,7 @@ class _GameLayout extends StatelessWidget {
                       right: 0,
                       bottom: 16,
                       child: GameIconButtonChip(
-                        tooltip: '디버그',
+                        tooltip: context.translate('battleDebug'),
                         size: 34,
                         icon: Icons.bug_report_rounded,
                         iconSize: 16,
@@ -745,9 +752,8 @@ class _GameLayout extends StatelessWidget {
             ),
             if (boardMoveMode) ...[
               const SizedBox(height: 4),
-              Text(
-                '빈 칸을 선택해 이동을 확정하세요. 원본 타일을 누르면 취소됩니다.',
-                maxLines: 1,
+              SemanticText(
+                context.translate('battleMovePrompt'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: GameUiPalette.textPrimary.withValues(alpha: 0.74),

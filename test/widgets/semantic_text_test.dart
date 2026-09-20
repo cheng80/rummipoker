@@ -20,13 +20,15 @@ Future<void> _pump(
   WidgetTester tester,
   Widget child, {
   Locale locale = const Locale('ko'),
+  MediaQueryData media = const MediaQueryData(),
+  bool clearCache = true,
 }) async {
-  clearSemanticTextCache();
+  if (clearCache) clearSemanticTextCache();
   await tester.pumpWidget(
     Directionality(
       textDirection: TextDirection.ltr,
       child: MediaQuery(
-        data: const MediaQueryData(),
+        data: media,
         child: Localizations(
           locale: locale,
           delegates: const [DefaultWidgetsLocalizations.delegate],
@@ -81,6 +83,162 @@ int _spaceOnlyMinimumLines(String text, double width) {
 }
 
 void main() {
+  group('spacing overrides use the same metrics as Text', () {
+    for (final entry in {
+      'letter spacing': const MediaQueryData(letterSpacingOverride: 2),
+      'word spacing': const MediaQueryData(wordSpacingOverride: 8),
+      'line height': const MediaQueryData(lineHeightScaleFactorOverride: 2),
+    }.entries) {
+      for (final strut in [
+        null,
+        const StrutStyle(fontSize: 14, height: 1.2, forceStrutHeight: true),
+      ]) {
+        testWidgets(
+          '${entry.key} fits a box that holds plain Text (strut: ${strut != null})',
+          (tester) async {
+            final width = entry.key == 'line height' ? 160.0 : 120.0;
+            // Derive the available height from Text's real output, including the
+            // SDK's accessibility overrides, rather than duplicating that logic.
+            await _pump(
+              tester,
+              SizedBox(
+                width: width,
+                child: Text(_sentence, style: _style, strutStyle: strut),
+              ),
+              media: entry.value,
+            );
+            final plain = tester.widget<RichText>(find.byType(RichText));
+            double measureHeight(RichText rich) {
+              final painter = TextPainter(
+                text: rich.text,
+                textDirection: TextDirection.ltr,
+                textScaler: rich.textScaler,
+                strutStyle: rich.strutStyle,
+                locale: rich.locale,
+                textHeightBehavior: rich.textHeightBehavior,
+              )..layout(maxWidth: width);
+              final height = painter.height;
+              painter.dispose();
+              return height;
+            }
+
+            final height = measureHeight(plain) + 0.1;
+            final box = SizedBox(
+              width: width,
+              height: height,
+              child: SemanticText(_sentence, style: _style, strutStyle: strut),
+            );
+            // Prime with different metrics, then change only MediaQuery. Neither
+            // this transition nor the reverse may reuse the previous layout.
+            await _pump(tester, box);
+            await _pump(tester, box, media: entry.value, clearCache: false);
+            final warm = tester.widget<RichText>(find.byType(RichText));
+            final warmText = warm.text.toPlainText(
+              includeSemanticsLabels: false,
+            );
+            expect(measureHeight(warm), lessThanOrEqualTo(height));
+            await _pump(tester, box, media: entry.value);
+            expect(
+              tester
+                  .widget<RichText>(find.byType(RichText))
+                  .text
+                  .toPlainText(includeSemanticsLabels: false),
+              warmText,
+            );
+            await _pump(tester, box, clearCache: false);
+            final reversed = tester
+                .widget<RichText>(find.byType(RichText))
+                .text
+                .toPlainText(includeSemanticsLabels: false);
+            await _pump(tester, box);
+            expect(
+              tester
+                  .widget<RichText>(find.byType(RichText))
+                  .text
+                  .toPlainText(includeSemanticsLabels: false),
+              reversed,
+            );
+          },
+        );
+      }
+    }
+  });
+
+  testWidgets(
+    'model replacement and mutable model inputs do not reuse layouts',
+    (tester) async {
+      final weights = <String, Map<String, int>>{
+        'UW5': {'다': 10},
+      };
+      final levels = [
+        PhraseLevel(name: 'custom', weights: weights, penalty: 0),
+      ];
+      final model = PhraseModel(levels: levels, fallbackPenalty: 1);
+      final other = PhraseModel(
+        levels: [
+          PhraseLevel(
+            name: 'other',
+            weights: {
+              'UW5': {'지': 10},
+            },
+            penalty: 0,
+          ),
+        ],
+        fallbackPenalty: 1,
+      );
+      Future<String> render(PhraseModel value, {bool clear = false}) async {
+        await _pump(
+          tester,
+          SizedBox(
+            width: 170,
+            child: SemanticText(
+              _sentence,
+              style: _style,
+              phraseModels: {'ko': value},
+            ),
+          ),
+          clearCache: clear,
+        );
+        return _paintedText(tester);
+      }
+
+      final original = await render(model, clear: true);
+      final changed = await render(other);
+      final fresh = await render(other, clear: true);
+      expect(
+        fresh,
+        isNot(original),
+        reason: 'fixture must distinguish the models',
+      );
+      expect(
+        changed,
+        fresh,
+        reason: 'a different model must not hit the old cache',
+      );
+      await render(model, clear: true);
+      // Keep the total weight fixed so the parser's precomputed base score is
+      // unchanged; only the predicted boundary moves.
+      weights['UW5'] = {'지': 10};
+      expect(
+        await render(model),
+        fresh,
+        reason: 'mutated weights must be measured',
+      );
+      levels[0] = PhraseLevel(
+        name: 'replacement',
+        weights: {
+          'UW5': {'다': 10},
+        },
+        penalty: 0,
+      );
+      expect(
+        await render(model),
+        original,
+        reason: 'mutated levels must be measured',
+      );
+    },
+  );
+
   testWidgets('does not use more lines than space-only breaking needs', (
     tester,
   ) async {

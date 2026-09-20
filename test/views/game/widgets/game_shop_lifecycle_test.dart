@@ -13,6 +13,7 @@ import 'package:rummipoker/services/game_settings.dart';
 import 'package:rummipoker/services/tutorial_state_service.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/game/widgets/game_shop_screen.dart';
+import '../../../support/test_translations.dart';
 
 void main() {
   setUpMarketFeedback();
@@ -30,6 +31,7 @@ void main() {
   testWidgets('짧은 inactive는 무시하고 paused 복귀는 Market 옵션창을 연다', (tester) async {
     await tester.pumpWidget(
       EasyLocalization(
+        assetLoader: const TestTranslationAssetLoader(),
         supportedLocales: const [Locale('ko'), Locale('en')],
         path: 'assets/translations',
         fallbackLocale: const Locale('ko'),

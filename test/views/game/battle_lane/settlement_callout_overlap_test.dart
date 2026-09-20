@@ -16,6 +16,7 @@ import 'package:rummipoker/services/new_run_setup.dart';
 import 'package:rummipoker/services/tutorial_state_service.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/game_view.dart';
+import '../../../support/test_translations.dart';
 
 /// 정산 내내 `+점수` 표시가 방금 채점된 0행 칸과 겹치지 않아야 한다(finalScore 포함).
 void main() {
@@ -101,6 +102,7 @@ void main() {
 
 Widget _app(ActiveRunRuntimeState restoredRun) {
   return EasyLocalization(
+    assetLoader: const TestTranslationAssetLoader(),
     supportedLocales: const [Locale('ko'), Locale('en')],
     path: 'assets/translations',
     fallbackLocale: const Locale('ko'),

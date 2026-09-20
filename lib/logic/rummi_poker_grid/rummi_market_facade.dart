@@ -28,6 +28,8 @@ class RummiMarketRuntimeFacade {
     required this.offers,
     required this.itemOfferSlotCount,
     this.itemOfferSlotBonusLabel,
+    this.itemOfferBonusSlots,
+    this.jesterOfferBonusSlots,
     this.jesterOfferSlotBonusLabel,
     required this.quickSlotCapacity,
     this.jesterSlotCapacity = RummiRunProgress.baseUnlockedJesterSlots,
@@ -158,6 +160,8 @@ class RummiMarketRuntimeFacade {
         pressureProfile: pressureProfile,
       ),
       itemOfferSlotBonusLabel: _itemOfferSlotBonusLabel(progress),
+      itemOfferBonusSlots: progress.marketModifiers.extraItemOfferSlots,
+      jesterOfferBonusSlots: progress.marketModifiers.extraJesterOfferSlots,
       jesterOfferSlotBonusLabel: _jesterOfferSlotBonusLabel(progress),
       quickSlotCapacity: progress.quickSlotCapacity(itemCatalog: itemCatalog),
       jesterSlotCapacity: progress.jesterSlotCapacity(itemCatalog: itemCatalog),
@@ -197,6 +201,8 @@ class RummiMarketRuntimeFacade {
       offers: offers,
       itemOfferSlotCount: itemOfferSlotCount,
       itemOfferSlotBonusLabel: itemOfferSlotBonusLabel,
+      itemOfferBonusSlots: itemOfferBonusSlots,
+      jesterOfferBonusSlots: jesterOfferBonusSlots,
       jesterOfferSlotBonusLabel: jesterOfferSlotBonusLabel,
       quickSlotCapacity: quickSlotCapacity,
       jesterSlotCapacity: jesterSlotCapacity,
@@ -229,6 +235,8 @@ class RummiMarketRuntimeFacade {
   final List<RummiMarketOfferView> offers;
   final int itemOfferSlotCount;
   final String? itemOfferSlotBonusLabel;
+  final int? itemOfferBonusSlots;
+  final int? jesterOfferBonusSlots;
   final String? jesterOfferSlotBonusLabel;
   final int quickSlotCapacity;
   final int jesterSlotCapacity;

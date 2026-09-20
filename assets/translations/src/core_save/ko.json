@@ -1,0 +1,17 @@
+{
+  "coreSaveBlindUnlock": "{required} 클리어 후 {blind} 열림",
+  "coreSaveBlindUnselected": "선택 전",
+  "coreSaveBookmark": "{station} · {mode} · {blind}",
+  "coreSaveCheckpoint": "체크포인트 Station {station}",
+  "coreSaveContinue": "저장된 현재 런을 복원합니다.\n{summary}\n삭제하거나 그대로 이어할지 선택하세요.",
+  "coreSaveEmpty": "비어 있음",
+  "coreSaveLocation": "현재 Station {station} · {scene} · Gold {gold}",
+  "coreSaveModeModifier": "{difficulty} · {modifier}",
+  "coreSaveSceneBattle": "Battle",
+  "coreSaveSceneBlindSelect": "Station Select",
+  "coreSaveSceneMarket": "Market",
+  "coreSaveSlotSemantic": "{slot}: {summary}",
+  "coreSaveSlotTitle": "슬롯 {slot}",
+  "coreSaveSnapshot": "{location}\n{checkpoint}",
+  "coreSaveStationMode": "{station} · {mode}"
+}

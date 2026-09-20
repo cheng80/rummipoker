@@ -159,7 +159,7 @@ class GameJesterEffectBurst extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       _GameOutlinedLabel(
-                        jesterEffectBadge(effect),
+                        jesterEffectBadge(effect, context: context),
                         fillColor: GameUiPalette.cardNameWarm,
                         strokeColor: GameUiPalette.surfacePanel,
                         fontSize: 10,

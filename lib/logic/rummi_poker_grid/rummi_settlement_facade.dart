@@ -31,6 +31,11 @@ class RummiSettlementEntryView {
     this.itemId,
     this.displayName,
     this.tile,
+    this.descriptionKey,
+    this.descriptionArgs = const {},
+    this.leadingKey,
+    this.leadingArgs = const {},
+    this.growthRank,
   });
 
   final RummiSettlementEntryKind kind;
@@ -41,6 +46,13 @@ class RummiSettlementEntryView {
   final String? itemId;
   final String? displayName;
   final Tile? tile;
+
+  // Transient display metadata; receipt strings and manual constructors stay valid.
+  final String? descriptionKey;
+  final Map<String, String> descriptionArgs;
+  final String? leadingKey;
+  final Map<String, String> leadingArgs;
+  final RummiHandRank? growthRank;
 
   bool get isEconomyBonus => kind == RummiSettlementEntryKind.economyBonus;
   bool get isItemBonus => kind == RummiSettlementEntryKind.itemBonus;
@@ -75,6 +87,14 @@ class RummiSettlementRuntimeFacade {
     final entries = <RummiSettlementEntryView>[
       RummiSettlementEntryView(
         kind: RummiSettlementEntryKind.stationReward,
+        leadingKey: breakdown.stageIndex > 8
+            ? 'marketEndlessStation'
+            : 'coreSettlementStation',
+        leadingArgs: {'stage': '${breakdown.stageIndex}'},
+        descriptionKey: breakdown.stageIndex > 8
+            ? 'coreSettlementEndlessReward'
+            : 'coreSettlementStationReward',
+        descriptionArgs: {'score': '${breakdown.targetScore}'},
         leadingLabel: _stationSettlementLabel(breakdown.stageIndex),
         description: breakdown.stageIndex > 8
             ? '무한 도전 목표 ${breakdown.targetScore} 달성 보상'
@@ -83,6 +103,11 @@ class RummiSettlementRuntimeFacade {
       ),
       RummiSettlementEntryView(
         kind: RummiSettlementEntryKind.boardDiscardReward,
+        descriptionKey: 'coreSettlementBoardDiscard',
+        descriptionArgs: {
+          'count': '${breakdown.remainingBoardDiscards}',
+          'gold': '${breakdown.perBoardDiscardBonus}',
+        },
         leadingLabel: '${breakdown.remainingBoardDiscards}',
         description:
             '남은 보드 버림 ${breakdown.remainingBoardDiscards}회 x ${breakdown.perBoardDiscardBonus}',
@@ -90,6 +115,11 @@ class RummiSettlementRuntimeFacade {
       ),
       RummiSettlementEntryView(
         kind: RummiSettlementEntryKind.handDiscardReward,
+        descriptionKey: 'coreSettlementHandDiscard',
+        descriptionArgs: {
+          'count': '${breakdown.remainingHandDiscards}',
+          'gold': '${breakdown.perHandDiscardBonus}',
+        },
         leadingLabel: '${breakdown.remainingHandDiscards}',
         description:
             '남은 손패 버림 ${breakdown.remainingHandDiscards}회 x ${breakdown.perHandDiscardBonus}',
@@ -97,6 +127,11 @@ class RummiSettlementRuntimeFacade {
       ),
       RummiSettlementEntryView(
         kind: RummiSettlementEntryKind.boardMoveReward,
+        descriptionKey: 'coreSettlementBoardMove',
+        descriptionArgs: {
+          'count': '${breakdown.remainingBoardMoves}',
+          'gold': '${breakdown.perBoardMoveBonus}',
+        },
         leadingLabel: '${breakdown.remainingBoardMoves}',
         description:
             '남은 보드 이동 ${breakdown.remainingBoardMoves}회 x ${breakdown.perBoardMoveBonus}',
@@ -105,6 +140,8 @@ class RummiSettlementRuntimeFacade {
       if (breakdown.firstBlindClearBonusGold > 0)
         RummiSettlementEntryView(
           kind: RummiSettlementEntryKind.firstBlindClearBonus,
+          descriptionKey: 'coreSettlementFirstBlind',
+          leadingKey: 'coreSettlementFirstLabel',
           leadingLabel: 'First',
           description: '첫 블라인드 클리어 보너스',
           gold: breakdown.firstBlindClearBonusGold,
@@ -132,6 +169,8 @@ class RummiSettlementRuntimeFacade {
       ...breakdown.deckTileRewards.map(
         (tile) => RummiSettlementEntryView(
           kind: RummiSettlementEntryKind.deckTileReward,
+          descriptionKey: 'coreSettlementDeckTile',
+          leadingKey: 'coreSettlementTileLabel',
           leadingLabel: 'Tile',
           description: '보스 클리어 보상 - 다음 전투 덱에 추가',
           gold: 0,
@@ -141,6 +180,10 @@ class RummiSettlementRuntimeFacade {
       ...breakdown.overkillGrowthBonuses.map(
         (bonus) => RummiSettlementEntryView(
           kind: RummiSettlementEntryKind.overkillGrowthBonus,
+          descriptionKey: 'coreSettlementGrowth',
+          leadingKey: 'coreSettlementGrowthLabel',
+          growthRank: bonus.rank,
+          descriptionArgs: {'amount': '${bonus.amount}'},
           leadingLabel: 'Growth',
           description:
               '초과 달성: ${_handRankLabel(bonus.rank)} 성장 +${bonus.amount}',
@@ -151,6 +194,8 @@ class RummiSettlementRuntimeFacade {
       if (breakdown.overkillGoldBonus > 0)
         RummiSettlementEntryView(
           kind: RummiSettlementEntryKind.overkillGoldBonus,
+          descriptionKey: 'coreSettlementOverkillGold',
+          leadingKey: 'coreSettlementScoreLabel',
           leadingLabel: 'Score',
           description: '초과 점수 보너스',
           gold: breakdown.overkillGoldBonus,
@@ -199,3 +244,26 @@ String _handRankLabel(RummiHandRank rank) {
     RummiHandRank.flushFive => '플러시 파이브',
   };
 }
+
+/// Stable presentation key; UI translates at build time to follow locale changes.
+String rummiHandRankKey(RummiHandRank rank) => switch (rank) {
+  RummiHandRank.highCard => 'coreHandRankHighCard',
+  RummiHandRank.onePair => 'coreHandRankOnePair',
+  RummiHandRank.twoPair => 'coreHandRankTwoPair',
+  RummiHandRank.threeOfAKind => 'coreHandRankThreeOfAKind',
+  RummiHandRank.straight => 'coreHandRankStraight',
+  RummiHandRank.flush => 'coreHandRankFlush',
+  RummiHandRank.fullHouse => 'coreHandRankFullHouse',
+  RummiHandRank.fourOfAKind => 'coreHandRankFourOfAKind',
+  RummiHandRank.straightFlush => 'coreHandRankStraightFlush',
+  RummiHandRank.prismStraight => 'coreHandRankPrismStraight',
+  RummiHandRank.crownFourOfAKind => 'coreHandRankCrownFourOfAKind',
+  RummiHandRank.lowStraightFlush => 'coreHandRankLowStraightFlush',
+  RummiHandRank.royalStraightFlush => 'coreHandRankRoyalStraightFlush',
+  RummiHandRank.fiveOfAKind => 'coreHandRankFiveOfAKind',
+  RummiHandRank.flushHouse => 'coreHandRankFlushHouse',
+  RummiHandRank.flushFive => 'coreHandRankFlushFive',
+};
+
+/// Legacy Korean label kept while UI consumers migrate to [rummiHandRankKey].
+String rummiHandRankLabel(RummiHandRank rank) => _handRankLabel(rank);

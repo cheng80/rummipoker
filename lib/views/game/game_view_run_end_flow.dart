@@ -10,8 +10,10 @@ extension _GameViewRunEndFlow on _GameViewState {
     if (!mounted) return false;
     final slotIndex = await showBookmarkSlotDialog(
       context: context,
-      title: '북마크하기',
-      message: '저장할 슬롯을 선택하세요. 저장된 슬롯을 선택하면 해당 북마크를 덮어씁니다.',
+      titleBuilder: (dialogContext) =>
+          dialogContext.translate('battleBookmarkSave'),
+      messageBuilder: (dialogContext) =>
+          dialogContext.translate('battleBookmarkSavePrompt'),
       slots: slots,
     );
     if (!mounted || slotIndex == null) return false;
@@ -19,10 +21,16 @@ extension _GameViewRunEndFlow on _GameViewState {
     if (!selected.isEmpty) {
       final confirmed = await showConfirmDialog(
         context,
-        title: '북마크 덮어쓰기',
-        message: '${selected.label}\n\n이 슬롯을 현재 진행 상태로 덮어쓸까요?',
-        cancelLabel: '취소',
-        confirmLabel: '덮어쓰기',
+        titleBuilder: (dialogContext) =>
+            dialogContext.translate('battleBookmarkOverwrite'),
+        messageBuilder: (dialogContext) => dialogContext.translate(
+          'battleBookmarkOverwritePrompt',
+          namedArgs: {'label': dialogContext.activeRunSlotLabel(selected)},
+        ),
+        cancelLabelBuilder: (dialogContext) =>
+            dialogContext.translate('cancel'),
+        confirmLabelBuilder: (dialogContext) =>
+            dialogContext.translate('battleOverwrite'),
       );
       if (!mounted || !confirmed) return false;
     }
@@ -31,7 +39,13 @@ extension _GameViewRunEndFlow on _GameViewState {
       runtime: runtime,
     );
     if (!mounted) return false;
-    showTopNotice(context, '북마크 슬롯 ${slotIndex + 1}에 저장했습니다.');
+    showTopNotice(
+      context,
+      context.translate(
+        'battleBookmarkSaved',
+        namedArgs: {'slot': '${slotIndex + 1}'},
+      ),
+    );
     return true;
   }
 
@@ -40,24 +54,29 @@ extension _GameViewRunEndFlow on _GameViewState {
     if (!mounted) return false;
     final slotIndex = await showBookmarkSlotDialog(
       context: context,
-      title: '북마크 불러오기',
-      message: '불러올 슬롯을 선택하세요. 북마크를 불러오면 현재 이어하기 데이터가 선택한 북마크로 덮어써집니다.',
+      titleBuilder: (dialogContext) =>
+          dialogContext.translate('battleBookmarkLoad'),
+      messageBuilder: (dialogContext) =>
+          dialogContext.translate('battleBookmarkLoadPrompt'),
       slots: slots,
     );
     if (!mounted || slotIndex == null) return false;
     final selected = slots[slotIndex];
     if (selected.isEmpty) {
-      showTopNotice(context, '비어 있는 북마크 슬롯입니다.');
+      showTopNotice(context, context.translate('battleBookmarkEmpty'));
       return false;
     }
     final confirmed = await showConfirmDialog(
       context,
-      title: '북마크 불러오기',
-      message:
-          '${selected.label}\n\n'
-          '이 북마크를 불러오면 현재 이어하기 데이터가 이 상태로 바뀝니다.',
-      cancelLabel: '취소',
-      confirmLabel: '불러오기',
+      titleBuilder: (dialogContext) =>
+          dialogContext.translate('battleBookmarkLoad'),
+      messageBuilder: (dialogContext) => dialogContext.translate(
+        'battleBookmarkRestorePrompt',
+        namedArgs: {'label': dialogContext.activeRunSlotLabel(selected)},
+      ),
+      cancelLabelBuilder: (dialogContext) => dialogContext.translate('cancel'),
+      confirmLabelBuilder: (dialogContext) =>
+          dialogContext.translate('battleLoad'),
     );
     if (!mounted || !confirmed) return false;
     final runtime = await ActiveRunSaveService.restoreBookmarkToActiveRun(
@@ -65,7 +84,7 @@ extension _GameViewRunEndFlow on _GameViewState {
     );
     if (!mounted) return false;
     if (runtime == null) {
-      showTopNotice(context, '북마크를 불러오지 못했습니다.');
+      showTopNotice(context, context.translate('battleBookmarkLoadFailed'));
       return false;
     }
     _resumePresentation();
@@ -77,17 +96,26 @@ extension _GameViewRunEndFlow on _GameViewState {
       stakeStartSnapshot: runtime.stakeStartSnapshot,
       activeRunScene: runtime.activeScene,
     );
-    showTopNotice(context, '북마크 슬롯 ${slotIndex + 1}을 불러왔습니다.');
+    showTopNotice(
+      context,
+      context.translate(
+        'battleBookmarkLoaded',
+        namedArgs: {'slot': '${slotIndex + 1}'},
+      ),
+    );
     return true;
   }
 
   Future<bool> _restartCurrentStakeWithConfirm() async {
     final confirmed = await showConfirmDialog(
       context,
-      title: '현재 전투 재시작',
-      message: '현재 전투 시작 시점으로 되돌릴까요?\n이번 전투에서 만든 보드와 점수 진행은 취소됩니다.',
-      cancelLabel: '취소',
-      confirmLabel: '현재 전투 재시작',
+      titleBuilder: (dialogContext) =>
+          dialogContext.translate('battleRestartBattle'),
+      messageBuilder: (dialogContext) =>
+          dialogContext.translate('battleRestartBattlePrompt'),
+      cancelLabelBuilder: (dialogContext) => dialogContext.translate('cancel'),
+      confirmLabelBuilder: (dialogContext) =>
+          dialogContext.translate('battleRestartBattle'),
     );
     if (!mounted || !confirmed) return false;
     await WidgetsBinding.instance.endOfFrame;
@@ -102,12 +130,14 @@ extension _GameViewRunEndFlow on _GameViewState {
     if (_battleView.stageIndex >= 9) {
       final warned = await showConfirmDialog(
         context,
-        title: '무한 Station 재시작',
-        message:
-            '무한 구간에서 Station 재시작은 현재 무한 진행을 크게 되돌릴 수 있습니다.\n'
-            '계속할까요?',
-        cancelLabel: '취소',
-        confirmLabel: 'Station 재시작',
+        titleBuilder: (dialogContext) =>
+            dialogContext.translate('battleRestartEndless'),
+        messageBuilder: (dialogContext) =>
+            dialogContext.translate('battleRestartEndlessPrompt'),
+        cancelLabelBuilder: (dialogContext) =>
+            dialogContext.translate('cancel'),
+        confirmLabelBuilder: (dialogContext) =>
+            dialogContext.translate('battleRestartStation'),
       );
       if (!mounted || !warned) return false;
       await WidgetsBinding.instance.endOfFrame;
@@ -115,11 +145,13 @@ extension _GameViewRunEndFlow on _GameViewState {
     }
     final confirmed = await showConfirmDialog(
       context,
-      title: '현재 Station 재시작',
-      message:
-          '현재 Station 시작 시점으로 되돌릴까요?\n이 Station에서 얻은 골드, 제스터, 진행 상태는 취소됩니다.',
-      cancelLabel: '취소',
-      confirmLabel: '현재 Station 재시작',
+      titleBuilder: (dialogContext) =>
+          dialogContext.translate('battleRestartCurrentStation'),
+      messageBuilder: (dialogContext) =>
+          dialogContext.translate('battleRestartStationPrompt'),
+      cancelLabelBuilder: (dialogContext) => dialogContext.translate('cancel'),
+      confirmLabelBuilder: (dialogContext) =>
+          dialogContext.translate('battleRestartCurrentStation'),
     );
     if (!mounted || !confirmed) return false;
     await WidgetsBinding.instance.endOfFrame;
@@ -133,10 +165,12 @@ extension _GameViewRunEndFlow on _GameViewState {
   Future<bool> _exitToTitleWithConfirm() async {
     final confirmed = await showConfirmDialog(
       context,
-      title: '메인 메뉴로 나가기',
-      message: '현재 진행을 멈추고 메인 메뉴로 돌아갈까요?\n이어하기로 다시 복원할 수 있습니다.',
-      cancelLabel: '취소',
-      confirmLabel: '나가기',
+      titleBuilder: (dialogContext) =>
+          dialogContext.translate('battleExitTitle'),
+      messageBuilder: (dialogContext) =>
+          dialogContext.translate('battleExitTitlePrompt'),
+      cancelLabelBuilder: (dialogContext) => dialogContext.translate('cancel'),
+      confirmLabelBuilder: (dialogContext) => dialogContext.translate('exit'),
     );
     if (!mounted || !confirmed) return false;
     await WidgetsBinding.instance.endOfFrame;
@@ -160,12 +194,14 @@ extension _GameViewRunEndFlow on _GameViewState {
     if (_battleView.stageIndex >= 9) {
       final confirmed = await showConfirmDialog(
         context,
-        title: '무한 Station 재시작',
-        message:
-            '무한 구간에서 Station 재시작은 현재 무한 진행을 크게 되돌릴 수 있습니다.\n'
-            '계속할까요?',
-        cancelLabel: '취소',
-        confirmLabel: 'Station 재시작',
+        titleBuilder: (dialogContext) =>
+            dialogContext.translate('battleRestartEndless'),
+        messageBuilder: (dialogContext) =>
+            dialogContext.translate('battleRestartEndlessPrompt'),
+        cancelLabelBuilder: (dialogContext) =>
+            dialogContext.translate('cancel'),
+        confirmLabelBuilder: (dialogContext) =>
+            dialogContext.translate('battleRestartStation'),
       );
       if (!mounted || !confirmed) return;
       await WidgetsBinding.instance.endOfFrame;
@@ -440,9 +476,8 @@ extension _GameViewRunEndFlow on _GameViewState {
     }
 
     return GameOverRunSummary(
-      difficultyLabel: NewRunSetup(
-        difficulty: widget.difficulty,
-      ).difficultyLabel,
+      difficulty: widget.difficulty,
+      runModifier: _gameState.runModifier,
       stageIndex: _battleView.stageIndex,
       scoreTowardTarget: session?.blind.scoreTowardBlind ?? 0,
       targetScore: session?.blind.targetScore ?? 0,

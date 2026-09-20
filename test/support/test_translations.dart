@@ -10,6 +10,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
+import 'package:easy_localization/easy_localization.dart';
 // ignore: implementation_imports
 import 'package:easy_localization/src/localization.dart';
 // ignore: implementation_imports
@@ -32,4 +33,18 @@ void loadKoreanTestTranslations() {
     fallbackTranslations: Translations(entries),
   );
   _loaded = true;
+}
+
+/// Reads the actual merged assets without isolate I/O inside testWidgets.
+/// RootBundleAssetLoader delegates JSON over 50 KB to compute, which cannot
+/// finish while a FakeAsync test directly awaits a locale change.
+class TestTranslationAssetLoader extends AssetLoader {
+  const TestTranslationAssetLoader();
+
+  @override
+  Future<Map<String, dynamic>> load(String path, Locale locale) async =>
+      jsonDecode(
+            File('$path/${locale.toLanguageTag()}.json').readAsStringSync(),
+          )
+          as Map<String, dynamic>;
 }

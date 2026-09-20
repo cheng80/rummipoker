@@ -1,3 +1,4 @@
+import '../utils/action_failure_translation.dart';
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -44,6 +45,9 @@ import '../services/run_progression_service.dart';
 import '../services/run_unlock_state_service.dart';
 import '../services/tutorial_state_service.dart';
 import '../utils/common_ui.dart';
+import '../utils/item_presentation_translation.dart';
+import '../utils/app_translation.dart';
+import '../widgets/semantic_text.dart';
 import 'game/game_feedback_cues.dart';
 import 'game/game_presentation_timings.dart';
 import 'game/game_settlement_pacing.dart';
@@ -71,6 +75,7 @@ import '../widgets/fx/motion_policy.dart';
 import '../widgets/fx/presentation_clock.dart';
 import '../widgets/fx/screen_shake.dart';
 import '../widgets/phone_frame_scaffold.dart';
+import '../utils/active_run_translation.dart';
 
 part 'game/game_view_transition_overlays.dart';
 part 'game/game_view_item_effect_widgets.dart';
@@ -335,7 +340,7 @@ class _GameViewState extends ConsumerState<GameView>
         _scheduleDebugAutoUseItem();
       }
       if (_isDebugFixtureRun && !widget.debugSuppressFixtureNotice) {
-        showTopNotice(context, '디버그 픽스처 모드: 이어하기 저장은 남기지 않습니다.');
+        showTopNotice(context, context.translate('battleDebugFixture'));
       }
       _showBossConstraintIntroIfNeeded();
       _showDebugGameOverOnLoadIfNeeded();
@@ -508,7 +513,7 @@ class _GameViewState extends ConsumerState<GameView>
     Rect? marksRect;
     await _showBossConstraintInfo(
       modifier: modifier,
-      buttonLabel: '전투 시작',
+      buttonLabelKey: 'battleStart',
       intro: true,
       onBeforeClose: () => marksRect = _globalRectOf(_bossIntroMarksKey),
     );
@@ -520,12 +525,15 @@ class _GameViewState extends ConsumerState<GameView>
     if (!mounted || _gameState.activeRunScene != ActiveRunScene.battle) return;
     final modifier = _gameState.session?.blind.bossModifier;
     if (modifier == null) return;
-    await _showBossConstraintInfo(modifier: modifier, buttonLabel: '닫기');
+    await _showBossConstraintInfo(
+      modifier: modifier,
+      buttonLabelKey: 'battleClose',
+    );
   }
 
   Future<void> _showBossConstraintInfo({
     required RummiBossModifier modifier,
-    required String buttonLabel,
+    required String buttonLabelKey,
     bool intro = false,
     VoidCallback? onBeforeClose,
   }) async {
@@ -534,7 +542,7 @@ class _GameViewState extends ConsumerState<GameView>
       barrierDismissible: false,
       builder: (dialogContext) => GameBossIntroCard(
         modifier: modifier,
-        buttonLabel: buttonLabel,
+        buttonLabel: dialogContext.translate(buttonLabelKey),
         animate: intro && !MotionPolicy.reduceMotion,
         marksKey: intro ? _bossIntroMarksKey : null,
         maxHeight: MediaQuery.sizeOf(dialogContext).height * 0.72,
@@ -657,7 +665,12 @@ class _GameViewState extends ConsumerState<GameView>
         }
       }
       if (slot == null) {
-        _showSnack('디버그 아이템을 찾지 못했습니다: $itemId');
+        _showSnack(
+          context.translate(
+            'battleDebugItemMissing',
+            namedArgs: {'id': itemId},
+          ),
+        );
         return;
       }
       _useBattleItem(slot);
@@ -716,9 +729,18 @@ class _GameViewState extends ConsumerState<GameView>
   }
 
   /// [silent]는 호출부가 이미 자체 cue를 냈을 때 알림 등급 소리만 끈다.
-  void _showSnack(String message, {bool silent = false}) {
+  void _showSnack(
+    String message, {
+    bool silent = false,
+    String Function(BuildContext)? messageBuilder,
+  }) {
     if (!mounted) return;
-    showTopNotice(context, message, cue: silent ? null : GameCue.noticeTop);
+    showTopNotice(
+      context,
+      message,
+      cue: silent ? null : GameCue.noticeTop,
+      messageBuilder: messageBuilder,
+    );
   }
 
   void _schedulePendingItemPresentationFeedback(GameSessionState gameState) {
@@ -739,15 +761,13 @@ class _GameViewState extends ConsumerState<GameView>
   ) async {
     for (final event in events) {
       if (!mounted) return;
-      final item = _itemCatalog?.findById(event.itemId);
-      final translatedItemName = item?.displayNameKey.tr();
       _showItemEffectFeedback(
-        title: item == null
-            ? event.sourceLabel
-            : translatedItemName == item.displayNameKey
-            ? item.displayName
-            : translatedItemName!,
+        title: event.sourceLabel,
         detail: event.resultLabel,
+        titleBuilder: (context) =>
+            localizedItemPresentationSource(context, event),
+        detailBuilder: (context) =>
+            localizedItemPresentationResult(context, event),
         sourceLabel: _itemPresentationSourceLabel(event.sourceKind),
         passive: event.sourceKind == ItemPresentationSourceKind.passive,
       );
@@ -834,10 +854,8 @@ class _GameViewState extends ConsumerState<GameView>
                 ritualEffectFlight: _ritualEffectFlight,
                 ritualEffectFlightTick: _ritualEffectFlightTick,
                 suppressDebugChrome: widget.debugSuppressFixtureNotice,
-                difficultyLabel: _battleRunContextLabel(
-                  difficulty: widget.difficulty,
-                  runModifier: gameState.runModifier,
-                ),
+                difficulty: widget.difficulty,
+                runModifier: gameState.runModifier,
                 battleBoardTutorialKey: _battleBoardTutorialKey,
                 battlePreviewTutorialKey: _battlePreviewTutorialKey,
                 battleActionsTutorialKey: _battleActionsTutorialKey,
@@ -846,7 +864,7 @@ class _GameViewState extends ConsumerState<GameView>
                 denyTarget: _battleDenyTarget,
                 denyTick: _battleDenyTick,
                 onLockedSlotTap: () => _denyBattleAction(
-                  '잠긴 슬롯입니다.',
+                  context.translate('t3MarketLockedSlot'),
                   target: _BattleDenyTarget.slots,
                 ),
                 onOptionsTap: _openGameOptions,
@@ -912,15 +930,6 @@ class _GameViewState extends ConsumerState<GameView>
 
 /// 거절 입력에서 흔들리는 영역.
 enum _BattleDenyTarget { board, actions, hand, slots }
-
-String _battleRunContextLabel({
-  required NewRunDifficulty difficulty,
-  required NewRunModifier runModifier,
-}) {
-  final difficultyLabel = NewRunSetup(difficulty: difficulty).difficultyLabel;
-  if (runModifier == NewRunModifier.basic) return difficultyLabel;
-  return '$difficultyLabel · 하이';
-}
 
 class _GameOverFadeVeil extends StatelessWidget {
   const _GameOverFadeVeil();

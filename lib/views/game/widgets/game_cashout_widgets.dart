@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'dart:ui' show lerpDouble;
 
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../../logic/rummi_poker_grid/hand_rank.dart';
@@ -12,7 +11,9 @@ import '../../../logic/rummi_poker_grid/line_ref.dart';
 import '../../../providers/features/rummi_poker_grid/game_session_state.dart';
 import '../../../resources/item_translation_scope.dart';
 import '../../../resources/jester_translation_scope.dart';
+import '../../../utils/app_translation.dart';
 import '../../../utils/common_ui.dart';
+import '../../../widgets/semantic_text.dart';
 import '../../../widgets/fx/fx_sprites.dart';
 import '../game_presentation_timings.dart';
 import '../game_feedback_cues.dart';
@@ -23,42 +24,51 @@ import 'game_ui_palette.dart';
 part 'game_cashout_presentation_widgets.dart';
 part 'game_cashout_sheet_widgets.dart';
 
-String gameHandRankLabel(RummiHandRank rank) {
-  return switch (rank) {
-    RummiHandRank.highCard => '하이',
-    RummiHandRank.onePair => '원페어',
-    RummiHandRank.twoPair => '투페어',
-    RummiHandRank.threeOfAKind => '트리플',
-    RummiHandRank.straight => '스트레이트',
-    RummiHandRank.flush => '플러시',
-    RummiHandRank.fullHouse => '풀하우스',
-    RummiHandRank.fourOfAKind => '포카드',
-    RummiHandRank.straightFlush => '스티플',
-    RummiHandRank.prismStraight => '프리즘 스트레이트',
-    RummiHandRank.crownFourOfAKind => '크라운 포카드',
-    RummiHandRank.lowStraightFlush => '로우 스티플',
-    RummiHandRank.royalStraightFlush => '로열 스티플',
-    RummiHandRank.fiveOfAKind => '파이브 카드',
-    RummiHandRank.flushHouse => '플러시 하우스',
-    RummiHandRank.flushFive => '플러시 파이브',
-  };
-}
+/// Omit [context] only for legacy consumers awaiting migration.
+String gameHandRankLabel(RummiHandRank rank, {BuildContext? context}) =>
+    context == null
+    ? rummiHandRankLabel(rank)
+    : context.translate(rummiHandRankKey(rank));
 
-String gameScoreBreakdownLabel(ConfirmedLineBreakdown line) {
-  final parts = <String>['칩 ${line.rankBaseScore ?? line.baseScore}'];
+String gameScoreBreakdownLabel(
+  ConfirmedLineBreakdown line, {
+  required BuildContext context,
+}) {
+  final parts = <String>[
+    context.translate(
+      'marketBaseChips',
+      namedArgs: {'count': '${line.rankBaseScore ?? line.baseScore}'},
+    ),
+  ];
   if (line.growthBonus > 0) {
-    parts.add('성장 칩 +${line.growthBonus}');
+    parts.add(
+      context.translate(
+        'marketGrowthChips',
+        namedArgs: {'count': '${line.growthBonus}'},
+      ),
+    );
   }
   if (line.overlapBonus > 0) {
-    parts.add('겹침 +${line.overlapBonus}');
+    parts.add(
+      context.translate(
+        'marketOverlapBonus',
+        namedArgs: {'count': '${line.overlapBonus}'},
+      ),
+    );
   }
   if (line.jesterBonus > 0) {
-    parts.add('제스터 +${line.jesterBonus}');
+    parts.add(
+      context.translate(
+        'marketJesterBonus',
+        namedArgs: {'count': '${line.jesterBonus}'},
+      ),
+    );
   }
   return parts.join(' · ');
 }
 
-String gameLineRefShortLabel(LineRef ref) {
+String gameLineRefShortLabel(LineRef ref, {BuildContext? context}) {
+  if (context != null) return localizedGameLineRefShortLabel(context, ref);
   return switch (ref.kind) {
     LineKind.row => '가로',
     LineKind.col => '세로',
@@ -200,8 +210,8 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
-                          '정산 완료',
+                        Text(
+                          context.translate('marketCashoutComplete'),
                           style: TextStyle(
                             color: GameUiPalette.textPrimary,
                             fontSize: 18,
@@ -256,7 +266,10 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                                         for (final entry
                                             in otherBonusEntries) ...[
                                           _GameCashOutLine(
-                                            leading: entry.leadingLabel,
+                                            leading: localizedSettlementLeading(
+                                              context,
+                                              entry,
+                                            ),
                                             text: _bonusEntryDescription(
                                               context,
                                               entry,
@@ -327,7 +340,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                         const SizedBox(height: 14),
                         if (widget.completesRun) ...[
                           GameChromeButton(
-                            label: '무한 도전 진입',
+                            label: context.translate('marketEnterEndless'),
                             backgroundColor: GameUiPalette.actionInfoBlue,
                             foregroundColor: GameUiPalette.textPrimary,
                             height: 50,
@@ -342,7 +355,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                           ),
                           const SizedBox(height: 8),
                           GameChromeButton(
-                            label: '런 완료',
+                            label: context.translate('marketCompleteRun'),
                             backgroundColor: GameUiPalette.actionGold,
                             foregroundColor: GameUiPalette.ink,
                             height: 50,
@@ -357,7 +370,7 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
                           ),
                         ] else
                           GameChromeButton(
-                            label: 'Market으로',
+                            label: context.translate('marketEnterMarket'),
                             backgroundColor: GameUiPalette.actionGold,
                             foregroundColor: GameUiPalette.ink,
                             height: 52,
@@ -381,4 +394,66 @@ class _GameCashOutSheetState extends State<GameCashOutSheet> {
       ),
     );
   }
+}
+
+String localizedGameLineRefShortLabel(BuildContext context, LineRef ref) =>
+    context.translate(switch (ref.kind) {
+      LineKind.row => 'marketLineRow',
+      LineKind.col => 'marketLineCol',
+      LineKind.diagMain => 'marketLineDiagMain',
+      LineKind.diagAnti => 'marketLineDiagAnti',
+    });
+
+/// Resolve only explicit metadata. Custom/manual descriptions remain verbatim.
+String localizedSettlementDescription(
+  BuildContext context,
+  RummiSettlementEntryView entry,
+) {
+  final key = entry.descriptionKey;
+  if (key == null) return entry.description;
+  return context.translate(
+    key,
+    namedArgs: {
+      ...entry.descriptionArgs,
+      if (entry.growthRank != null)
+        'rank': context.translate(rummiHandRankKey(entry.growthRank!)),
+    },
+  );
+}
+
+String localizedSettlementLeading(
+  BuildContext context,
+  RummiSettlementEntryView entry,
+) {
+  final key = entry.leadingKey;
+  return key == null
+      ? entry.leadingLabel
+      : context.translate(key, namedArgs: entry.leadingArgs);
+}
+
+String localizedSettlementTileEffectName(
+  BuildContext context,
+  RummiJesterEffectBreakdown effect,
+) {
+  final key = switch (effect.jesterId) {
+    'tile:chip_inlaid' => 'coreSettlementTileChipInlaid',
+    'tile:score_gilded' => 'coreSettlementTileScoreGilded',
+    'tile:gold_tile' => 'coreSettlementTileGoldTile',
+    'tile:glass_tile' => 'coreSettlementTileGlassTile',
+    'tile_edition:silver_edition' => 'battleWidgetsTileEditionSilver',
+    'tile_edition:glow_edition' => 'battleWidgetsTileEditionGlow',
+    'tile_edition:prism_edition' => 'battleWidgetsTileEditionPrism',
+    'tile_seal:blue_seal' => 'battleWidgetsTileSealBlue',
+    'tile_seal:red_seal' => 'battleWidgetsTileSealRed',
+    'tile_seal:line_mark' => 'battleWidgetsTileSealLine',
+    'tile_seal:growth_seal' => 'battleWidgetsTileSealGrowth',
+    'tile_seal:gold_seal' => 'battleWidgetsTileSealGold',
+    'tile_seal:echo_seal' => 'battleWidgetsTileSealEcho',
+    'tile_seal:anchor_seal' => 'battleWidgetsTileSealAnchor',
+    'tile_seal:fracture_seal' => 'battleWidgetsTileSealFracture',
+    'tile_seal:cross_memory' => 'battleWidgetsTileSealCross',
+    'tile_seal:bridge_seal' => 'battleWidgetsTileSealBridge',
+    _ => null,
+  };
+  return key == null ? effect.displayName : context.translate(key);
 }

@@ -103,6 +103,7 @@ class BattleBoardTapResult {
     required this.didPlaceTile,
     required this.didChangeSelection,
     this.failMessage,
+    this.failure,
   });
 
   const BattleBoardTapResult.placed()
@@ -114,14 +115,16 @@ class BattleBoardTapResult {
   const BattleBoardTapResult.ignored()
     : this._(didPlaceTile: false, didChangeSelection: false);
 
-  const BattleBoardTapResult.fail(String message)
+  const BattleBoardTapResult.fail(String message, {ActionFailure? failure})
     : this._(
         didPlaceTile: false,
         didChangeSelection: false,
         failMessage: message,
+        failure: failure,
       );
 
   final bool didPlaceTile;
   final bool didChangeSelection;
   final String? failMessage;
+  final ActionFailure? failure;
 }

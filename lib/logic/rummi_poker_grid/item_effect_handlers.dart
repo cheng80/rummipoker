@@ -11,6 +11,7 @@ ItemUseResult _applyAddBoardDiscard(
     currentValue: session.blind.boardDiscardsRemaining,
     maxValue: ItemEffectRuntime.maxSupportedBoardDiscards,
     failureMessage: '보드 버림 최대치입니다.',
+    failureReason: ActionFailureReason.boardDiscardCap,
     eventKind: ItemEffectEventKind.boardDiscardAdded,
     applyValue: (value) => session.blind.boardDiscardsRemaining = value,
   );
@@ -55,6 +56,10 @@ ItemUseResult _applyMarketModifier(
         return ItemUseResult.failure(
           itemId: item.id,
           message: 'Item 후보 슬롯 최대치입니다.',
+          failure: ActionFailure(
+            ActionFailureReason.itemOfferCap,
+            'Item 후보 슬롯 최대치입니다.',
+          ),
         );
       }
       runProgress.queueMarketModifier(
@@ -115,6 +120,10 @@ ItemUseResult _applyBossMarketModifier(
       return ItemUseResult.failure(
         itemId: item.id,
         message: 'Jester 후보 슬롯 최대치입니다.',
+        failure: ActionFailure(
+          ActionFailureReason.jesterOfferCap,
+          'Jester 후보 슬롯 최대치입니다.',
+        ),
       );
     }
   }
@@ -194,12 +203,20 @@ ItemUseResult _applyExpiryGuardRescue(
     return ItemUseResult.failure(
       itemId: item.id,
       message: '안전망으로 복구할 수 있는 만료 상태가 아닙니다.',
+      failure: ActionFailure(
+        ActionFailureReason.expiryNotRecoverable,
+        '안전망으로 복구할 수 있는 만료 상태가 아닙니다.',
+      ),
     );
   }
   if (!session.tryUseExpiryGuard()) {
     return ItemUseResult.failure(
       itemId: item.id,
       message: '이미 이번 스테이션의 안전망을 사용했습니다.',
+      failure: ActionFailure(
+        ActionFailureReason.expiryAlreadyUsed,
+        '이미 이번 스테이션의 안전망을 사용했습니다.',
+      ),
     );
   }
   final events = <ItemEffectEvent>[
@@ -266,6 +283,7 @@ ItemUseResult _applyAddHandDiscard(
     currentValue: session.blind.handDiscardsRemaining,
     maxValue: ItemEffectRuntime.maxSupportedHandDiscards,
     failureMessage: '손패 버림 최대치입니다.',
+    failureReason: ActionFailureReason.handDiscardCap,
     eventKind: ItemEffectEventKind.handDiscardAdded,
     applyValue: (value) => session.blind.handDiscardsRemaining = value,
   );
@@ -282,6 +300,7 @@ ItemUseResult _applyAddBoardMove(
     currentValue: session.blind.boardMovesRemaining,
     maxValue: ItemEffectRuntime.maxSupportedBoardMoves,
     failureMessage: '보드 이동 최대치입니다.',
+    failureReason: ActionFailureReason.boardMoveCap,
     eventKind: ItemEffectEventKind.boardMoveAdded,
     applyValue: (value) => session.blind.boardMovesRemaining = value,
   );
@@ -292,6 +311,7 @@ ItemUseResult _applyCappedResourceIncrease({
   required int currentValue,
   required int maxValue,
   required String failureMessage,
+  required ActionFailureReason failureReason,
   required ItemEffectEventKind eventKind,
   required void Function(int value) applyValue,
 }) {
@@ -302,7 +322,11 @@ ItemUseResult _applyCappedResourceIncrease({
   final nextValue = requestedValue > maxValue ? maxValue : requestedValue;
   final appliedAmount = nextValue - currentValue;
   if (appliedAmount <= 0) {
-    return ItemUseResult.failure(itemId: item.id, message: failureMessage);
+    return ItemUseResult.failure(
+      itemId: item.id,
+      message: failureMessage,
+      failure: ActionFailure(failureReason, failureMessage),
+    );
   }
 
   applyValue(nextValue);
@@ -322,12 +346,20 @@ ItemUseResult _applyMarkNextBoardMoveBonus(
     return ItemUseResult.failure(
       itemId: item.id,
       message: '사용 가능한 보드 이동이 없습니다.',
+      failure: ActionFailure(
+        ActionFailureReason.noAvailableBoardMove,
+        '사용 가능한 보드 이동이 없습니다.',
+      ),
     );
   }
   if (!session.queueNextBoardMoveSlideBonus()) {
     return ItemUseResult.failure(
       itemId: item.id,
       message: '이미 다음 보드 이동 보너스가 준비되어 있습니다.',
+      failure: ActionFailure(
+        ActionFailureReason.moveBonusPending,
+        '이미 다음 보드 이동 보너스가 준비되어 있습니다.',
+      ),
     );
   }
   return ItemUseResult.success(
@@ -354,6 +386,10 @@ ItemUseResult _applyDrawIfHandEmpty(
     return ItemUseResult.failure(
       itemId: item.id,
       message: '손패가 비어 있을 때만 사용할 수 있습니다.',
+      failure: ActionFailure(
+        ActionFailureReason.handMustBeEmpty,
+        '손패가 비어 있을 때만 사용할 수 있습니다.',
+      ),
     );
   }
   var drawn = 0;
@@ -372,7 +408,11 @@ ItemUseResult _applyDrawIfHandEmpty(
     drawn += 1;
   }
   if (drawn <= 0) {
-    return ItemUseResult.failure(itemId: item.id, message: '드로우에 실패했습니다.');
+    return ItemUseResult.failure(
+      itemId: item.id,
+      message: '드로우에 실패했습니다.',
+      failure: ActionFailure(ActionFailureReason.drawFailed, '드로우에 실패했습니다.'),
+    );
   }
   return ItemUseResult.success(
     itemId: item.id,
@@ -394,6 +434,20 @@ ItemUseResult _applyUndoLastBoardMove(
   if (fail != null) {
     return ItemUseResult.failure(
       itemId: item.id,
+      failure: switch (fail) {
+        BoardMoveUndoFailReason.noMoveHistory => ActionFailure(
+          ActionFailureReason.noMoveHistory,
+          '되돌릴 보드 이동이 없습니다.',
+        ),
+        BoardMoveUndoFailReason.sourceOccupied => ActionFailure(
+          ActionFailureReason.undoSourceOccupied,
+          '이동 전 칸이 비어 있지 않습니다.',
+        ),
+        BoardMoveUndoFailReason.destinationEmpty => ActionFailure(
+          ActionFailureReason.undoTileMissing,
+          '이동한 타일을 찾지 못했습니다.',
+        ),
+      },
       message: switch (fail) {
         BoardMoveUndoFailReason.noMoveHistory => '되돌릴 보드 이동이 없습니다.',
         BoardMoveUndoFailReason.sourceOccupied => '이동 전 칸이 비어 있지 않습니다.',
@@ -425,7 +479,11 @@ ItemUseResult _applyIncreaseHandSize(
   );
   final appliedAmount = nextMaxHandSize - session.maxHandSize;
   if (appliedAmount <= 0) {
-    return ItemUseResult.failure(itemId: item.id, message: '손패 최대치입니다.');
+    return ItemUseResult.failure(
+      itemId: item.id,
+      message: '손패 최대치입니다.',
+      failure: ActionFailure(ActionFailureReason.handSizeCap, '손패 최대치입니다.'),
+    );
   }
   session.maxHandSize = nextMaxHandSize;
   return ItemUseResult.success(
@@ -487,6 +545,10 @@ ItemUseResult _applyAddHandRankProgress(
     return ItemUseResult.failure(
       itemId: item.id,
       message: '성장시킬 족보를 찾지 못했습니다.',
+      failure: ActionFailure(
+        ActionFailureReason.rankMissing,
+        '성장시킬 족보를 찾지 못했습니다.',
+      ),
     );
   }
   final didApply = runProgress.addHandRankProgress(rank, amount: amount);
@@ -494,6 +556,10 @@ ItemUseResult _applyAddHandRankProgress(
     return ItemUseResult.failure(
       itemId: item.id,
       message: '이 족보는 성장시킬 수 없습니다.',
+      failure: ActionFailure(
+        ActionFailureReason.rankCannotGrow,
+        '이 족보는 성장시킬 수 없습니다.',
+      ),
     );
   }
   return ItemUseResult.success(
@@ -518,7 +584,14 @@ ItemUseResult _applyAddHandRankProgressFromSelectedLine(
   final line = session.currentScoringLineSummaryFor(lineRef);
   final amount = _nonNegativeIntValue(item, 'amount');
   if (line == null) {
-    return ItemUseResult.failure(itemId: item.id, message: '선택한 완성 줄이 없습니다.');
+    return ItemUseResult.failure(
+      itemId: item.id,
+      message: '선택한 완성 줄이 없습니다.',
+      failure: ActionFailure(
+        ActionFailureReason.scoringLineMissing,
+        '선택한 완성 줄이 없습니다.',
+      ),
+    );
   }
   if (amount <= 0) return _invalidAmount(item);
   final didApply = runProgress.addHandRankProgress(line.rank, amount: amount);
@@ -526,6 +599,10 @@ ItemUseResult _applyAddHandRankProgressFromSelectedLine(
     return ItemUseResult.failure(
       itemId: item.id,
       message: '이 족보는 성장시킬 수 없습니다.',
+      failure: ActionFailure(
+        ActionFailureReason.rankCannotGrow,
+        '이 족보는 성장시킬 수 없습니다.',
+      ),
     );
   }
   return ItemUseResult.success(
@@ -553,6 +630,10 @@ ItemUseResult _applyRitualLineEffect(
     return ItemUseResult.failure(
       itemId: item.id,
       message: '선택한 보드 선이 비어 있습니다.',
+      failure: ActionFailure(
+        ActionFailureReason.boardLineEmpty,
+        '선택한 보드 선이 비어 있습니다.',
+      ),
     );
   }
   final action = item.effect.value('ritualAction') as String? ?? '';
@@ -565,6 +646,10 @@ ItemUseResult _applyRitualLineEffect(
       return ItemUseResult.failure(
         itemId: item.id,
         message: '성장시킬 완성 족보가 없습니다.',
+        failure: ActionFailure(
+          ActionFailureReason.noRankToGrow,
+          '성장시킬 완성 족보가 없습니다.',
+        ),
       );
     }
     if (growthAmount <= 0) return _invalidAmount(item);
@@ -576,6 +661,10 @@ ItemUseResult _applyRitualLineEffect(
       return ItemUseResult.failure(
         itemId: item.id,
         message: '이 족보는 성장시킬 수 없습니다.',
+        failure: ActionFailure(
+          ActionFailureReason.rankCannotGrow,
+          '이 족보는 성장시킬 수 없습니다.',
+        ),
       );
     }
     return ItemUseResult.success(
@@ -596,6 +685,10 @@ ItemUseResult _applyRitualLineEffect(
       return ItemUseResult.failure(
         itemId: item.id,
         message: '족보 치환은 타일이 3개 이상 있는 선에만 사용할 수 있습니다.',
+        failure: ActionFailure(
+          ActionFailureReason.rankNeedsThree,
+          '족보 치환은 타일이 3개 이상 있는 선에만 사용할 수 있습니다.',
+        ),
       );
     }
     return _queueLineRankOverride(item, session, line.ref, rank);
@@ -606,6 +699,10 @@ ItemUseResult _applyRitualLineEffect(
       return ItemUseResult.failure(
         itemId: item.id,
         message: '운명 변환은 기준 타일이 있는 선에만 사용할 수 있습니다.',
+        failure: ActionFailure(
+          ActionFailureReason.fateNeedsTile,
+          '운명 변환은 기준 타일이 있는 선에만 사용할 수 있습니다.',
+        ),
       );
     }
     final transformed = _buildFateLineTiles(line, fateAction);
@@ -613,6 +710,10 @@ ItemUseResult _applyRitualLineEffect(
       return ItemUseResult.failure(
         itemId: item.id,
         message: '이 선에서는 해당 운명 세트를 만들 수 없습니다.',
+        failure: ActionFailure(
+          ActionFailureReason.fateSetUnavailable,
+          '이 선에서는 해당 운명 세트를 만들 수 없습니다.',
+        ),
       );
     }
     final cells = line.ref.cells();
@@ -745,6 +846,10 @@ ItemUseResult _applyRitualLineEffect(
         return ItemUseResult.failure(
           itemId: item.id,
           message: '보너스를 적용할 완성 족보가 없습니다.',
+          failure: ActionFailure(
+            ActionFailureReason.noRankForBonus,
+            '보너스를 적용할 완성 족보가 없습니다.',
+          ),
         );
       }
       _queueLineScoreMultiplier(item, session, line.ref, 1.25);
@@ -755,6 +860,10 @@ ItemUseResult _applyRitualLineEffect(
         return ItemUseResult.failure(
           itemId: item.id,
           message: '보너스를 적용할 완성 족보가 없습니다.',
+          failure: ActionFailure(
+            ActionFailureReason.noRankForBonus,
+            '보너스를 적용할 완성 족보가 없습니다.',
+          ),
         );
       }
       _queueLineScoreMultiplier(item, session, line.ref, 1.35);
@@ -771,6 +880,10 @@ ItemUseResult _applyRitualLineEffect(
         return ItemUseResult.failure(
           itemId: item.id,
           message: '덱에서 같은 타일을 찾지 못했습니다.',
+          failure: ActionFailure(
+            ActionFailureReason.matchingTileMissing,
+            '덱에서 같은 타일을 찾지 못했습니다.',
+          ),
         );
       }
       runProgress.gold += 2;
@@ -802,6 +915,10 @@ ItemUseResult _applyRitualLineEffect(
         return ItemUseResult.failure(
           itemId: item.id,
           message: '가지칠 다른 색 타일이 없습니다.',
+          failure: ActionFailure(
+            ActionFailureReason.noOtherColor,
+            '가지칠 다른 색 타일이 없습니다.',
+          ),
         );
       }
       final addedTiles = <Tile>[];
@@ -834,6 +951,10 @@ ItemUseResult _applyRitualLineEffect(
         return ItemUseResult.failure(
           itemId: item.id,
           message: '덱에서 같은 숫자 타일을 찾지 못했습니다.',
+          failure: ActionFailure(
+            ActionFailureReason.matchingNumberMissing,
+            '덱에서 같은 숫자 타일을 찾지 못했습니다.',
+          ),
         );
       }
       events.add(
@@ -871,6 +992,10 @@ ItemUseResult _applyRitualLineEffect(
         return ItemUseResult.failure(
           itemId: item.id,
           message: '제물 의식은 타일이 2개 이상 있는 선에만 사용할 수 있습니다.',
+          failure: ActionFailure(
+            ActionFailureReason.sacrificeNeedsTwo,
+            '제물 의식은 타일이 2개 이상 있는 선에만 사용할 수 있습니다.',
+          ),
         );
       }
       final addedTiles = <Tile>[];
@@ -895,6 +1020,10 @@ ItemUseResult _applyRitualLineEffect(
       return ItemUseResult.failure(
         itemId: item.id,
         message: '알 수 없는 의식 효과입니다.',
+        failure: ActionFailure(
+          ActionFailureReason.unknownRitual,
+          '알 수 없는 의식 효과입니다.',
+        ),
       );
   }
   return ItemUseResult.success(itemId: item.id, events: events);
@@ -1208,7 +1337,14 @@ ItemUseResult _applyRitualSeal(
   if (tile == null) return _noTileTarget(item);
   final applied = _applySealToBoardTile(session, tile, seal);
   if (!applied) {
-    return ItemUseResult.failure(itemId: item.id, message: '선택 타일을 찾지 못했습니다.');
+    return ItemUseResult.failure(
+      itemId: item.id,
+      message: '선택 타일을 찾지 못했습니다.',
+      failure: ActionFailure(
+        ActionFailureReason.selectedTileMissing,
+        '선택 타일을 찾지 못했습니다.',
+      ),
+    );
   }
   return ItemUseResult.success(
     itemId: item.id,
@@ -1309,7 +1445,11 @@ ItemEffectEvent _lineMultiplierEvent(ItemDefinition item, int percent) {
 }
 
 ItemUseResult _noTileTarget(ItemDefinition item) {
-  return ItemUseResult.failure(itemId: item.id, message: '선택할 타일이 없습니다.');
+  return ItemUseResult.failure(
+    itemId: item.id,
+    message: '선택할 타일이 없습니다.',
+    failure: ActionFailure(ActionFailureReason.noTileTarget, '선택할 타일이 없습니다.'),
+  );
 }
 
 void _consumeIfNeeded(
@@ -1326,19 +1466,31 @@ void _consumeIfNeeded(
   );
 }
 
-String? _validateBattleUse(ItemDefinition item, RummiRunProgress runProgress) {
+ActionFailure? _validateBattleUse(
+  ItemDefinition item,
+  RummiRunProgress runProgress,
+) {
   if (item.placement != ItemPlacement.quickSlot || !item.usableInBattle) {
-    return '전투에서 사용할 수 없는 아이템입니다.';
+    return ActionFailure(
+      ActionFailureReason.notBattleItem,
+      '전투에서 사용할 수 없는 아이템입니다.',
+    );
   }
   if (item.effect.timing != 'use_battle' &&
       _handlerNameFor(item.effect.timing) != 'applyConfirmModifierItem') {
-    return '지금 사용할 수 없는 아이템입니다.';
+    return ActionFailure(
+      ActionFailureReason.itemNotReady,
+      '지금 사용할 수 없는 아이템입니다.',
+    );
   }
   final hasItem = runProgress.itemInventory.ownedItems.any(
     (entry) => entry.itemId == item.id && entry.count > 0,
   );
   if (!hasItem) {
-    return '보유 중인 아이템을 찾지 못했습니다.';
+    return ActionFailure(
+      ActionFailureReason.itemNotOwned,
+      '보유 중인 아이템을 찾지 못했습니다.',
+    );
   }
   return null;
 }
@@ -1347,21 +1499,33 @@ bool _isManualOneShotConfirmModifier(RummiConfirmModifier modifier) {
   return modifier.consumeOnApply && modifier.timing.startsWith('next_confirm');
 }
 
-String? _validateMarketUse(ItemDefinition item, RummiRunProgress runProgress) {
+ActionFailure? _validateMarketUse(
+  ItemDefinition item,
+  RummiRunProgress runProgress,
+) {
   if (item.effect.timing != 'use_market' &&
       item.effect.timing != 'use_market_if_gold_lte') {
-    return '상점에서 사용할 수 없는 아이템입니다.';
+    return ActionFailure(
+      ActionFailureReason.notMarketItem,
+      '상점에서 사용할 수 없는 아이템입니다.',
+    );
   }
   final hasItem = runProgress.itemInventory.ownedItems.any(
     (entry) => entry.itemId == item.id && entry.count > 0,
   );
   if (!hasItem) {
-    return '보유 중인 아이템을 찾지 못했습니다.';
+    return ActionFailure(
+      ActionFailureReason.itemNotOwned,
+      '보유 중인 아이템을 찾지 못했습니다.',
+    );
   }
   if (item.effect.timing == 'use_market_if_gold_lte') {
     final threshold = (item.effect.value('threshold') as num?)?.toInt();
     if (threshold != null && runProgress.gold > threshold) {
-      return '현재 골드가 사용 조건보다 많습니다.';
+      return ActionFailure(
+        ActionFailureReason.goldAboveThreshold,
+        '현재 골드가 사용 조건보다 많습니다.',
+      );
     }
   }
   return null;
@@ -1386,6 +1550,10 @@ ItemUseResult _invalidAmount(ItemDefinition item) {
   return ItemUseResult.failure(
     itemId: item.id,
     message: '아이템 효과 값이 올바르지 않습니다.',
+    failure: ActionFailure(
+      ActionFailureReason.invalidAmount,
+      '아이템 효과 값이 올바르지 않습니다.',
+    ),
   );
 }
 
@@ -1393,5 +1561,10 @@ ItemUseResult _pendingHook(ItemDefinition item, String handlerName) {
   return ItemUseResult.pendingHook(
     itemId: item.id,
     message: '$handlerName 연결이 필요합니다.',
+    failure: ActionFailure(
+      ActionFailureReason.hookRequired,
+      '$handlerName 연결이 필요합니다.',
+      args: {'handler': handlerName},
+    ),
   );
 }

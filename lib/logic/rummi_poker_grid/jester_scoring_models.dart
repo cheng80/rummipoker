@@ -78,6 +78,16 @@ class RummiJesterEffectBreakdown {
 
   int get multPercentBonus => multBonus * 5;
 
+  /// Matches legacy displayToken equality, including chips/score collisions.
+  /// Never use localized presentation strings as an effect identity.
+  String get displayIdentity {
+    if (hasIntegerMultiplierToken) return 'x${xmultBonus.round()}';
+    if (xmultBonus > 1.0) return 'x${xmultBonus.toStringAsFixed(1)}';
+    if (chipsBonus > 0) return '+$chipsBonus';
+    if (multBonus > 0) return '+$multPercentBonus%';
+    return '+$scoreDelta';
+  }
+
   String get displayToken {
     if (hasIntegerMultiplierToken) {
       return '점수 x${xmultBonus.round()}';

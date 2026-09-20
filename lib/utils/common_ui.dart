@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'app_translation.dart';
 import '../resources/asset_paths.dart';
 import '../resources/game_haptics.dart';
 import '../views/game/game_feedback_cues.dart';
@@ -11,6 +12,7 @@ import '../views/game/widgets/game_ui_palette.dart';
 import '../widgets/fx/juice.dart';
 import '../widgets/fx/motion_policy.dart';
 import '../widgets/phone_frame_scaffold.dart';
+import '../widgets/semantic_text.dart';
 
 enum _NoticeStyle { topBanner, bottomToast }
 
@@ -489,6 +491,7 @@ class GameMenuActionTile extends StatelessWidget {
 void showTopNotice(
   BuildContext context,
   String message, {
+  String Function(BuildContext)? messageBuilder,
   Duration duration = const Duration(milliseconds: 2200),
   GameCue? cue = GameCue.noticeTop,
 }) {
@@ -500,7 +503,7 @@ void showTopNotice(
 
   late final OverlayEntry entry;
   entry = OverlayEntry(
-    builder: (context) {
+    builder: (overlayContext) {
       return IgnorePointer(
         child: SafeArea(
           child: Center(
@@ -510,7 +513,7 @@ void showTopNotice(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                   child: _NoticeCard(
-                    message: message,
+                    message: messageBuilder?.call(overlayContext) ?? message,
                     beginOffsetY: -18,
                     style: _NoticeStyle.topBanner,
                   ),
@@ -530,6 +533,7 @@ void showTopNotice(
 void showBottomNotice(
   BuildContext context,
   String message, {
+  String Function(BuildContext)? messageBuilder,
   Duration duration = const Duration(milliseconds: 1800),
   GameCue? cue = GameCue.noticeBottom,
 }) {
@@ -553,7 +557,7 @@ void showBottomNotice(
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(18, 0, 18, bottomInset + 12),
                   child: _NoticeCard(
-                    message: message,
+                    message: messageBuilder?.call(overlayContext) ?? message,
                     beginOffsetY: 18,
                     style: _NoticeStyle.bottomToast,
                   ),
@@ -574,10 +578,12 @@ Future<T?> showAppDialog<T>(
   BuildContext context, {
   bool barrierDismissible = true,
   bool useRootNavigator = true,
-  String routeName = '게임 대화상자',
+  String? routeName,
   required WidgetBuilder builder,
 }) {
-  final safeRouteName = routeName.trim().isEmpty ? '게임 대화상자' : routeName;
+  final safeRouteName = routeName == null || routeName.trim().isEmpty
+      ? context.translate('commonUiDialogLabel')
+      : routeName;
   return pushGameDialog<T>(
     context,
     barrierDismissible: barrierDismissible,
@@ -663,12 +669,17 @@ class _GamePopDialogRoute<T> extends DialogRoute<T> {
   }
 }
 
+/// Builders run inside the dialog route so an open dialog follows locale changes.
+/// A builder takes precedence over its legacy string/list argument.
 Future<T?> showGameChoiceDialog<T>(
   BuildContext context, {
-  required String title,
+  String title = '',
   String? message,
+  String Function(BuildContext)? titleBuilder,
+  String Function(BuildContext)? messageBuilder,
   Widget? content,
-  required List<GameDialogAction<T>> actions,
+  List<GameDialogAction<T>> actions = const [],
+  List<GameDialogAction<T>> Function(BuildContext)? actionsBuilder,
   bool barrierDismissible = true,
   bool useRootNavigator = true,
 }) {
@@ -677,116 +688,105 @@ Future<T?> showGameChoiceDialog<T>(
     barrierDismissible: barrierDismissible,
     useRootNavigator: useRootNavigator,
     routeName: title,
-    builder: (dialogContext) => _GameDialogFrame(
-      semanticLabel: title,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontFamily: AssetPaths.fontNexonLv2Gothic,
-              fontSize: 26,
-              color: GameUiPalette.textPrimary.withValues(alpha: 0.96),
-              letterSpacing: 1.2,
-            ),
-          ),
-          if (message != null) ...[
-            const SizedBox(height: 14),
-            Text(
-              message,
+    builder: (dialogContext) {
+      final resolvedTitle = titleBuilder?.call(dialogContext) ?? title;
+      final resolvedMessage = messageBuilder?.call(dialogContext) ?? message;
+      final resolvedActions = actionsBuilder?.call(dialogContext) ?? actions;
+      return _GameDialogFrame(
+        semanticLabel: resolvedTitle,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SemanticText(
+              resolvedTitle,
               style: TextStyle(
-                color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                height: 1.45,
+                fontFamily: AssetPaths.fontNexonLv2Gothic,
+                fontSize: 26,
+                color: GameUiPalette.textPrimary.withValues(alpha: 0.96),
+                letterSpacing: 1.2,
               ),
             ),
+            if (resolvedMessage != null) ...[
+              const SizedBox(height: 14),
+              SemanticText(
+                resolvedMessage,
+                style: TextStyle(
+                  color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  height: 1.45,
+                ),
+              ),
+            ],
+            if (content != null) ...[
+              const SizedBox(height: 14),
+              Flexible(child: content),
+            ],
+            const SizedBox(height: 18),
+            _GameDialogActionBar<T>(actions: resolvedActions),
           ],
-          if (content != null) ...[
-            const SizedBox(height: 14),
-            Flexible(child: content),
-          ],
-          const SizedBox(height: 18),
-          _GameDialogActionBar<T>(actions: actions),
-        ],
-      ),
-    ),
+        ),
+      );
+    },
   );
 }
 
 Future<bool> showConfirmDialog(
   BuildContext context, {
-  required String title,
-  required String message,
-  String cancelLabel = '취소',
-  String confirmLabel = '확인',
+  String title = '',
+  String message = '',
+  String Function(BuildContext)? titleBuilder,
+  String Function(BuildContext)? messageBuilder,
+  String? cancelLabel,
+  String? confirmLabel,
+  String Function(BuildContext)? cancelLabelBuilder,
+  String Function(BuildContext)? confirmLabelBuilder,
   bool barrierDismissible = true,
   bool useRootNavigator = true,
 }) async {
-  final result = await showAppDialog<bool>(
+  final result = await showGameChoiceDialog<bool>(
     context,
+    title: title,
+    message: message,
+    titleBuilder: titleBuilder,
+    messageBuilder: messageBuilder,
     barrierDismissible: barrierDismissible,
     useRootNavigator: useRootNavigator,
-    routeName: title,
-    builder: (dialogContext) => _GameDialogFrame(
-      semanticLabel: title,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontFamily: AssetPaths.fontNexonLv2Gothic,
-              fontSize: 26,
-              color: GameUiPalette.textPrimary.withValues(alpha: 0.96),
-              letterSpacing: 1.2,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            message,
-            style: TextStyle(
-              color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 18),
-          _GameDialogActionBar<bool>(
-            actions: [
-              GameDialogAction<bool>(
-                label: cancelLabel,
-                value: false,
-                accent: GameUiPalette.disabledControl,
-              ),
-              GameDialogAction<bool>(
-                label: confirmLabel,
-                value: true,
-                accent: GameUiPalette.actionGold,
-                textColor: GameUiPalette.ink,
-              ),
-            ],
-          ),
-        ],
+    actionsBuilder: (dialogContext) => [
+      GameDialogAction<bool>(
+        label:
+            cancelLabelBuilder?.call(dialogContext) ??
+            cancelLabel ??
+            dialogContext.translate('cancel'),
+        value: false,
+        accent: GameUiPalette.disabledControl,
       ),
-    ),
+      GameDialogAction<bool>(
+        label:
+            confirmLabelBuilder?.call(dialogContext) ??
+            confirmLabel ??
+            dialogContext.translate('ok'),
+        value: true,
+        accent: GameUiPalette.actionGold,
+        textColor: GameUiPalette.ink,
+      ),
+    ],
   );
   return result ?? false;
 }
 
 class _GameDialogFrame extends StatelessWidget {
-  const _GameDialogFrame({required this.child, this.semanticLabel = '게임 확인'});
+  const _GameDialogFrame({required this.child, this.semanticLabel});
 
   final Widget child;
-  final String semanticLabel;
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
-    final label = semanticLabel.trim().isEmpty ? '게임 확인' : semanticLabel;
+    final label = semanticLabel == null || semanticLabel!.trim().isEmpty
+        ? context.translate('commonUiConfirmLabel')
+        : semanticLabel!;
     return Semantics(
       scopesRoute: true,
       namesRoute: true,

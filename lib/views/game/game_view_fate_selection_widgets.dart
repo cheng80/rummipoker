@@ -3,14 +3,15 @@ part of '../game_view.dart';
 class _FateLineSelection {
   const _FateLineSelection({
     required this.slot,
-    required this.itemName,
     required this.lines,
     this.selectedLine,
     this.selectedTileIndex,
   });
 
   final RummiBattleItemSlotView slot;
-  final String itemName;
+  String displayName(BuildContext context) => ItemTranslationScope.of(
+    context,
+  ).resolveDisplayName(slot.contentId, slot.displayName);
   final List<RummiScoringLineSummary> lines;
   final RummiScoringLineSummary? selectedLine;
   final int? selectedTileIndex;
@@ -55,7 +56,6 @@ class _FateLineSelection {
   }) {
     return _FateLineSelection(
       slot: slot,
-      itemName: itemName,
       lines: lines,
       selectedLine: selectedLine ?? this.selectedLine,
       selectedTileIndex: selectedTileIndex == -1
@@ -82,27 +82,41 @@ class _FateLineSelectionPanel extends StatelessWidget {
     final selectedTile = selection.selectedTile;
     final previewText = selectedLine == null
         ? selection.needsTileTarget
-              ? '보드 위 파란 테두리 타일 후보를 직접 선택하세요.'
-              : '보드 위 파란 테두리 줄 후보를 직접 선택하세요.'
+              ? context.translate('battlePickOutlinedTile')
+              : context.translate('battlePickOutlinedLine')
         : _ritualSelectionPreviewText(
+            context,
             selection.slot.item,
             selectedLine,
             selectedTile,
           );
     final targetText = selectedLine == null
-        ? '선택 없음'
+        ? context.translate('battleNoSelection')
         : selection.needsTileTarget
-        ? '${_lineLabel(selectedLine.ref)} · ${selectedTile?.code ?? '타일 선택 필요'}'
-        : '${_lineLabel(selectedLine.ref)} · ${_rankLabel(selectedLine)} · 타일 ${selectedLine.occupiedCount}';
+        ? '${_lineLabel(context, selectedLine.ref)} · ${selectedTile?.code ?? context.translate('battleTileRequired')}'
+        : context.translate(
+            'battleSelectedLineSummary',
+            namedArgs: {
+              'line': _lineLabel(context, selectedLine.ref),
+              'rank': _rankLabel(context, selectedLine),
+              'count': '${selectedLine.occupiedCount}',
+            },
+          );
     final confirmEnabled =
         selectedLine != null &&
         (!selection.needsTileTarget || selectedTile != null);
     final confirmLabel = _isFateLineTransformDefinition(selection.slot.item)
-        ? '변환'
-        : '확인';
+        ? context.translate('battleTransform')
+        : context.translate('ok');
     final countText = selection.needsTileTarget
-        ? '${selection.tileTargets.length}개 타일'
-        : '${selection.lines.length}개 선';
+        ? context.translate(
+            'battleTargetTileCount',
+            namedArgs: {'count': '${selection.tileTargets.length}'},
+          )
+        : context.translate(
+            'battleTargetLineCount',
+            namedArgs: {'count': '${selection.lines.length}'},
+          );
     return DecoratedBox(
       decoration: BoxDecoration(
         color: GameUiPalette.surfaceModalInner,
@@ -129,9 +143,8 @@ class _FateLineSelectionPanel extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    selection.itemName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    selection.displayName(context),
+
                     style: const TextStyle(
                       color: GameUiPalette.textPrimary,
                       fontSize: 15,
@@ -152,8 +165,7 @@ class _FateLineSelectionPanel extends StatelessWidget {
             const SizedBox(height: 5),
             Text(
               targetText,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+
               style: const TextStyle(
                 color: GameUiPalette.userSelection,
                 fontSize: 12,
@@ -161,10 +173,8 @@ class _FateLineSelectionPanel extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 3),
-            Text(
+            SemanticText(
               previewText,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 color: GameUiPalette.textPrimary,
                 fontSize: 11.5,
@@ -176,7 +186,10 @@ class _FateLineSelectionPanel extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                TextButton(onPressed: onCancel, child: const Text('취소')),
+                TextButton(
+                  onPressed: onCancel,
+                  child: Text(context.translate('cancel')),
+                ),
                 const SizedBox(width: 6),
                 FilledButton(
                   key: const ValueKey('fate-line-confirm-button'),

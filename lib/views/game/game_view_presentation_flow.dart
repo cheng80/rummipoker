@@ -195,6 +195,8 @@ extension _GameViewPresentationFlow on _GameViewState {
     String? sourceLabel,
     bool passive = false,
     bool fateTransform = false,
+    String Function(BuildContext)? titleBuilder,
+    String Function(BuildContext)? detailBuilder,
   }) {
     if (!mounted) return;
     final tick = _itemEffectFeedbackTick + 1;
@@ -206,6 +208,8 @@ extension _GameViewPresentationFlow on _GameViewState {
         sourceLabel: sourceLabel,
         passive: passive,
         fateTransform: fateTransform,
+        titleBuilder: titleBuilder,
+        detailBuilder: detailBuilder,
       );
     });
     unawaited(

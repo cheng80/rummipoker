@@ -3,8 +3,29 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../resources/asset_paths.dart';
+import '../utils/app_translation.dart';
+import '../widgets/semantic_text.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import 'game/widgets/game_ui_palette.dart';
+
+class TrialPlaceholderView extends StatelessWidget {
+  const TrialPlaceholderView({super.key, this.debugScrollPreset});
+
+  final String? debugScrollPreset;
+
+  @override
+  Widget build(BuildContext context) => HomePlaceholderView(
+    title: context.translate('homeSpecialModeTitle'),
+    summary: context.translate('commonUiTrialSummary'),
+    cardTitle: context.translate('commonUiTrialCardTitle'),
+    debugScrollPreset: debugScrollPreset,
+    items: [
+      context.translate('commonUiTrialStructure'),
+      context.translate('commonUiTrialPolicy'),
+      context.translate('commonUiTrialDebug'),
+    ],
+  );
+}
 
 class HomePlaceholderView extends StatefulWidget {
   const HomePlaceholderView({
@@ -75,7 +96,7 @@ class _HomePlaceholderViewState extends State<HomePlaceholderView> {
               ),
             ),
             const SizedBox(height: 10),
-            Text(
+            SemanticText(
               widget.summary,
               style: TextStyle(
                 color: GameUiPalette.textPrimary.withValues(alpha: 0.76),
@@ -157,7 +178,7 @@ class _PlaceholderBullet extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: Text(
+          child: SemanticText(
             text,
             style: TextStyle(
               color: GameUiPalette.textPrimary.withValues(alpha: 0.9),

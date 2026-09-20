@@ -1,0 +1,9 @@
+{
+  "commonUiConfirmLabel": "遊戲確認",
+  "commonUiDialogLabel": "遊戲對話框",
+  "commonUiTrialCardTitle": "模式說明",
+  "commonUiTrialDebug": "開發測試入口僅在偵錯選單中顯示。",
+  "commonUiTrialPolicy": "規則、獎勵和紀錄方式尚未確定。",
+  "commonUiTrialStructure": "目前僅設置了入口。",
+  "commonUiTrialSummary": "這是採用額外規則的獨立模式。"
+}

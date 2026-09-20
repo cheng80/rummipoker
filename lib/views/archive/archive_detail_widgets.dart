@@ -54,7 +54,7 @@ class _ArchiveDetailCard extends StatelessWidget {
             onPressed: onClose,
             icon: const Icon(Icons.keyboard_arrow_up_rounded),
             color: GameUiPalette.textPrimary.withValues(alpha: 0.66),
-            tooltip: '접기',
+            tooltip: context.translate('menuCollapse'),
           ),
         ],
       ),
@@ -72,11 +72,16 @@ class _ArchiveMemoryCardDetail extends StatelessWidget {
   Widget build(BuildContext context) {
     final collected = status != _ArchiveCollectionStatus.undiscovered;
     return _ArchiveDetailText(
-      title: collected ? card.title : '아직 얻지 못한 기억 카드',
-      subtitle: '${status.label} · 기억 카드',
+      title: collected
+          ? card.localizedTitle(context)
+          : context.translate('menuMemoryUnknown'),
+      subtitle: context.translate(
+        'menuMemoryStatus',
+        namedArgs: {'status': context.translate(status.labelKey)},
+      ),
       body: collected
-          ? '게임오버나 런 완료 후 얻는 보상 카드입니다. 다음 런 준비에서 새 규칙을 여는 데 사용됩니다.'
-          : '이 칸은 아직 비어 있습니다. 런을 더 진행하면 기억 카드가 여기에 채워집니다.',
+          ? context.translate('menuMemoryDetail')
+          : context.translate('menuMemoryEmpty'),
     );
   }
 }
@@ -91,13 +96,15 @@ class _ArchiveJesterDetail extends StatelessWidget {
   Widget build(BuildContext context) {
     final collected = status != _ArchiveCollectionStatus.undiscovered;
     return _ArchiveDetailText(
-      title: collected ? card.displayName : '아직 만나지 못한 Jester',
+      title: collected
+          ? localizedJesterName(context, card)
+          : context.translate('menuJesterUnknown'),
       subtitle: collected
-          ? '${status.label} · ${_archiveJesterRarityLabel(card.rarity)}'
-          : '${status.label} · Jester',
+          ? '${context.translate(status.labelKey)} · ${context.translate(_archiveJesterRarityKey(card.rarity))}'
+          : '${context.translate(status.labelKey)} · Jester',
       body: collected
-          ? card.effectText
-          : '이 칸은 아직 비어 있습니다. 마켓에서 만나거나 구매한 Jester가 여기에 채워집니다.',
+          ? localizedJesterEffect(context, card)
+          : context.translate('menuJesterEmpty'),
     );
   }
 }
@@ -112,13 +119,19 @@ class _ArchiveItemDetail extends StatelessWidget {
   Widget build(BuildContext context) {
     final collected = status != _ArchiveCollectionStatus.undiscovered;
     return _ArchiveDetailText(
-      title: collected ? item.displayName : '아직 만나지 못한 Item',
+      title: collected
+          ? ItemTranslationScope.of(
+              context,
+            ).resolveDisplayName(item.id, item.displayName)
+          : context.translate('menuItemUnknown'),
       subtitle: collected
-          ? '${status.label} · ${_archiveItemSlotLabel(item.placement)} · ${_archiveItemRarityLabel(item.rarity)}'
-          : '${status.label} · Item',
+          ? '${context.translate(status.labelKey)} · ${_archiveItemSlotLabel(item.placement)} · ${context.translate(_archiveItemRarityKey(item.rarity))}'
+          : '${context.translate(status.labelKey)} · Item',
       body: collected
-          ? item.effectText
-          : '이 칸은 아직 비어 있습니다. 마켓에서 만나거나 구매한 아이템이 여기에 채워집니다.',
+          ? ItemTranslationScope.of(
+              context,
+            ).resolveEffectText(item.id, item.effectText)
+          : context.translate('menuItemEmpty'),
     );
   }
 }
@@ -158,7 +171,7 @@ class _ArchiveDetailText extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 7),
-        Text(
+        SemanticText(
           body,
           style: TextStyle(
             color: GameUiPalette.textPrimary.withValues(alpha: 0.76),
@@ -174,6 +187,7 @@ class _ArchiveDetailText extends StatelessWidget {
 
 class _ArchiveSelectableCard extends StatelessWidget {
   const _ArchiveSelectableCard({
+    super.key,
     required this.width,
     required this.height,
     required this.status,
@@ -288,7 +302,7 @@ class _ArchiveStatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     // 상태마다 등장 결을 다르게 한다. 미발견은 그대로, 발견은 아래에서 올라오고,
     // 획득·클리어는 튀어나오듯 커진다.
-    final badge = _badge();
+    final badge = _badge(context);
     return switch (status) {
       _ArchiveCollectionStatus.undiscovered => badge,
       _ArchiveCollectionStatus.discovered => EntranceIn(
@@ -306,7 +320,7 @@ class _ArchiveStatusBadge extends StatelessWidget {
     };
   }
 
-  Widget _badge() {
+  Widget _badge(BuildContext context) {
     return Container(
       width: width,
       height: height,
@@ -317,7 +331,7 @@ class _ArchiveStatusBadge extends StatelessWidget {
         border: Border.all(color: GameUiPalette.ink.withValues(alpha: 0.16)),
       ),
       child: Text(
-        status.label,
+        context.translate(status.labelKey),
         style: const TextStyle(
           color: GameUiPalette.ink,
           fontSize: 7,
@@ -408,7 +422,7 @@ class _ArchiveMemoryCardFace extends StatelessWidget {
             Expanded(
               child: Center(
                 child: Text(
-                  card.title,
+                  card.localizedTitle(context),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: GameUiPalette.archiveRewardText,
@@ -419,7 +433,7 @@ class _ArchiveMemoryCardFace extends StatelessWidget {
                 ),
               ),
             ),
-            _ArchiveItemBadge(label: card.badge),
+            _ArchiveItemBadge(label: context.translate(card.badgeKey)),
           ],
         ),
       ),
@@ -467,7 +481,9 @@ class _ArchiveItemCardFace extends StatelessWidget {
               child: Align(
                 alignment: Alignment.topCenter,
                 child: GameCardNameText(
-                  item.displayName,
+                  ItemTranslationScope.of(
+                    context,
+                  ).resolveDisplayName(item.id, item.displayName),
                   style: const TextStyle(
                     color: GameUiPalette.specialGoldCardText,
                     fontSize: 8,
@@ -540,21 +556,21 @@ String _archiveItemSlotLabel(ItemPlacement placement) {
   };
 }
 
-String _archiveJesterRarityLabel(RummiJesterRarity rarity) {
+String _archiveJesterRarityKey(RummiJesterRarity rarity) {
   return switch (rarity) {
-    RummiJesterRarity.common => '일반',
-    RummiJesterRarity.uncommon => '희귀',
-    RummiJesterRarity.rare => '레어',
-    RummiJesterRarity.legendary => '전설',
+    RummiJesterRarity.common => 'menuRarityCommon',
+    RummiJesterRarity.uncommon => 'menuRarityUncommon',
+    RummiJesterRarity.rare => 'menuRarityRare',
+    RummiJesterRarity.legendary => 'menuRarityLegendary',
   };
 }
 
-String _archiveItemRarityLabel(ItemRarity rarity) {
+String _archiveItemRarityKey(ItemRarity rarity) {
   return switch (rarity) {
-    ItemRarity.common => '일반',
-    ItemRarity.uncommon => '희귀',
-    ItemRarity.rare => '레어',
-    ItemRarity.legendary => '전설',
+    ItemRarity.common => 'menuRarityCommon',
+    ItemRarity.uncommon => 'menuRarityUncommon',
+    ItemRarity.rare => 'menuRarityRare',
+    ItemRarity.legendary => 'menuRarityLegendary',
   };
 }
 
@@ -572,7 +588,7 @@ class _ArchiveNewTag extends StatelessWidget {
         border: Border.all(color: GameUiPalette.ink.withValues(alpha: 0.4)),
       ),
       child: Text(
-        'flowArchiveNew'.tr(),
+        context.translate('flowArchiveNew'),
         style: const TextStyle(
           color: GameUiPalette.ink,
           fontSize: 8,

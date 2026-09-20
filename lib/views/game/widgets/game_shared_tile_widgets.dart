@@ -246,45 +246,61 @@ class _TileModifierBadge extends StatelessWidget {
   }
 }
 
-String tileModifierSummary(Tile tile) {
+String tileModifierSummary(Tile tile, {BuildContext? context}) {
   final parts = <String>[
-    if (tile.enhancement != null) tileEnhancementDisplayName(tile.enhancement!),
-    if (tile.seal != null) tileSealDisplayName(tile.seal!),
-    if (tile.edition != null) tileEditionDisplayName(tile.edition!),
+    if (tile.enhancement != null)
+      tileEnhancementDisplayName(tile.enhancement!, context: context),
+    if (tile.seal != null) tileSealDisplayName(tile.seal!, context: context),
+    if (tile.edition != null)
+      tileEditionDisplayName(tile.edition!, context: context),
   ];
   return parts.join(' · ');
 }
 
-String tileModifierEffectText(Tile tile) {
+String tileModifierEffectText(Tile tile, {BuildContext? context}) {
   final parts = <String>[
-    if (tile.enhancement != null) tileEnhancementEffectText(tile.enhancement!),
-    if (tile.seal != null) tileSealEffectText(tile.seal!),
-    if (tile.edition != null) tileEditionEffectText(tile.edition!),
+    if (tile.enhancement != null)
+      tileEnhancementEffectText(tile.enhancement!, context: context),
+    if (tile.seal != null) tileSealEffectText(tile.seal!, context: context),
+    if (tile.edition != null)
+      tileEditionEffectText(tile.edition!, context: context),
   ];
   return parts.join(' / ');
 }
 
-List<String> tileModifierBadgeDescriptions(Tile tile) {
+List<String> tileModifierBadgeDescriptions(Tile tile, {BuildContext? context}) {
   return [
     if (tile.enhancement != null)
-      '${tileEnhancementShortLabel(tile.enhancement!)} ${tileEnhancementEffectText(tile.enhancement!)}',
+      '${tileEnhancementShortLabel(tile.enhancement!)} ${tileEnhancementEffectText(tile.enhancement!, context: context)}',
     if (tile.seal != null)
-      '${tileSealShortLabel(tile.seal!)} ${tileSealEffectText(tile.seal!)}',
+      '${tileSealShortLabel(tile.seal!)} ${tileSealEffectText(tile.seal!, context: context)}',
     if (tile.edition != null)
-      '${tileEditionShortLabel(tile.edition!)} ${tileEditionEffectText(tile.edition!)}',
+      '${tileEditionShortLabel(tile.edition!)} ${tileEditionEffectText(tile.edition!, context: context)}',
   ];
 }
 
-String tileModifierBadgeDescriptionText(Tile tile) {
-  return tileModifierBadgeDescriptions(tile).join(' / ');
+String tileModifierBadgeDescriptionText(Tile tile, {BuildContext? context}) {
+  return tileModifierBadgeDescriptions(tile, context: context).join(' / ');
 }
 
-String tileColorDisplayName(TileColor color) {
+String tileColorDisplayName(TileColor color, {BuildContext? context}) {
   return switch (color) {
-    TileColor.red => '빨간 타일',
-    TileColor.blue => '파란 타일',
-    TileColor.yellow => '노란 타일',
-    TileColor.black => '검은 타일',
+    TileColor.red => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileColorRed',
+    ),
+    TileColor.blue => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileColorBlue',
+    ),
+    TileColor.yellow => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileColorYellow',
+    ),
+    TileColor.black => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileColorBlack',
+    ),
   };
 }
 
@@ -320,67 +336,175 @@ String tileEditionShortLabel(TileEdition edition) {
   };
 }
 
-String tileEnhancementDisplayName(TileEnhancement enhancement) {
+String tileEnhancementDisplayName(
+  TileEnhancement enhancement, {
+  BuildContext? context,
+}) {
   return switch (enhancement) {
-    TileEnhancement.chipInlaid => '칩 박힘',
-    TileEnhancement.scoreGilded => '점수 도금',
-    TileEnhancement.goldTile => '골드',
-    TileEnhancement.glassTile => '유리',
+    TileEnhancement.chipInlaid => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileEnhancementChip',
+    ),
+    TileEnhancement.scoreGilded => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileEnhancementScore',
+    ),
+    TileEnhancement.goldTile => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileEnhancementGold',
+    ),
+    TileEnhancement.glassTile => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileEnhancementGlass',
+    ),
   };
 }
 
-String tileSealDisplayName(TileSeal seal) {
+String tileSealDisplayName(TileSeal seal, {BuildContext? context}) {
   return switch (seal) {
-    TileSeal.blueSeal => '푸른 인장',
-    TileSeal.redSeal => '붉은 인장',
-    TileSeal.lineMark => '라인 각인',
-    TileSeal.growthSeal => '성장 각인',
-    TileSeal.goldSeal => '금빛 각인',
-    TileSeal.echoSeal => '메아리 각인',
-    TileSeal.anchorSeal => '닻 각인',
-    TileSeal.fractureSeal => '균열 각인',
-    TileSeal.crossMemory => '교차 기억',
-    TileSeal.bridgeSeal => '다리 표식',
+    TileSeal.blueSeal => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealBlue',
+    ),
+    TileSeal.redSeal => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealRed',
+    ),
+    TileSeal.lineMark => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealLine',
+    ),
+    TileSeal.growthSeal => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealGrowth',
+    ),
+    TileSeal.goldSeal => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealGold',
+    ),
+    TileSeal.echoSeal => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealEcho',
+    ),
+    TileSeal.anchorSeal => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealAnchor',
+    ),
+    TileSeal.fractureSeal => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealFracture',
+    ),
+    TileSeal.crossMemory => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealCross',
+    ),
+    TileSeal.bridgeSeal => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealBridge',
+    ),
   };
 }
 
-String tileEditionDisplayName(TileEdition edition) {
+String tileEditionDisplayName(TileEdition edition, {BuildContext? context}) {
   return switch (edition) {
-    TileEdition.silverEdition => '은빛 판본',
-    TileEdition.glowEdition => '빛무늬 판본',
-    TileEdition.prismEdition => '다색 판본',
+    TileEdition.silverEdition => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileEditionSilver',
+    ),
+    TileEdition.glowEdition => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileEditionGlow',
+    ),
+    TileEdition.prismEdition => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileEditionPrism',
+    ),
   };
 }
 
-String tileEnhancementEffectText(TileEnhancement enhancement) {
+String tileEnhancementEffectText(
+  TileEnhancement enhancement, {
+  BuildContext? context,
+}) {
   return switch (enhancement) {
-    TileEnhancement.chipInlaid => '확정 시 +20칩',
-    TileEnhancement.scoreGilded => '확정 시 점수 +20%',
-    TileEnhancement.goldTile => '확정 후 골드 +1',
-    TileEnhancement.glassTile => '확정 시 점수 x1.5',
+    TileEnhancement.chipInlaid => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileEnhancementChipEffect',
+    ),
+    TileEnhancement.scoreGilded => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileEnhancementScoreEffect',
+    ),
+    TileEnhancement.goldTile => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileEnhancementGoldEffect',
+    ),
+    TileEnhancement.glassTile => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileEnhancementGlassEffect',
+    ),
   };
 }
 
-String tileSealEffectText(TileSeal seal) {
+String tileSealEffectText(TileSeal seal, {BuildContext? context}) {
   return switch (seal) {
-    TileSeal.blueSeal => '확정 족보 성장 +1',
-    TileSeal.redSeal => '타일 효과 1회 재발동',
-    TileSeal.lineMark => '포함 줄 확정 시 점수 +10%',
-    TileSeal.growthSeal => '포함 줄 확정 시 족보 성장 +1',
-    TileSeal.goldSeal => '포함 줄 확정 시 골드 +1',
-    TileSeal.echoSeal => '겹친 줄 확정 시 점수 +25%',
-    TileSeal.anchorSeal => '이동 후 포함 줄 확정 시 점수 +20%',
-    TileSeal.fractureSeal => '포함 줄 확정 시 점수 +50%, 이후 이 타일 제거',
-    TileSeal.crossMemory => '겹친 줄 확정 시 족보 성장 +1',
-    TileSeal.bridgeSeal => '겹친 줄 확정 시 골드 +2',
+    TileSeal.blueSeal => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealBlueEffect',
+    ),
+    TileSeal.redSeal => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealRedEffect',
+    ),
+    TileSeal.lineMark => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealLineEffect',
+    ),
+    TileSeal.growthSeal => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealGrowthEffect',
+    ),
+    TileSeal.goldSeal => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealGoldEffect',
+    ),
+    TileSeal.echoSeal => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealEchoEffect',
+    ),
+    TileSeal.anchorSeal => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealAnchorEffect',
+    ),
+    TileSeal.fractureSeal => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealFractureEffect',
+    ),
+    TileSeal.crossMemory => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealCrossEffect',
+    ),
+    TileSeal.bridgeSeal => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileSealBridgeEffect',
+    ),
   };
 }
 
-String tileEditionEffectText(TileEdition edition) {
+String tileEditionEffectText(TileEdition edition, {BuildContext? context}) {
   return switch (edition) {
-    TileEdition.silverEdition => '확정 시 +15칩',
-    TileEdition.glowEdition => '확정 시 점수 +15%',
-    TileEdition.prismEdition => '확정 시 점수 x1.35',
+    TileEdition.silverEdition => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileEditionSilverEffect',
+    ),
+    TileEdition.glowEdition => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileEditionGlowEffect',
+    ),
+    TileEdition.prismEdition => _battleWidgetTranslation(
+      context,
+      'battleWidgetsTileEditionPrismEffect',
+    ),
   };
 }
 

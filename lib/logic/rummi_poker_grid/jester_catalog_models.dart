@@ -679,14 +679,6 @@ enum RummiSlotUnlockKind {
     };
   }
 
-  String get displayLabel {
-    return switch (this) {
-      RummiSlotUnlockKind.jester => 'Jester 슬롯 +1',
-      RummiSlotUnlockKind.quickSlot => 'Item 슬롯 +1',
-      RummiSlotUnlockKind.passiveRelic => 'Passive 슬롯 +1',
-    };
-  }
-
   static RummiSlotUnlockKind? fromPersistenceValue(String value) {
     return switch (value) {
       'jester' => RummiSlotUnlockKind.jester,

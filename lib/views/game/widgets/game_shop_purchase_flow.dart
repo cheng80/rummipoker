@@ -17,8 +17,8 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              '리롤 확인',
+            Text(
+              dialogContext.translate('marketRerollConfirm'),
               style: TextStyle(
                 color: GameUiPalette.textPrimary,
                 fontSize: 18,
@@ -26,8 +26,8 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
               ),
             ),
             const SizedBox(height: 12),
-            Text(
-              _rerollConfirmMessage(laneLabel, rerollQuote),
+            SemanticText(
+              _rerollConfirmMessage(dialogContext, laneLabel, rerollQuote),
               style: const TextStyle(
                 color: GameUiPalette.textSecondary,
                 fontSize: 14,
@@ -40,7 +40,7 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
               children: [
                 Expanded(
                   child: GameActionButton(
-                    label: '취소',
+                    label: dialogContext.translate('cancel'),
                     background: GameUiPalette.disabledControl,
                     onPressed: () => Navigator.of(dialogContext).pop(false),
                   ),
@@ -49,7 +49,10 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
                 Expanded(
                   child: GameActionButton(
                     key: const ValueKey('market-reroll-confirm'),
-                    label: _rerollConfirmActionLabel(rerollQuote),
+                    label: _rerollConfirmActionLabel(
+                      dialogContext,
+                      rerollQuote,
+                    ),
                     background: GameUiPalette.actionGold,
                     foreground: GameUiPalette.ink,
                     onPressed: () => Navigator.of(dialogContext).pop(true),
@@ -69,14 +72,28 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       return;
     }
     final effectPresentation = _marketRerollPresentation(_market, lane);
-    final failMessage = lane == _MarketOfferLane.tile
-        ? widget.onRerollTileOffers!()
+    final failure = lane == _MarketOfferLane.tile
+        ? _invokeMarketFailure(
+            widget.onRerollTileOffersFailure,
+            () => widget.onRerollTileOffers!(),
+          )
         : placement == null
-        ? widget.onReroll()
-        : widget.onRerollItemOffers!(placement);
+        ? _invokeMarketFailure(widget.onRerollFailure, widget.onReroll)
+        : _invokeMarketFailure(
+            widget.onRerollItemOffersFailure == null
+                ? null
+                : () => widget.onRerollItemOffersFailure!(placement),
+            () => widget.onRerollItemOffers!(placement),
+          );
+    final failMessage = failure?.legacyMessage;
     if (failMessage != null) {
-      _startMarketDenyFeedback('reroll', failMessage);
-      showBottomNotice(context, failMessage, cue: null);
+      _startMarketDenyFeedback('reroll', failMessage, failure: failure);
+      showBottomNotice(
+        context,
+        failMessage,
+        cue: null,
+        messageBuilder: (context) => actionFailureLabel(context, failure!),
+      );
       return;
     }
     _mutate(() {
@@ -114,15 +131,28 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       market: _market,
       category: 'jester',
       targetLabel: flightLabel,
+      targetId: boughtOffer.contentId,
       discountSourceLabel: boughtOffer.discountSourceLabel,
+      isCompassDiscounted: boughtOffer.isCompassDiscounted,
     );
     final isFirstAcquisition =
         widget.isFirstAcquisition?.call('jester', boughtOffer.contentId) ??
         false;
-    final failMessage = widget.onBuyOffer(boughtOffer);
+    final failure = _invokeMarketFailure(
+      widget.onBuyOfferFailure == null
+          ? null
+          : () => widget.onBuyOfferFailure!(boughtOffer),
+      () => widget.onBuyOffer(boughtOffer),
+    );
+    final failMessage = failure?.legacyMessage;
     if (failMessage != null) {
-      _startMarketDenyFeedback('jester-buy', failMessage);
-      showBottomNotice(context, failMessage, cue: null);
+      _startMarketDenyFeedback('jester-buy', failMessage, failure: failure);
+      showBottomNotice(
+        context,
+        failMessage,
+        cue: null,
+        messageBuilder: (context) => actionFailureLabel(context, failure!),
+      );
       return;
     }
     _mutate(() {
@@ -187,14 +217,27 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
       market: _market,
       category: 'item',
       targetLabel: flightLabel,
+      targetId: boughtOffer.contentId,
       discountSourceLabel: boughtOffer.discountSourceLabel,
+      isCompassDiscounted: boughtOffer.isCompassDiscounted,
     );
     final isFirstAcquisition =
         widget.isFirstAcquisition?.call('item', boughtOffer.contentId) ?? false;
-    final failMessage = widget.onBuyItemOffer(boughtOffer);
+    final failure = _invokeMarketFailure(
+      widget.onBuyItemOfferFailure == null
+          ? null
+          : () => widget.onBuyItemOfferFailure!(boughtOffer),
+      () => widget.onBuyItemOffer(boughtOffer),
+    );
+    final failMessage = failure?.legacyMessage;
     if (failMessage != null) {
-      _startMarketDenyFeedback('item-buy', failMessage);
-      showBottomNotice(context, failMessage, cue: null);
+      _startMarketDenyFeedback('item-buy', failMessage, failure: failure);
+      showBottomNotice(
+        context,
+        failMessage,
+        cue: null,
+        messageBuilder: (context) => actionFailureLabel(context, failure!),
+      );
       return;
     }
     _mutate(() {
@@ -268,10 +311,21 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
     final sourceIndex = _visibleOfferLaneIndex(sourceEntry);
     final sourceCount = _visibleOfferLaneCount();
     final startOffset = _flightCenterForKey(_offerKey(sourceEntry));
-    final failMessage = widget.onBuyTileOffer(index);
+    final failure = _invokeMarketFailure(
+      widget.onBuyTileOfferFailure == null
+          ? null
+          : () => widget.onBuyTileOfferFailure!(index),
+      () => widget.onBuyTileOffer(index),
+    );
+    final failMessage = failure?.legacyMessage;
     if (failMessage != null) {
-      _startMarketDenyFeedback('tile-buy', failMessage);
-      showBottomNotice(context, failMessage, cue: null);
+      _startMarketDenyFeedback('tile-buy', failMessage, failure: failure);
+      showBottomNotice(
+        context,
+        failMessage,
+        cue: null,
+        messageBuilder: (context) => actionFailureLabel(context, failure!),
+      );
       return;
     }
     _mutate(() {
@@ -296,7 +350,14 @@ extension _GameShopPurchaseFlow on _GameShopScreenState {
     GameFeedback.play(GameCue.buy);
     showBottomNotice(
       context,
-      '${_tileLabel(boughtOffer.tile)} 덱 추가',
+      context.translate(
+        'marketTileAdded',
+        namedArgs: {'tile': _tileLabel(boughtOffer.tile)},
+      ),
+      messageBuilder: (context) => context.translate(
+        'marketTileAdded',
+        namedArgs: {'tile': _tileLabel(boughtOffer.tile)},
+      ),
       cue: null,
     );
   }

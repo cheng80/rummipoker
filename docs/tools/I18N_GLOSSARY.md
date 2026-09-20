@@ -4,6 +4,8 @@
 
 읽는 법은 간단하다. **이미 번역된 용어**는 번역 파일에 실제로 들어 있는 값을 그대로 옮긴 것이고, 그것이 기준이다. **새 용어**는 아직 어느 번역 파일에도 없어서 초안만 적어 둔 것이고, 사용자 검수가 끝나기 전까지는 확정이 아니다.
 
+Boss 28종의 이름·규칙·표시는 `assets/translations/src/core/<locale>.json`의 `coreBoss*Title`, `coreBoss*Rule`, `coreBoss*Marker`에서 관리한다. 저장 필드의 한국어 원문과 현재 locale의 표시 번역은 구분한다.
+
 이 문서는 손으로 관리한다. 번역 파일에서 뽑았지만 생성물은 아니다.
 
 ## 1. 이미 번역된 용어
@@ -97,15 +99,37 @@
 
 번역 방식만 적어 두면, 영어·일본어·중국어의 Item 이름은 모두 영어 고유명(`Reroll Chip`, `Board Glove`, `Score Abacus`)을 그대로 쓴다. 한국어만 우리말 이름(`리롤 칩`, `보드 장갑`, `점수 주판`)을 쓴다. 새 Item·Jester를 추가할 때도 이 방식을 따른다.
 
-## 2. 새 용어 (초안, 검수 필요)
+### 통합에서 추가한 표시 용어
 
-아래는 화면 코드에 한국어로 박혀 있지만 아직 번역 파일에 없는 용어다. English 이하는 **초안**이며 확정이 아니다. 각 트랙이 문구를 옮길 때 이 표를 근거로 쓰되, 사용자가 검수해 값을 고치면 그쪽이 기준이 된다.
+I1·I2·I3·I4의 조각과 대조한 실제 표시값이다. 같은 북마크 동작도 버튼 폭과 문맥에 따라 짧은 `Bookmarks`와 구체적인 `Load Bookmark`를 구분한다.
+
+| 한국어 | English | 日本語 | 简体中文 | 繁體中文 | 출처 키 |
+|---|---|---|---|---|---|
+| 표준 | Standard | 標準 | 标准 | 標準 | `menuStandard` |
+| 도전 | Challenge | チャレンジ | 挑战 | 挑戰 | `menuChallenge` |
+| 하이 스테이크 | High Stakes | ハイステークス | 高风险 | 高風險 | `menuHighStakes` |
+| 북마크 불러오기 | Bookmarks | ブックマーク | 书签 | 書籤 | `menuBookmarks` |
+| 정산 완료 | Cash out complete | 精算完了 | 结算完成 | 結算完成 | `marketCashoutComplete` |
+| 첫 리롤 무료 | First reroll free | 初回無料 | 首次免费重掷 | 首次免費重擲 | `marketRerollFirstFree` |
+| 칩 박힘 | Chip Inlay | Chips埋め込み | Chips镶嵌 | Chips鑲嵌 | `battleWidgetsTileEnhancementChip` |
+| 점수 도금 | Score Gilding | 得点メッキ | 分数镀金 | 分數鍍金 | `battleWidgetsTileEnhancementScore` |
+| 유리 | Glass | ガラス | 玻璃 | 玻璃 | `battleWidgetsTileEnhancementGlass` |
+| 경제형 | Economy | 経済型 | 经济型 | 經濟型 | `battleWidgetsCategoryEconomy` |
+| 상태형 | Stateful | 状態型 | 状态型 | 狀態型 | `battleWidgetsCategoryStateful` |
+| 점수형 | Score | 得点型 | 得分型 | 得分型 | `battleWidgetsCategoryScore` |
+| 미완성/무득점 | Incomplete / no score | 未完成／得点なし | 未完成／无得分 | 未完成／無得分 | `battleNoScoringLine` |
+| 덮어쓰기 | Overwrite | 上書き | 覆盖 | 覆寫 | `battleOverwrite` |
+| 디버그 설정 | Debug settings | デバッグ設定 | 调试设置 | 偵錯設定 | `battleDebugSettings` |
+
+## 2. 추가 용어와 검수 상태
+
+족보 16종은 `assets/translations/src/core/<locale>.json`의 `coreHandRank*`에 반영했다. `미완성/무득점`은 `battleNoScoringLine`의 표시값이다. 아래 표는 각 키의 값과 일치하며 일본어 로우 스티플은 `ローストレートフラッシュ`다. 나머지 초안은 각 트랙의 번역 조각과 대조해 갱신한다. 사용자가 검수해 값을 고치면 그쪽이 기준이 된다.
 
 ### 족보 이름
 
 이 게임의 족보 이름은 포커에서 빌려 왔다. 한국어 표기가 `스티플`(스트레이트 플러시)처럼 줄임말이라 영어를 그대로 되돌리면 안 되는 자리가 있다.
 
-| 한국어 | English (초안) | 日本語 (초안) | 简体中文 (초안) | 繁體中文 (초안) |
+| 한국어 | English | 日本語 | 简体中文 | 繁體中文 |
 |---|---|---|---|---|
 | 하이 | High Card | ハイカード | 高牌 | 高牌 |
 | 원페어 | One Pair | ワンペア | 一对 | 一對 |
@@ -117,13 +141,13 @@
 | 포카드 | Four of a Kind | フォーカード | 四条 | 四條 |
 | 스티플 | Straight Flush | ストレートフラッシュ | 同花顺 | 同花順 |
 | 로열 스티플 | Royal Straight Flush | ロイヤルストレートフラッシュ | 皇家同花顺 | 皇家同花順 |
-| 로우 스티플 | Low Straight Flush | ロースートレートフラッシュ | 小同花顺 | 小同花順 |
+| 로우 스티플 | Low Straight Flush | ローストレートフラッシュ | 小同花顺 | 小同花順 |
 | 파이브 카드 | Five of a Kind | ファイブカード | 五条 | 五條 |
 | 플러시 하우스 | Flush House | フラッシュハウス | 同花葫芦 | 同花葫蘆 |
 | 플러시 파이브 | Flush Five | フラッシュファイブ | 同花五条 | 同花五條 |
 | 크라운 포카드 | Crown Four of a Kind | クラウンフォーカード | 王冠四条 | 王冠四條 |
 | 프리즘 스트레이트 | Prism Straight | プリズムストレート | 棱镜顺子 | 稜鏡順子 |
-| 미완성/무득점 | No scoring line | 無得点 | 未完成／无得分 | 未完成／無得分 |
+| 미완성/무득점 | Incomplete / no score | 未完成／得点なし | 未完成／无得分 | 未完成／無得分 |
 
 ### 희귀도
 

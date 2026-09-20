@@ -93,10 +93,17 @@ extension _GameViewBattleActions on _GameViewState {
       itemCatalog: _itemCatalog,
     );
     if (guardResult == null) return false;
-    _showSnack(guardResult.message);
+    _showSnack(
+      guardResult.message,
+      messageBuilder: (context) =>
+          expiryGuardLabel(context, guardResult.events),
+    );
     _showItemEffectFeedback(
-      title: '안전망 발동',
+      title: context.translate('battleSafetyNet'),
+      titleBuilder: (context) => context.translate('battleSafetyNet'),
       detail: guardResult.feedbackDetail,
+      detailBuilder: (context) =>
+          expiryGuardLabel(context, guardResult.events, detail: true),
       passive: true,
     );
     await _saveActiveRun(scene: ActiveRunScene.battle);
@@ -132,7 +139,7 @@ extension _GameViewBattleActions on _GameViewState {
     if (!ok) return;
     GameFeedback.play(GameCue.sell);
     if (slotIndex != null) _emitJesterSaleBurst(slotIndex);
-    _showSnack('제스터를 판매했습니다.', silent: true);
+    _showSnack(context.translate('battleJesterSold'), silent: true);
   }
 
   /// 상점 판매처럼 팔린 슬롯에서 카드 조각과 코인이 튄다.
@@ -157,13 +164,23 @@ extension _GameViewBattleActions on _GameViewState {
   }
 
   /// 거절 입구. 알림 문구는 그대로 두고 흔들림·오류음·error 햅틱을 더한다.
-  void _denyBattleAction(String message, {required _BattleDenyTarget target}) {
+  void _denyBattleAction(
+    String message, {
+    required _BattleDenyTarget target,
+    ActionFailure? failure,
+  }) {
     GameFeedback.play(GameCue.deny);
     _mutate(() {
       _battleDenyTarget = target;
       _battleDenyTick++;
     });
-    _showSnack(message, silent: true);
+    _showSnack(
+      message,
+      silent: true,
+      messageBuilder: failure == null
+          ? null
+          : (context) => actionFailureLabel(context, failure),
+    );
   }
 
   void _openBattleItemOverlay(RummiBattleItemSlotView slot) {
@@ -220,10 +237,14 @@ extension _GameViewBattleActions on _GameViewState {
     if (result.failMessage != null) {
       _logBattleActionFail(
         'board_place',
-        result.failMessage!,
+        result.failure?.reason?.name ?? 'denied',
         parameters: {'row': row, 'col': col},
       );
-      _denyBattleAction(result.failMessage!, target: _BattleDenyTarget.board);
+      _denyBattleAction(
+        result.failMessage!,
+        failure: result.failure,
+        target: _BattleDenyTarget.board,
+      );
       return;
     }
     if (result.didPlaceTile) {
@@ -237,10 +258,14 @@ extension _GameViewBattleActions on _GameViewState {
 
   void _drawTile() async {
     if (_isBattleInputLocked) return;
-    final failReason = _gameNotifier.drawTile();
+    final failReason = _gameNotifier.drawTileFailure();
     if (failReason != null) {
-      _logBattleActionFail('draw', failReason);
-      _denyBattleAction(failReason, target: _BattleDenyTarget.hand);
+      _logBattleActionFail('draw', failReason.reason?.name ?? 'denied');
+      _denyBattleAction(
+        failReason.legacyMessage,
+        failure: failReason,
+        target: _BattleDenyTarget.hand,
+      );
       return;
     }
     _logBattleAction('draw');
@@ -252,10 +277,17 @@ extension _GameViewBattleActions on _GameViewState {
 
   void _discardSelectedBoardTile() async {
     if (_isBattleInputLocked) return;
-    final failReason = _gameNotifier.discardSelectedBoardTileFromState();
+    final failReason = _gameNotifier.discardSelectedBoardTileFromStateFailure();
     if (failReason != null) {
-      _logBattleActionFail('board_discard', failReason);
-      _denyBattleAction(failReason, target: _BattleDenyTarget.actions);
+      _logBattleActionFail(
+        'board_discard',
+        failReason.reason?.name ?? 'denied',
+      );
+      _denyBattleAction(
+        failReason.legacyMessage,
+        failure: failReason,
+        target: _BattleDenyTarget.actions,
+      );
       return;
     }
     _logBattleAction('board_discard');
@@ -267,10 +299,14 @@ extension _GameViewBattleActions on _GameViewState {
 
   void _discardSelectedHandTile() async {
     if (_isBattleInputLocked) return;
-    final failReason = _gameNotifier.discardSelectedHandTileFromState();
+    final failReason = _gameNotifier.discardSelectedHandTileFromStateFailure();
     if (failReason != null) {
-      _logBattleActionFail('hand_discard', failReason);
-      _denyBattleAction(failReason, target: _BattleDenyTarget.actions);
+      _logBattleActionFail('hand_discard', failReason.reason?.name ?? 'denied');
+      _denyBattleAction(
+        failReason.legacyMessage,
+        failure: failReason,
+        target: _BattleDenyTarget.actions,
+      );
       return;
     }
     _logBattleAction('hand_discard');
@@ -294,14 +330,18 @@ extension _GameViewBattleActions on _GameViewState {
     final undoReturnCell = slot.item.effect.op == 'undo_last_board_move'
         ? _gameState.session?.boardMoveHistory.lastOrNull
         : null;
-    final failReason = _gameNotifier.useBattleItem(slot.item);
+    final failReason = _gameNotifier.useBattleItemFailure(slot.item);
     if (failReason != null) {
       _logBattleActionFail(
         'battle_item_use',
-        failReason,
+        failReason.reason?.name ?? 'denied',
         parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
       );
-      _denyBattleAction(failReason, target: _BattleDenyTarget.slots);
+      _denyBattleAction(
+        failReason.legacyMessage,
+        failure: failReason,
+        target: _BattleDenyTarget.slots,
+      );
       return;
     }
     _logBattleAction(
@@ -312,9 +352,17 @@ extension _GameViewBattleActions on _GameViewState {
     final itemName = ItemTranslationScope.of(
       context,
     ).resolveDisplayName(slot.contentId, slot.displayName);
-    _showSnack('$itemName 사용', silent: true);
+    _showSnack(
+      context.translate('battleItemUsed', namedArgs: {'item': itemName}),
+      silent: true,
+    );
     _showItemEffectFeedback(
       title: itemName,
+      titleBuilder: (context) => ItemTranslationScope.of(
+        context,
+      ).resolveDisplayName(slot.contentId, slot.displayName),
+      detailBuilder: (context) =>
+          _battleItemFeedbackDetail(slot.item, feedbackContext: context),
       detail: _battleItemFeedbackDetail(slot.item),
       sourceLabel: slot.slotLabel,
     );
@@ -333,7 +381,7 @@ extension _GameViewBattleActions on _GameViewState {
   Future<void> _useScoringLineTargetItem(RummiBattleItemSlotView slot) async {
     final session = _gameState.session;
     if (session == null) {
-      _showSnack('세션이 없습니다.');
+      _showSnack(context.translate('battleNoSession'));
       return;
     }
     final isRitual = slot.item.effect.op == 'ritual_line_effect';
@@ -353,7 +401,9 @@ extension _GameViewBattleActions on _GameViewState {
         parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
       );
       _denyBattleAction(
-        isRitual ? '선택할 보드 선이 없습니다.' : '선택할 완성 줄이 없습니다.',
+        isRitual
+            ? context.translate('battleNoBoardLines')
+            : context.translate('battleNoCompleteLines'),
         target: _BattleDenyTarget.slots,
       );
       return;
@@ -362,17 +412,22 @@ extension _GameViewBattleActions on _GameViewState {
       context,
     ).resolveDisplayName(slot.contentId, slot.displayName);
     if (usesBoardLineSelection) {
-      _startFateLineSelection(slot: slot, itemName: itemName, lines: lines);
+      _startFateLineSelection(slot: slot, lines: lines);
       return;
     }
     final selected = await showDialog<RummiScoringLineSummary>(
       context: context,
       barrierDismissible: true,
-      routeSettings: RouteSettings(name: isRitual ? '의식 보드 선 선택' : '의식 줄 선택'),
+      routeSettings: RouteSettings(
+        name: isRitual ? 'ritual-board-line-choice' : 'ritual-line-choice',
+      ),
       builder: (context) {
         if (isRitual) {
           return _RitualBoardLineChoiceDialog(
-            title: '$itemName 대상 선택',
+            title: context.translate(
+              'battleChooseItemTarget',
+              namedArgs: {'item': itemName},
+            ),
             board: session.board,
             lines: lines,
             lineLabel: _lineChoiceLabel,
@@ -381,7 +436,12 @@ extension _GameViewBattleActions on _GameViewState {
         }
         return AlertDialog(
           backgroundColor: GameUiPalette.surfaceModal,
-          title: Text('$itemName 대상 선택'),
+          title: Text(
+            context.translate(
+              'battleChooseItemTarget',
+              namedArgs: {'item': itemName},
+            ),
+          ),
           content: SizedBox(
             width: 360,
             child: Column(
@@ -395,8 +455,17 @@ extension _GameViewBattleActions on _GameViewState {
                     ),
                     subtitle: Text(
                       line.isScoringLine
-                          ? '칩 ${line.baseScore} · 타일 ${line.occupiedCount}'
-                          : '미완성/무득점 · 타일 ${line.occupiedCount}',
+                          ? context.translate(
+                              'battleLineChipsTiles',
+                              namedArgs: {
+                                'chips': '${line.baseScore}',
+                                'count': '${line.occupiedCount}',
+                              },
+                            )
+                          : context.translate(
+                              'battleIncompleteTiles',
+                              namedArgs: {'count': '${line.occupiedCount}'},
+                            ),
                     ),
                     onTap: () => Navigator.of(context).pop(line),
                   ),
@@ -406,7 +475,7 @@ extension _GameViewBattleActions on _GameViewState {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('취소'),
+              child: Text(context.translate('cancel')),
             ),
           ],
         );
@@ -421,12 +490,15 @@ extension _GameViewBattleActions on _GameViewState {
       tileIndex = await showDialog<int>(
         context: context,
         barrierDismissible: true,
-        routeSettings: const RouteSettings(name: '의식 타일 선택'),
+        routeSettings: const RouteSettings(name: 'ritual-tile-choice'),
         builder: (context) => GameTileChoiceDialog(
-          title: '$itemName 타일 선택',
-          message: '선택한 줄 안에서 효과를 적용할 타일을 고릅니다.',
+          title: context.translate(
+            'battleChooseItemTile',
+            namedArgs: {'item': itemName},
+          ),
+          message: context.translate('battleRitualTilePrompt'),
           tiles: selected.scoringTiles,
-          closeLabel: '취소',
+          closeLabel: context.translate('cancel'),
         ),
       );
       if (!mounted || tileIndex == null) return;
@@ -434,19 +506,23 @@ extension _GameViewBattleActions on _GameViewState {
     }
 
     final failReason = slot.item.effect.op == 'ritual_line_effect'
-        ? _gameNotifier.useBattleItemOnRitualTarget(
+        ? _gameNotifier.useBattleItemOnRitualTargetFailure(
             slot.item,
             selected.ref,
             tileIndex: tileIndex,
           )
-        : _gameNotifier.useBattleItemOnLine(slot.item, selected.ref);
+        : _gameNotifier.useBattleItemOnLineFailure(slot.item, selected.ref);
     if (failReason != null) {
       _logBattleActionFail(
         'targeted_item_use',
-        failReason,
+        failReason.reason?.name ?? 'denied',
         parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
       );
-      _denyBattleAction(failReason, target: _BattleDenyTarget.slots);
+      _denyBattleAction(
+        failReason.legacyMessage,
+        failure: failReason,
+        target: _BattleDenyTarget.slots,
+      );
       return;
     }
     _logBattleAction(
@@ -456,9 +532,21 @@ extension _GameViewBattleActions on _GameViewState {
     GameFeedback.play(GameCue.itemUse);
     final targetLabel =
         '${_lineChoiceLabel(selected.ref)} ${_lineChoiceRankLabel(selected)}';
-    _showSnack('$itemName 사용', silent: true);
+    _showSnack(
+      context.translate('battleItemUsed', namedArgs: {'item': itemName}),
+      silent: true,
+    );
     _showItemEffectFeedback(
       title: itemName,
+      titleBuilder: (context) => ItemTranslationScope.of(
+        context,
+      ).resolveDisplayName(slot.contentId, slot.displayName),
+      detailBuilder: (context) => _scoringLineTargetFeedbackDetail(
+        slot.item,
+        '${_lineLabel(context, selected.ref)} ${context.translate(rummiHandRankKey(selected.rank))}',
+        selectedTile,
+        feedbackContext: context,
+      ),
       detail: _scoringLineTargetFeedbackDetail(
         slot.item,
         targetLabel,
@@ -472,22 +560,17 @@ extension _GameViewBattleActions on _GameViewState {
 
   void _startFateLineSelection({
     required RummiBattleItemSlotView slot,
-    required String itemName,
     required List<RummiScoringLineSummary> lines,
   }) {
     _clearSelections();
     _mutate(() {
       _selectedBattleItemSlot = null;
-      _fateLineSelection = _FateLineSelection(
-        slot: slot,
-        itemName: itemName,
-        lines: lines,
-      );
+      _fateLineSelection = _FateLineSelection(slot: slot, lines: lines);
     });
     _showSnack(
       slot.item.effect.value('target') == 'tile'
-          ? '보드에서 적용할 타일을 선택하세요.'
-          : '보드에서 적용할 선을 선택하세요.',
+          ? context.translate('battleSelectBoardTile')
+          : context.translate('battleSelectBoardLine'),
     );
   }
 
@@ -524,15 +607,15 @@ extension _GameViewBattleActions on _GameViewState {
     if (selection == null || selected == null) {
       _denyBattleAction(
         selection?.needsTileTarget == true
-            ? '적용할 보드 타일을 먼저 선택하세요.'
-            : '적용할 보드 선을 먼저 선택하세요.',
+            ? context.translate('battleSelectTileFirst')
+            : context.translate('battleSelectLineFirst'),
         target: _BattleDenyTarget.board,
       );
       return;
     }
     if (selection.needsTileTarget && selection.selectedTileIndex == null) {
       _denyBattleAction(
-        '적용할 보드 타일을 먼저 선택하세요.',
+        context.translate('battleSelectTileFirst'),
         target: _BattleDenyTarget.board,
       );
       return;
@@ -545,14 +628,15 @@ extension _GameViewBattleActions on _GameViewState {
     if (!useResult.isSuccess) {
       _logBattleActionFail(
         'targeted_item_use',
-        useResult.failMessage ?? 'item_use_failed',
+        useResult.failure?.reason?.name ?? 'item_use_failed',
         parameters: {
           'item_id': selection.slot.contentId,
           'item_op': selection.slot.item.effect.op,
         },
       );
       _denyBattleAction(
-        useResult.failMessage ?? '아이템을 사용할 수 없습니다.',
+        useResult.failMessage ?? context.translate('battleCannotUseItem'),
+        failure: useResult.failure,
         target: _BattleDenyTarget.slots,
       );
       return;
@@ -570,7 +654,13 @@ extension _GameViewBattleActions on _GameViewState {
       _fateTransformFlashLineRef = selected.ref;
       _fateTransformFlashTick += 1;
     });
-    _showSnack('${selection.itemName} 사용', silent: true);
+    _showSnack(
+      context.translate(
+        'battleItemUsed',
+        namedArgs: {'item': selection.displayName(context)},
+      ),
+      silent: true,
+    );
     final feedbackDetail = _scoringLineTargetFeedbackDetail(
       selection.slot.item,
       '${_lineChoiceLabel(selected.ref)} ${_lineChoiceRankLabel(selected)}',
@@ -582,7 +672,14 @@ extension _GameViewBattleActions on _GameViewState {
     );
     if (feedbackDelay == Duration.zero) {
       _showItemEffectFeedback(
-        title: selection.itemName,
+        title: selection.displayName(context),
+        titleBuilder: selection.displayName,
+        detailBuilder: (context) => _scoringLineTargetFeedbackDetail(
+          selection.slot.item,
+          '${_lineLabel(context, selected.ref)} ${selected.isScoringLine ? context.translate(rummiHandRankKey(selected.rank)) : context.translate('battleNoScoringLine')}',
+          selection.selectedTile,
+          feedbackContext: context,
+        ),
         detail: feedbackDetail,
         sourceLabel: selection.slot.slotLabel,
         fateTransform: fateTransformFeedback,
@@ -592,7 +689,14 @@ extension _GameViewBattleActions on _GameViewState {
         Future<void>.delayed(feedbackDelay, () {
           if (!mounted) return;
           _showItemEffectFeedback(
-            title: selection.itemName,
+            title: selection.displayName(context),
+            titleBuilder: selection.displayName,
+            detailBuilder: (context) => _scoringLineTargetFeedbackDetail(
+              selection.slot.item,
+              '${_lineLabel(context, selected.ref)} ${selected.isScoringLine ? context.translate(rummiHandRankKey(selected.rank)) : context.translate('battleNoScoringLine')}',
+              selection.selectedTile,
+              feedbackContext: context,
+            ),
             detail: feedbackDetail,
             sourceLabel: selection.slot.slotLabel,
             fateTransform: fateTransformFeedback,
@@ -748,11 +852,12 @@ extension _GameViewBattleActions on _GameViewState {
     if (!useResult.isSuccess) {
       _logBattleActionFail(
         'deck_peek_discard',
-        useResult.failMessage ?? 'item_use_failed',
+        useResult.failure?.reason?.name ?? 'item_use_failed',
         parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
       );
       _denyBattleAction(
-        useResult.failMessage ?? '아이템을 사용할 수 없습니다.',
+        useResult.failMessage ?? context.translate('battleCannotUseItem'),
+        failure: useResult.failure,
         target: _BattleDenyTarget.slots,
       );
       return;
@@ -769,13 +874,13 @@ extension _GameViewBattleActions on _GameViewState {
     final selectedIndex = await showDialog<int>(
       context: context,
       barrierDismissible: false,
-      barrierLabel: '덱 확인',
-      routeSettings: const RouteSettings(name: '덱 확인'),
+      barrierLabel: context.translate('battlePeekDeck'),
+      routeSettings: const RouteSettings(name: 'deck-peek'),
       builder: (context) => GameTileChoiceDialog(
-        title: '덱 확인',
-        message: '덱 위 3장 중 버릴 타일을 선택합니다.',
+        title: context.translate('battlePeekDeck'),
+        message: context.translate('battlePeekDeckPrompt'),
         tiles: useResult.candidates,
-        closeLabel: '닫기',
+        closeLabel: context.translate('battleClose'),
       ),
     );
     await WidgetsBinding.instance.endOfFrame;
@@ -786,27 +891,38 @@ extension _GameViewBattleActions on _GameViewState {
         parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
       );
       GameFeedback.play(GameCue.itemUse);
-      _showSnack('$itemName 사용', silent: true);
+      _showSnack(
+        context.translate('battleItemUsed', namedArgs: {'item': itemName}),
+        silent: true,
+      );
       _showItemEffectFeedback(
         title: itemName,
-        detail: '덱 확인',
+        titleBuilder: (context) => ItemTranslationScope.of(
+          context,
+        ).resolveDisplayName(slot.contentId, slot.displayName),
+        detailBuilder: (context) => context.translate('battlePeekDeck'),
+        detail: context.translate('battlePeekDeck'),
         sourceLabel: slot.slotLabel,
       );
       return;
     }
 
     final selectedTile = useResult.candidates[selectedIndex];
-    final failReason = _gameNotifier.useBattleDeckPeekDiscardItem(
+    final failReason = _gameNotifier.useBattleDeckPeekDiscardItemFailure(
       slot.item,
       selectedIndex,
     );
     if (failReason != null) {
       _logBattleActionFail(
         'deck_peek_discard',
-        failReason,
+        failReason.reason?.name ?? 'denied',
         parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
       );
-      _denyBattleAction(failReason, target: _BattleDenyTarget.slots);
+      _denyBattleAction(
+        failReason.legacyMessage,
+        failure: failReason,
+        target: _BattleDenyTarget.slots,
+      );
       return;
     }
     _logBattleAction(
@@ -814,104 +930,168 @@ extension _GameViewBattleActions on _GameViewState {
       parameters: {'item_id': slot.contentId, 'item_op': slot.item.effect.op},
     );
     GameFeedback.play(GameCue.discard);
-    _showSnack('${selectedTile.code} 제거', silent: true);
+    _showSnack(
+      context.translate(
+        'battleTileRemoved',
+        namedArgs: {'tile': selectedTile.code},
+      ),
+      silent: true,
+    );
     _showItemEffectFeedback(
       title: itemName,
-      detail: '${selectedTile.code} 제거',
+      titleBuilder: (context) => ItemTranslationScope.of(
+        context,
+      ).resolveDisplayName(slot.contentId, slot.displayName),
+      detailBuilder: (context) => context.translate(
+        'battleTileRemoved',
+        namedArgs: {'tile': selectedTile.code},
+      ),
+      detail: context.translate(
+        'battleTileRemoved',
+        namedArgs: {'tile': selectedTile.code},
+      ),
       sourceLabel: slot.slotLabel,
     );
     await _saveActiveRun();
   }
 
-  String _battleItemFeedbackDetail(ItemDefinition item) {
+  String _battleItemFeedbackDetail(
+    ItemDefinition item, {
+    BuildContext? feedbackContext,
+  }) {
+    final context = feedbackContext ?? this.context;
     if (isDelayedItemActivation(item)) {
-      return delayedItemConsumedTimingLabel(item);
+      return localizedItemPresentationResult(
+        context,
+        ItemPresentationEvent(
+          itemId: item.id,
+          sourceKind: itemPresentationSourceKindForPlacement(item.placement),
+          sourceLabel: item.displayName,
+          target: const ItemPresentationTarget(
+            kind: ItemPresentationTargetKind.confirm,
+            label: '',
+          ),
+          resultLabel: delayedItemConsumedTimingLabel(item),
+          consumed: item.effect.consume,
+          activationTiming: item.effect.timing,
+        ),
+      );
     }
     return switch (item.effect.op) {
-      'add_board_discard' => '보드 버림 +${item.effect.value('amount') ?? 1}',
-      'add_hand_discard' => '손패 버림 +${item.effect.value('amount') ?? 1}',
-      'add_board_move' => '타일 이동 +${item.effect.value('amount') ?? 1}',
-      'mark_next_board_move_bonus' => '다음 보드 이동 보너스 준비',
-      'undo_last_board_move' => '마지막 이동 되돌림',
-      'draw_if_hand_empty' => '타일 1장 생성',
-      'increase_hand_size' => '손패 최대치 +${item.effect.value('amount') ?? 1}',
-      'add_hand_rank_progress_from_selected_line' => '선택 줄 족보 성장 +1',
+      'add_board_discard' => context.translate(
+        'battleBoardDiscardAdded',
+        namedArgs: {'amount': '${item.effect.value('amount') ?? 1}'},
+      ),
+      'add_hand_discard' => context.translate(
+        'battleHandDiscardAdded',
+        namedArgs: {'amount': '${item.effect.value('amount') ?? 1}'},
+      ),
+      'add_board_move' => context.translate(
+        'battleTileMoveAdded',
+        namedArgs: {'amount': '${item.effect.value('amount') ?? 1}'},
+      ),
+      'mark_next_board_move_bonus' => context.translate('battleMoveBonusReady'),
+      'undo_last_board_move' => context.translate('battleMoveUndone'),
+      'draw_if_hand_empty' => context.translate('battleDrawOne'),
+      'increase_hand_size' => context.translate(
+        'battleHandCapacityAdded',
+        namedArgs: {'amount': '${item.effect.value('amount') ?? 1}'},
+      ),
+      'add_hand_rank_progress_from_selected_line' => context.translate(
+        'battleSelectedRankGrowth',
+      ),
       'ritual_line_effect' => _ritualActionLabel(
         item.effect.value('ritualAction'),
+        feedbackContext: context,
       ),
-      'chips_bonus' => '다음 확정 칩 보너스',
-      'mult_bonus' => '다음 확정 점수 +% 보너스',
-      'xmult_bonus' => '다음 확정 점수 x 보너스',
-      'temporary_overlap_cap_bonus' => '다음 확정 overlap 보너스',
-      _ => '효과 적용',
+      'chips_bonus' => context.translate('battleNextChips'),
+      'mult_bonus' => context.translate('battleNextPercent'),
+      'xmult_bonus' => context.translate('battleNextMultiplier'),
+      'temporary_overlap_cap_bonus' => context.translate('battleNextOverlap'),
+      _ => context.translate('battleEffectApplied'),
     };
   }
 
   String _scoringLineTargetFeedbackDetail(
     ItemDefinition item,
     String targetLabel,
-    Tile? tile,
-  ) {
+    Tile? tile, {
+    BuildContext? feedbackContext,
+  }) {
+    final context = feedbackContext ?? this.context;
     if (item.effect.op != 'ritual_line_effect') {
-      return '$targetLabel 성장 +${item.effect.value('amount') ?? 1}';
+      return context.translate(
+        'battleTargetGrowth',
+        namedArgs: {
+          'target': targetLabel,
+          'amount': '${item.effect.value('amount') ?? 1}',
+        },
+      );
     }
     final tileLabel = tile == null ? '' : ' · ${tile.code}';
-    return '$targetLabel$tileLabel · ${_ritualActionLabel(item.effect.value('ritualAction'))}';
+    return '$targetLabel$tileLabel · ${_ritualActionLabel(item.effect.value('ritualAction'), feedbackContext: context)}';
   }
 
-  String _ritualActionLabel(Object? actionValue) {
+  String _ritualActionLabel(
+    Object? actionValue, {
+    BuildContext? feedbackContext,
+  }) {
+    final context = feedbackContext ?? this.context;
     return switch (actionValue?.toString()) {
-      'growth' || 'center_growth' => '족보 성장',
-      'growth_marker' => '교차 기억 표식',
+      'growth' || 'center_growth' => context.translate('battleRankGrowth'),
+      'growth_marker' => context.translate('battleGrowthMarker'),
       'copy_center' ||
       'copy_endpoint' ||
       'copy_selected' ||
       'copy_rank' ||
-      'copy_color' => '덱 복제',
+      'copy_color' => context.translate('battleDeckCopy'),
       'seal_line_mark' ||
       'seal_growth' ||
       'seal_gold' ||
       'seal_echo' ||
       'seal_anchor' ||
       'seal_risk' ||
-      'seal_bridge' => '타일 봉인',
+      'seal_bridge' => context.translate('battleTileSeal'),
       'override_three_kind' ||
       'override_straight' ||
       'override_flush' ||
       'override_full_house' ||
       'override_four_kind' ||
-      'override_five_kind' => '족보 강제 치환',
-      'fate_royal_flush' => '로얄플러시 세트 변환',
-      'fate_straight_flush_high' || 'fate_straight_flush_low' => '스티플 세트 변환',
-      'fate_four_kind_high' || 'fate_four_kind_low' => '포카드 세트 변환',
-      'fate_full_house_high' || 'fate_full_house_low' => '풀하우스 세트 변환',
-      'fate_flush_house' => '플러시 하우스 세트 변환',
-      'fate_flush_five' => '플러시 파이브 세트 변환',
-      'fate_flush_high' || 'fate_flush_low' => '플러시 세트 변환',
-      'fate_straight_high' || 'fate_straight_low' => '스트레이트 세트 변환',
-      'fate_three_kind_high' || 'fate_three_kind_low' => '트리플 세트 변환',
-      'fate_two_pair_high' => '투페어 세트 변환',
-      'line_bonus_25' || 'line_bonus_35' => '선택 줄 보너스',
-      'remove_same_tile' || 'remove_same_rank' => '덱 파괴',
-      'prune_line_to_color' => '색 가지치기',
-      'burn_line' => '줄 파괴',
-      'sacrifice_line' => '줄 희생',
-      _ => '의식 효과',
+      'override_five_kind' => context.translate('battleOverrideRank'),
+      'fate_royal_flush' => context.translate('battleTransformRoyal'),
+      'fate_straight_flush_high' || 'fate_straight_flush_low' =>
+        context.translate('battleTransformStraightFlush'),
+      'fate_four_kind_high' ||
+      'fate_four_kind_low' => context.translate('battleTransformFour'),
+      'fate_full_house_high' ||
+      'fate_full_house_low' => context.translate('battleTransformFullHouse'),
+      'fate_flush_house' => context.translate('battleTransformFlushHouse'),
+      'fate_flush_five' => context.translate('battleTransformFlushFive'),
+      'fate_flush_high' ||
+      'fate_flush_low' => context.translate('battleTransformFlush'),
+      'fate_straight_high' ||
+      'fate_straight_low' => context.translate('battleTransformStraight'),
+      'fate_three_kind_high' ||
+      'fate_three_kind_low' => context.translate('battleTransformThree'),
+      'fate_two_pair_high' => context.translate('battleTransformTwoPair'),
+      'line_bonus_25' ||
+      'line_bonus_35' => context.translate('battleLineBonus'),
+      'remove_same_tile' ||
+      'remove_same_rank' => context.translate('battleDeckDestroy'),
+      'prune_line_to_color' => context.translate('battleColorPrune'),
+      'burn_line' => context.translate('battleBurnLine'),
+      'sacrifice_line' => context.translate('battleSacrificeLine'),
+      _ => context.translate('battleRitualEffect'),
     };
   }
 
   String _lineChoiceLabel(LineRef ref) {
-    return switch (ref.kind) {
-      LineKind.row => '가로 ${ref.index + 1}',
-      LineKind.col => '세로 ${ref.index + 1}',
-      LineKind.diagMain => '대각 ↘',
-      LineKind.diagAnti => '대각 ↙',
-    };
+    return _lineLabel(context, ref);
   }
 
   String _lineChoiceRankLabel(RummiScoringLineSummary line) {
-    if (!line.isScoringLine) return '미완성/무득점';
-    return gameHandRankLabel(line.rank);
+    if (!line.isScoringLine) return context.translate('battleNoScoringLine');
+    return context.translate(rummiHandRankKey(line.rank));
   }
 
   void _confirmLines() async {
@@ -920,9 +1100,12 @@ extension _GameViewBattleActions on _GameViewState {
     if (result == null) {
       if (await _tryApplyExpiryGuard()) return;
       final didGameOver = await _afterAction();
-      if (didGameOver) return;
+      if (didGameOver || !mounted) return;
       _logBattleActionFail('confirm_lines', 'no_scoring_lines');
-      _denyBattleAction('확정할 족보 줄이 없습니다.', target: _BattleDenyTarget.actions);
+      _denyBattleAction(
+        context.translate('battleNothingToConfirm'),
+        target: _BattleDenyTarget.actions,
+      );
       return;
     }
     GameFeedback.play(GameCue.confirmPress);
@@ -971,14 +1154,17 @@ extension _GameViewBattleActions on _GameViewState {
     if (row == null || col == null) {
       _logBattleActionFail('board_move_start', 'no_source_tile');
       _denyBattleAction(
-        '이동할 보드 타일을 먼저 선택하세요.',
+        context.translate('battleSelectMoveFirst'),
         target: _BattleDenyTarget.board,
       );
       return;
     }
     if (_stationView.resources.boardMovesRemaining <= 0) {
       _logBattleActionFail('board_move_start', 'no_board_moves');
-      _denyBattleAction('보드 이동 횟수가 없습니다.', target: _BattleDenyTarget.actions);
+      _denyBattleAction(
+        context.translate('battleNoMoves'),
+        target: _BattleDenyTarget.actions,
+      );
       return;
     }
     _mutate(() {
@@ -1020,13 +1206,16 @@ extension _GameViewBattleActions on _GameViewState {
           'to_col': col,
         },
       );
-      _denyBattleAction('빈 칸으로만 이동할 수 있습니다.', target: _BattleDenyTarget.board);
+      _denyBattleAction(
+        context.translate('battleMoveEmptyOnly'),
+        target: _BattleDenyTarget.board,
+      );
       return;
     }
 
     final hadSlideBonus =
         _gameState.session?.nextBoardMoveSlideBonusQueued ?? false;
-    final failReason = _gameNotifier.moveBoardTile(
+    final failReason = _gameNotifier.moveBoardTileFailure(
       fromRow: fromRow,
       fromCol: fromCol,
       toRow: row,
@@ -1035,7 +1224,7 @@ extension _GameViewBattleActions on _GameViewState {
     if (failReason != null) {
       _logBattleActionFail(
         'board_move',
-        failReason,
+        failReason.reason?.name ?? 'denied',
         parameters: {
           'from_row': fromRow,
           'from_col': fromCol,
@@ -1043,7 +1232,11 @@ extension _GameViewBattleActions on _GameViewState {
           'to_col': col,
         },
       );
-      _denyBattleAction(failReason, target: _BattleDenyTarget.board);
+      _denyBattleAction(
+        failReason.legacyMessage,
+        failure: failReason,
+        target: _BattleDenyTarget.board,
+      );
       return;
     }
     _logBattleAction(
@@ -1059,12 +1252,19 @@ extension _GameViewBattleActions on _GameViewState {
     _cancelBoardMoveMode();
     GameFeedback.play(GameCue.tileMove);
     _showSnack(
-      hadSlideBonus ? '보드 이동 보너스가 발동했습니다.' : '타일을 이동했습니다.',
+      hadSlideBonus
+          ? context.translate('battleMoveBonusActivated')
+          : context.translate('battleTileMoved'),
       silent: true,
     );
     if (hadSlideBonus) {
       _showBoardMoveBonusFlash(row: row, col: col);
-      _showItemEffectFeedback(title: '슬라이드 왁스', detail: '이동 보너스 발동');
+      _showItemEffectFeedback(
+        title: context.translate('battleSlideWax'),
+        titleBuilder: (context) => context.translate('battleSlideWax'),
+        detailBuilder: (context) => context.translate('battleMoveBonus'),
+        detail: context.translate('battleMoveBonus'),
+      );
     }
     await _saveActiveRun();
   }
@@ -1188,8 +1388,8 @@ class _RitualBoardLineChoiceDialogState
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
-                  '보드 선을 선택합니다. 미완성/무득점 선도 효과에 따라 사용할 수 있습니다.',
+                SemanticText(
+                  context.translate('battleRitualLinePrompt'),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: GameUiPalette.textSecondary,
@@ -1237,14 +1437,14 @@ class _RitualBoardLineChoiceDialogState
                   children: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('취소'),
+                      child: Text(context.translate('cancel')),
                     ),
                     const SizedBox(width: 8),
                     TextButton(
                       onPressed: _selectedLine == null
                           ? null
                           : _confirmSelection,
-                      child: const Text('확인'),
+                      child: Text(context.translate('ok')),
                     ),
                   ],
                 ),

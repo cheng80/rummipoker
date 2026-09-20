@@ -27,6 +27,8 @@ const _intrinsicSizeWidgets = <String>[
 /// Files that legitimately mention both. Add a line only after checking that
 /// no SemanticText actually sits under the intrinsic-size widget, and say why.
 const _allowList = <String, String>{
+  'lib/views/game/game_view_battle_actions.dart':
+      'SemanticText is only in the bounded plain Dialog; AlertDialog retains Text.',
   // The widget's own source names these in its documentation.
   'lib/widgets/semantic_text.dart': 'documentation only',
 };

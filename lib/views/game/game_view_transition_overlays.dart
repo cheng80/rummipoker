@@ -56,8 +56,8 @@ class _SettlementToMarketTransitionOverlay extends StatelessWidget {
                     size: kGameTransitionIconSize,
                   ),
                   const SizedBox(height: kGameTransitionIconTitleGap),
-                  const Text(
-                    'Market 준비',
+                  Text(
+                    context.translate('battleMarketPreparing'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: GameUiPalette.textPrimary,
@@ -67,7 +67,10 @@ class _SettlementToMarketTransitionOverlay extends StatelessWidget {
                   ),
                   const SizedBox(height: kGameTransitionTitleBodyGap),
                   Text(
-                    '정산 보상 +${breakdown.totalGold} Gold',
+                    context.translate(
+                      'battleCashoutGold',
+                      namedArgs: {'gold': '${breakdown.totalGold}'},
+                    ),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: GameUiPalette.textPrimary.withValues(alpha: 0.76),
@@ -116,7 +119,7 @@ class _GamePresentationPauseVeil extends StatelessWidget {
   Widget build(BuildContext context) {
     return ColoredBox(
       color: GameUiPalette.ink.withValues(alpha: 0.8),
-      child: const Center(
+      child: Center(
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: GameUiPalette.surfacePanel,
@@ -127,7 +130,7 @@ class _GamePresentationPauseVeil extends StatelessWidget {
           child: Padding(
             padding: kGamePauseVeilPadding,
             child: Text(
-              '일시정지',
+              context.translate('paused'),
               style: TextStyle(
                 color: GameUiPalette.textPrimary,
                 fontSize: kGamePauseVeilFontSize,
@@ -195,8 +198,8 @@ class _NextStationTransitionOverlay extends StatelessWidget {
                     size: kGameTransitionIconSize,
                   ),
                   const SizedBox(height: kGameTransitionIconTitleGap),
-                  const Text(
-                    '다음 Station 준비',
+                  Text(
+                    context.translate('battleStationPreparing'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: GameUiPalette.textPrimary,
@@ -206,7 +209,7 @@ class _NextStationTransitionOverlay extends StatelessWidget {
                   ),
                   const SizedBox(height: kGameTransitionTitleBodyGap),
                   Text(
-                    'Station Select로 이동',
+                    context.translate('battleStationSelectTravel'),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: GameUiPalette.textPrimary.withValues(alpha: 0.72),

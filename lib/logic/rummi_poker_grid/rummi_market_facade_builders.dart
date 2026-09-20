@@ -187,6 +187,7 @@ _CompassDiscountedOffers _applyCheapestFirstOfferDiscount(
       price: offer.price - appliedDiscount,
       originalPrice: offer.originalPrice,
       discountSourceLabel: rummiMarketCompassDiscountLabel,
+      discountSource: RummiMarketDiscountSource.compass,
     );
     return _CompassDiscountedOffers(
       jesterOffers: List<RummiMarketOfferView>.unmodifiable(nextJesters),
@@ -203,6 +204,7 @@ _CompassDiscountedOffers _applyCheapestFirstOfferDiscount(
     price: offer.price - appliedDiscount,
     originalPrice: offer.originalPrice,
     discountSourceLabel: rummiMarketCompassDiscountLabel,
+    discountSource: RummiMarketDiscountSource.compass,
   );
   return _CompassDiscountedOffers(
     jesterOffers: jesterOffers,

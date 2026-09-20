@@ -240,7 +240,10 @@ class _GameItemQueuedBadge extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
           child: Text(
-            '확정 대기 $count',
+            context.translate(
+              'battleWidgetsConfirmQueued',
+              namedArgs: {'count': '$count'},
+            ),
             maxLines: 1,
             style: const TextStyle(
               color: GameUiPalette.specialScoreText,
@@ -275,9 +278,9 @@ class _GameItemBoardMoveQueuedBadge extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: const [
+            children: [
               Text(
-                '이동 보너스 대기',
+                context.translate('battleWidgetsMoveQueued'),
                 maxLines: 1,
                 style: TextStyle(
                   color: GameUiPalette.specialSoftMintText,
@@ -537,7 +540,7 @@ class _GameItemPocketChip extends StatelessWidget {
                                     ),
                                   ),
                                   child: Text(
-                                    _itemEffectBadge(activeEffect!),
+                                    _itemEffectBadge(context, activeEffect!),
                                     maxLines: 1,
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
@@ -604,17 +607,32 @@ class _GameItemPocketChip extends StatelessWidget {
   }
 }
 
-String _itemEffectBadge(RummiJesterEffectBreakdown effect) {
+String _itemEffectBadge(
+  BuildContext context,
+  RummiJesterEffectBreakdown effect,
+) {
   if (effect.hasIntegerMultiplierToken) {
-    return '점수 x${effect.xmultBonus.round()}';
+    return context.translate(
+      'battleWidgetsEffectMultiplier',
+      namedArgs: {'value': '${effect.xmultBonus.round()}'},
+    );
   }
   if (effect.chipsBonus > 0) {
-    return '+칩 ${effect.chipsBonus}';
+    return context.translate(
+      'battleWidgetsEffectChips',
+      namedArgs: {'value': '${effect.chipsBonus}'},
+    );
   }
   if (effect.multBonus > 0) {
-    return '점수 +${effect.multPercentBonus}%';
+    return context.translate(
+      'battleWidgetsEffectPercent',
+      namedArgs: {'value': '${effect.multPercentBonus}'},
+    );
   }
-  return '+Score ${effect.scoreDelta}';
+  return context.translate(
+    'battleWidgetsEffectScore',
+    namedArgs: {'value': '${effect.scoreDelta}'},
+  );
 }
 
 class _GameItemEffectBurst extends StatelessWidget {
@@ -698,7 +716,7 @@ class _GameItemEffectBurst extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              _itemEffectBadge(effect),
+                              _itemEffectBadge(context, effect),
                               maxLines: 1,
                               style: TextStyle(
                                 color: faded(GameUiPalette.textWarmPale),

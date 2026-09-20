@@ -15,12 +15,17 @@ import '../../../logic/rummi_poker_grid/models/board.dart';
 import '../../../logic/rummi_poker_grid/models/tile.dart';
 import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
+import '../../../logic/rummi_poker_grid/rummi_settlement_facade.dart';
 import '../../../resources/asset_paths.dart';
 import '../../../resources/card_emblem_assets.dart';
 import '../../../resources/item_translation_scope.dart';
 import '../../../resources/sound_manager.dart';
 import '../../../services/blind_selection_setup.dart';
+import '../../../services/new_run_setup.dart';
+import '../../../utils/active_run_translation.dart';
 import '../../../utils/common_ui.dart';
+import '../../../utils/app_translation.dart';
+import '../../../widgets/semantic_text.dart';
 import '../../../services/game_settings.dart';
 import '../../../widgets/fx/fx_layer.dart';
 import '../../../widgets/fx/fx_sprites.dart';
@@ -165,8 +170,13 @@ class _GameBottomInfoRowState extends State<GameBottomInfoRow> {
             pulseKey: 'deck',
             pulsing: _pulsingKeys.contains('deck'),
             warning: resources.drawPileRemaining == 0,
-            label:
-                '덱 ${resources.drawPileRemaining}/${widget.battle.totalDeckSize}',
+            label: context.translate(
+              'battleWidgetsDeckResource',
+              namedArgs: {
+                'remaining': '${resources.drawPileRemaining}',
+                'total': '${widget.battle.totalDeckSize}',
+              },
+            ),
             textAlign: TextAlign.left,
           ),
         ),
@@ -175,8 +185,13 @@ class _GameBottomInfoRowState extends State<GameBottomInfoRow> {
             pulseKey: 'board-move',
             pulsing: _pulsingKeys.contains('board-move'),
             warning: resources.boardMovesRemaining == 1,
-            label:
-                '이동 ${resources.boardMovesRemaining}/${resources.boardMovesMax}',
+            label: context.translate(
+              'battleWidgetsMoveResource',
+              namedArgs: {
+                'remaining': '${resources.boardMovesRemaining}',
+                'total': '${resources.boardMovesMax}',
+              },
+            ),
             textAlign: TextAlign.center,
           ),
         ),
@@ -185,8 +200,13 @@ class _GameBottomInfoRowState extends State<GameBottomInfoRow> {
             pulseKey: 'board-discard',
             pulsing: _pulsingKeys.contains('board-discard'),
             warning: resources.boardDiscardsRemaining == 1,
-            label:
-                '보드 버림 ${resources.boardDiscardsRemaining}/${resources.boardDiscardsMax}',
+            label: context.translate(
+              'battleWidgetsBoardDiscardResource',
+              namedArgs: {
+                'remaining': '${resources.boardDiscardsRemaining}',
+                'total': '${resources.boardDiscardsMax}',
+              },
+            ),
             textAlign: TextAlign.center,
           ),
         ),
@@ -195,8 +215,15 @@ class _GameBottomInfoRowState extends State<GameBottomInfoRow> {
             pulseKey: 'hand',
             pulsing: _pulsingKeys.contains('hand'),
             warning: resources.handDiscardsRemaining == 1,
-            label:
-                '손패 ${widget.battle.hand.length}/${resources.maxHandSize} · 버림 ${resources.handDiscardsRemaining}/${resources.handDiscardsMax}',
+            label: context.translate(
+              'battleWidgetsHandResource',
+              namedArgs: {
+                'count': '${widget.battle.hand.length}',
+                'max': '${resources.maxHandSize}',
+                'remaining': '${resources.handDiscardsRemaining}',
+                'total': '${resources.handDiscardsMax}',
+              },
+            ),
             textAlign: TextAlign.right,
           ),
         ),
@@ -262,16 +289,24 @@ class _BottomResourceText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget text = Text(
-      label,
-      maxLines: 1,
-      textAlign: textAlign,
-      style: TextStyle(
-        color: warning
-            ? GameUiPalette.specialDangerBright
-            : GameUiPalette.textSecondary,
-        fontSize: 9,
-        fontWeight: warning ? FontWeight.w900 : FontWeight.w800,
+    Widget text = FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: switch (textAlign) {
+        TextAlign.left => Alignment.centerLeft,
+        TextAlign.right => Alignment.centerRight,
+        _ => Alignment.center,
+      },
+      child: Text(
+        label,
+        maxLines: 1,
+        textAlign: textAlign,
+        style: TextStyle(
+          color: warning
+              ? GameUiPalette.specialDangerBright
+              : GameUiPalette.textSecondary,
+          fontSize: 9,
+          fontWeight: warning ? FontWeight.w900 : FontWeight.w800,
+        ),
       ),
     );
     if (warning) {
@@ -584,12 +619,16 @@ class _GameTableBackdropPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-String expirySignalLabel(RummiExpirySignal signal) {
+String expirySignalLabel(RummiExpirySignal signal, {BuildContext? context}) {
   return switch (signal) {
-    RummiExpirySignal.boardFullAfterDcExhausted =>
-      '버림이 모두 소진된 상태에서 보드 25칸이 가득 찼습니다.',
-    RummiExpirySignal.drawPileExhausted =>
-      '드로우 덱이 소진되었고 더 이상 사용할 손패나 확정할 줄이 없습니다.',
+    RummiExpirySignal.boardFullAfterDcExhausted => _battleWidgetTranslation(
+      context,
+      'battleWidgetsExpiryBoard',
+    ),
+    RummiExpirySignal.drawPileExhausted => _battleWidgetTranslation(
+      context,
+      'battleWidgetsExpiryDeck',
+    ),
   };
 }
 
@@ -617,4 +656,15 @@ class GameDenyShake extends StatelessWidget {
       child: child,
     );
   }
+}
+
+// Compatibility for existing callers until their owning track passes context.
+// All localized screen builds in this library supply their BuildContext.
+String _battleWidgetTranslation(
+  BuildContext? context,
+  String key, {
+  Map<String, String>? namedArgs,
+}) {
+  return context?.translate(key, namedArgs: namedArgs) ??
+      key.tr(namedArgs: namedArgs);
 }

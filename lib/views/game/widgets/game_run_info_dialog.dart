@@ -242,7 +242,7 @@ class _RunInfoRankRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    gameHandRankLabel(row.rank),
+                    gameHandRankLabel(row.rank, context: context),
                     style: TextStyle(
                       color: GameUiPalette.textPrimary.withValues(alpha: 0.94),
                       fontSize: 14,

@@ -74,6 +74,7 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
                       ),
                       IconButton(
                         onPressed: onClose,
+                        tooltip: context.translate('battleWidgetsClose'),
                         icon: const Icon(Icons.close_rounded),
                         color: GameUiPalette.textPrimary,
                         visualDensity: VisualDensity.compact,
@@ -98,7 +99,7 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  Text(
+                  SemanticText(
                     effectText,
                     style: TextStyle(
                       color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
@@ -117,10 +118,12 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
                       if (isPassive) ...[
                         _GameItemOverlayTag(
                           text: itemSlot.placement == ItemPlacement.equipped
-                              ? '기어'
-                              : '패시브',
+                              ? context.translate('battleWidgetsGear')
+                              : context.translate('battleWidgetsPassive'),
                         ),
-                        const _GameItemOverlayTag(text: '자동 발동'),
+                        _GameItemOverlayTag(
+                          text: context.translate('battleWidgetsAutomatic'),
+                        ),
                       ],
                     ],
                   ),
@@ -130,7 +133,7 @@ class GameBattleItemInfoOverlay extends StatelessWidget {
                       width: double.infinity,
                       child: GameActionButton(
                         key: const ValueKey('battle-item-overlay-use-button'),
-                        label: '사용',
+                        label: context.translate('battleWidgetsUse'),
                         background: GameUiPalette.actionGold,
                         foreground: GameUiPalette.ink,
                         onPressed: onUse,
@@ -166,12 +169,12 @@ class _GameToolItemNotice extends StatelessWidget {
           color: GameUiPalette.textPrimary.withValues(alpha: 0.14),
         ),
       ),
-      child: const SizedBox(
+      child: SizedBox(
         width: double.infinity,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-          child: Text(
-            '상점용 도구 · Market에서 조건에 따라 사용',
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          child: SemanticText(
+            context.translate('battleWidgetsToolNotice'),
             textAlign: TextAlign.center,
             style: TextStyle(
               color: GameUiPalette.textSecondary,
@@ -199,12 +202,12 @@ class _GamePassiveItemNotice extends StatelessWidget {
           color: GameUiPalette.textPrimary.withValues(alpha: 0.14),
         ),
       ),
-      child: const SizedBox(
+      child: SizedBox(
         width: double.infinity,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-          child: Text(
-            '패시브 효과 · 조건 충족 시 자동 발동',
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+          child: SemanticText(
+            context.translate('battleWidgetsPassiveNotice'),
             textAlign: TextAlign.center,
             style: TextStyle(
               color: GameUiPalette.textSecondary,
@@ -235,11 +238,20 @@ class GameHandTileInfoOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final modifierSummary = tileModifierSummary(tile);
-    final modifierEffectText = tileModifierBadgeDescriptionText(tile);
+    final modifierSummary = tileModifierSummary(tile, context: context);
+    final modifierEffectText = tileModifierBadgeDescriptionText(
+      tile,
+      context: context,
+    );
     final hasModifier = modifierSummary.isNotEmpty;
-    final baseInfoText =
-        '${tileColorDisplayName(tile.color)} ${tile.number} · 기준 칩 ${tile.baseChipValue}';
+    final baseInfoText = context.translate(
+      'battleWidgetsTileBaseInfo',
+      namedArgs: {
+        'color': tileColorDisplayName(tile.color, context: context),
+        'number': '${tile.number}',
+        'chips': '${tile.baseChipValue}',
+      },
+    );
     return Material(
       color: GameUiPalette.transparent,
       child: DecoratedBox(
@@ -309,6 +321,7 @@ class GameHandTileInfoOverlay extends StatelessWidget {
                   ),
                   IconButton(
                     onPressed: onClose,
+                    tooltip: context.translate('battleWidgetsClose'),
                     icon: const Icon(Icons.close_rounded),
                     color: GameUiPalette.textPrimary,
                     visualDensity: VisualDensity.compact,
@@ -317,7 +330,7 @@ class GameHandTileInfoOverlay extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               if (hasModifier)
-                Text(
+                SemanticText(
                   modifierEffectText,
                   style: TextStyle(
                     color: GameUiPalette.textPrimary.withValues(alpha: 0.84),
@@ -327,8 +340,11 @@ class GameHandTileInfoOverlay extends StatelessWidget {
                   ),
                 )
               else
-                Text(
-                  '$baseInfoText\n확정 점수는 완성한 족보의 기본 칩을 기준으로 계산됩니다.',
+                SemanticText(
+                  context.translate(
+                    'battleWidgetsTileBaseExplanation',
+                    namedArgs: {'info': baseInfoText},
+                  ),
                   style: TextStyle(
                     color: GameUiPalette.textPrimary.withValues(alpha: 0.72),
                     fontSize: 13,
@@ -369,7 +385,8 @@ class _GameTileInfoConstraintCallout extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 22,
+              constraints: const BoxConstraints(minWidth: 22),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               height: 18,
               alignment: Alignment.center,
               decoration: BoxDecoration(
@@ -377,7 +394,10 @@ class _GameTileInfoConstraintCallout extends StatelessWidget {
                 borderRadius: BorderRadius.circular(5),
               ),
               child: Text(
-                modifier.markerText,
+                modifier.displayKeys == null
+                    ? modifier.markerText
+                    : context.translate(modifier.displayKeys!.markerTextKey),
+                maxLines: 1,
                 style: const TextStyle(
                   color: GameUiPalette.textOnWarm,
                   fontSize: 11,
@@ -388,8 +408,18 @@ class _GameTileInfoConstraintCallout extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: Text(
-                '${modifier.title}: ${modifier.ruleText}',
+              child: SemanticText(
+                context.translate(
+                  'battleWidgetsBossRule',
+                  namedArgs: {
+                    'title': modifier.displayKeys == null
+                        ? modifier.title
+                        : context.translate(modifier.displayKeys!.titleKey),
+                    'rule': modifier.displayKeys == null
+                        ? modifier.ruleText
+                        : context.translate(modifier.displayKeys!.ruleTextKey),
+                  },
+                ),
                 style: const TextStyle(
                   color: GameUiPalette.actionWarningText,
                   fontSize: 12,

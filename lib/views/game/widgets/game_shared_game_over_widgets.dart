@@ -42,8 +42,8 @@ class GameOverInsightRewardCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  '기억 카드 획득',
+                Text(
+                  context.translate('battleWidgetsMemoryEarned'),
                   style: TextStyle(
                     color: GameUiPalette.gameOverRewardAccent,
                     fontSize: 14,
@@ -51,8 +51,8 @@ class GameOverInsightRewardCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  '다음 런 준비에서 새 규칙을 여는 데 사용됩니다.',
+                SemanticText(
+                  context.translate('battleWidgetsMemoryDescription'),
                   style: TextStyle(
                     color: GameUiPalette.textPrimary.withValues(alpha: 0.72),
                     fontSize: 12,
@@ -71,7 +71,9 @@ class GameOverInsightRewardCard extends StatelessWidget {
 
 class GameOverRunSummary {
   const GameOverRunSummary({
-    required this.difficultyLabel,
+    this.difficultyLabel,
+    this.difficulty,
+    this.runModifier,
     required this.stageIndex,
     required this.scoreTowardTarget,
     required this.targetScore,
@@ -86,7 +88,9 @@ class GameOverRunSummary {
     this.addedDeckTileCount = 0,
   });
 
-  final String difficultyLabel;
+  final String? difficultyLabel;
+  final NewRunDifficulty? difficulty;
+  final NewRunModifier? runModifier;
   final int stageIndex;
   final int scoreTowardTarget;
   final int targetScore;
@@ -101,20 +105,20 @@ class GameOverRunSummary {
   final int addedDeckTileCount;
 }
 
-String gameOverTauntLineForSeed(int seed) {
+String gameOverTauntLineForSeed(int seed, {BuildContext? context}) {
   const lines = [
-    '전략은 좋았어요. 결과만 빼면요.',
-    '덱은 기억합니다. 이번 실수도요.',
-    '한 줄만 더 만들었으면 멋졌겠네요. 만들었다면요.',
-    '보드는 가득 찼고, 변명도 꽤 찼습니다.',
-    '족보는 자랐습니다. 자존심은 잠시 접어 둡시다.',
-    '이번 런은 교훈이 많네요. 점수 빼고요.',
-    '방금 선택은 기록해 뒀습니다. 반면교사로요.',
-    '운이 나빴다고 해도 됩니다. 카드가 듣지 않는다면요.',
-    '다음 런에서는 이 장면을 못 본 척해 드릴게요.',
-    '성장은 남았습니다. 승리는 다음에 찾죠.',
+    'battleWidgetsTaunt0',
+    'battleWidgetsTaunt1',
+    'battleWidgetsTaunt2',
+    'battleWidgetsTaunt3',
+    'battleWidgetsTaunt4',
+    'battleWidgetsTaunt5',
+    'battleWidgetsTaunt6',
+    'battleWidgetsTaunt7',
+    'battleWidgetsTaunt8',
+    'battleWidgetsTaunt9',
   ];
-  return lines[seed.abs() % lines.length];
+  return _battleWidgetTranslation(context, lines[seed.abs() % lines.length]);
 }
 
 /// 만료 신호 목록으로 게임오버 다이얼로그를 표시한다.
@@ -133,115 +137,125 @@ void showGameOverDialog({
   required Future<void> Function() onNewRun,
   required Future<void> Function() onExit,
 }) {
-  final resolvedTaunt =
-      tauntLine ??
-      gameOverTauntLineForSeed(
-        (runSummary?.seed ?? 0) +
-            (runSummary?.stageIndex ?? 0) +
-            (runSummary?.scoreTowardTarget ?? 0),
-      );
-  final text =
-      '${signals.map(expirySignalLabel).join('\n')}\n\n'
-      '이번 런의 기록을 남기고 새로 시작할 수 있습니다.';
   showGameFramedDialog<void>(
     context: context,
     barrierDismissible: false,
-    builder: (ctx) => GameModalCard(
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              _localizedGameResultTitle(context),
-              style: TextStyle(
-                fontFamily: AssetPaths.fontNexonLv2Gothic,
-                color: GameUiPalette.textPrimary.withValues(alpha: 0.95),
-                fontSize: 18,
+    builder: (ctx) {
+      final resolvedTaunt =
+          tauntLine ??
+          gameOverTauntLineForSeed(
+            (runSummary?.seed ?? 0) +
+                (runSummary?.stageIndex ?? 0) +
+                (runSummary?.scoreTowardTarget ?? 0),
+            context: ctx,
+          );
+      final text = ctx.translate(
+        'battleWidgetsGameOverMessage',
+        namedArgs: {
+          'signals': signals
+              .map((signal) => expirySignalLabel(signal, context: ctx))
+              .join('\n'),
+        },
+      );
+      return GameModalCard(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                ctx.translate('gameResult'),
+                style: TextStyle(
+                  fontFamily: AssetPaths.fontNexonLv2Gothic,
+                  color: GameUiPalette.textPrimary.withValues(alpha: 0.95),
+                  fontSize: 18,
+                ),
               ),
-            ),
-            const SizedBox(height: 14),
-            _GameOverTauntPanel(text: resolvedTaunt),
-            const SizedBox(height: 12),
-            Text(
-              text,
-              style: TextStyle(
-                color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                height: 1.35,
-              ),
-            ),
-            if (runSummary != null) ...[
+              const SizedBox(height: 14),
+              _GameOverTauntPanel(text: resolvedTaunt),
               const SizedBox(height: 12),
-              _GameOverRunSummaryCard(summary: runSummary),
-            ],
-            if (insightReward > 0) ...[
-              const SizedBox(height: 12),
-              _GameOverRewardReveal(
-                child: GameOverInsightRewardCard(insightReward: insightReward),
+              SemanticText(
+                text,
+                style: TextStyle(
+                  color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  height: 1.35,
+                ),
               ),
-            ],
-            const SizedBox(height: 18),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                GameActionButton(
-                  key: const ValueKey('game-over-retry-stake'),
-                  label: '현재 전투 재시작',
-                  background: GameUiPalette.actionGold,
-                  foreground: GameUiPalette.ink,
-                  onPressed: () async {
-                    Navigator.of(ctx).pop();
-                    await WidgetsBinding.instance.endOfFrame;
-                    _leaveGameOverSound(GameCue.runRestore);
-                    await onRetryStake();
-                  },
-                ),
-                const SizedBox(height: 10),
-                GameActionButton(
-                  key: const ValueKey('game-over-retry-station'),
-                  label: '현재 Station 재시작',
-                  background: GameUiPalette.menuAccentRestart,
-                  foreground: GameUiPalette.ink,
-                  onPressed: () async {
-                    Navigator.of(ctx).pop();
-                    await WidgetsBinding.instance.endOfFrame;
-                    _leaveGameOverSound(GameCue.runRestore);
-                    await onRetryStation();
-                  },
-                ),
-                const SizedBox(height: 10),
-                GameActionButton(
-                  key: const ValueKey('game-over-new-run'),
-                  label: '새 run 준비',
-                  background: GameUiPalette.actionSuccess,
-                  foreground: GameUiPalette.ink,
-                  onPressed: () async {
-                    Navigator.of(ctx).pop();
-                    await WidgetsBinding.instance.endOfFrame;
-                    _leaveGameOverSound(GameCue.runStart);
-                    await onNewRun();
-                  },
-                ),
-                const SizedBox(height: 10),
-                GameActionButton(
-                  key: const ValueKey('game-over-exit'),
-                  label: _localizedDialogLabel(context, 'exit', '나가기'),
-                  background: GameUiPalette.disabledControl,
-                  onPressed: () async {
-                    Navigator.of(ctx).pop();
-                    await WidgetsBinding.instance.endOfFrame;
-                    _leaveGameOverSound(GameCue.buttonTap);
-                    await onExit();
-                  },
+              if (runSummary != null) ...[
+                const SizedBox(height: 12),
+                _GameOverRunSummaryCard(summary: runSummary),
+              ],
+              if (insightReward > 0) ...[
+                const SizedBox(height: 12),
+                _GameOverRewardReveal(
+                  child: GameOverInsightRewardCard(
+                    insightReward: insightReward,
+                  ),
                 ),
               ],
-            ),
-          ],
+              const SizedBox(height: 18),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  GameActionButton(
+                    key: const ValueKey('game-over-retry-stake'),
+                    label: ctx.translate('battleWidgetsRetryBattle'),
+                    background: GameUiPalette.actionGold,
+                    foreground: GameUiPalette.ink,
+                    onPressed: () async {
+                      Navigator.of(ctx).pop();
+                      await WidgetsBinding.instance.endOfFrame;
+                      _leaveGameOverSound(GameCue.runRestore);
+                      await onRetryStake();
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  GameActionButton(
+                    key: const ValueKey('game-over-retry-station'),
+                    label: ctx.translate('battleWidgetsRetryStation'),
+                    background: GameUiPalette.menuAccentRestart,
+                    foreground: GameUiPalette.ink,
+                    onPressed: () async {
+                      Navigator.of(ctx).pop();
+                      await WidgetsBinding.instance.endOfFrame;
+                      _leaveGameOverSound(GameCue.runRestore);
+                      await onRetryStation();
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  GameActionButton(
+                    key: const ValueKey('game-over-new-run'),
+                    label: ctx.translate('battleWidgetsNewRun'),
+                    background: GameUiPalette.actionSuccess,
+                    foreground: GameUiPalette.ink,
+                    onPressed: () async {
+                      Navigator.of(ctx).pop();
+                      await WidgetsBinding.instance.endOfFrame;
+                      _leaveGameOverSound(GameCue.runStart);
+                      await onNewRun();
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  GameActionButton(
+                    key: const ValueKey('game-over-exit'),
+                    label: ctx.translate('exit'),
+                    background: GameUiPalette.disabledControl,
+                    onPressed: () async {
+                      Navigator.of(ctx).pop();
+                      await WidgetsBinding.instance.endOfFrame;
+                      _leaveGameOverSound(GameCue.buttonTap);
+                      await onExit();
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-      ),
-    ),
+      );
+    },
   );
 }
 
@@ -349,7 +363,7 @@ class _GameOverTauntPanel extends StatelessWidget {
               size: 24,
             ),
             Expanded(
-              child: Text(
+              child: SemanticText(
                 text,
                 softWrap: true,
                 style: const TextStyle(
@@ -378,11 +392,25 @@ class _GameOverRunSummaryCard extends StatelessWidget {
         ? '${summary.scoreTowardTarget}'
         : '${summary.scoreTowardTarget} / ${summary.targetScore}';
     final bestHand = summary.bestRank == null
-        ? '없음'
-        : '${_gameOverHandRankLabel(summary.bestRank!)} · 칩 ${summary.bestRankScore}';
+        ? context.translate('battleWidgetsNone')
+        : context.translate(
+            'battleWidgetsBestHandValue',
+            namedArgs: {
+              'rank': context.translate(rummiHandRankKey(summary.bestRank!)),
+              'chips': '${summary.bestRankScore}',
+            },
+          );
     final mostPlayed = summary.mostPlayedRank == null
-        ? '없음'
-        : '${_gameOverHandRankLabel(summary.mostPlayedRank!)} (${summary.mostPlayedCount})';
+        ? context.translate('battleWidgetsNone')
+        : context.translate(
+            'battleWidgetsMostPlayedValue',
+            namedArgs: {
+              'rank': context.translate(
+                rummiHandRankKey(summary.mostPlayedRank!),
+              ),
+              'count': '${summary.mostPlayedCount}',
+            },
+          );
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -398,8 +426,8 @@ class _GameOverRunSummaryCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: 7,
           children: [
-            const Text(
-              '이번 런 정산',
+            Text(
+              context.translate('battleWidgetsRunSummary'),
               style: TextStyle(
                 color: GameUiPalette.specialMutedText,
                 fontSize: 14,
@@ -407,20 +435,51 @@ class _GameOverRunSummaryCard extends StatelessWidget {
               ),
             ),
             _GameOverSummaryRow(
-              label: '도달',
-              value: 'S${summary.stageIndex} · ${summary.difficultyLabel}',
+              label: context.translate('battleWidgetsReached'),
+              value: context.translate(
+                'coreSaveStationMode',
+                namedArgs: {
+                  'station': 'S${summary.stageIndex}',
+                  'mode': context.runModeLabel(
+                    difficulty: summary.difficulty,
+                    runModifier: summary.runModifier,
+                    difficultyLabel: summary.difficultyLabel,
+                  ),
+                },
+              ),
             ),
-            _GameOverSummaryRow(label: '점수', value: scoreText),
-            _GameOverSummaryRow(label: '베스트 족보', value: bestHand),
-            _GameOverSummaryRow(label: '가장 많이 완성', value: mostPlayed),
             _GameOverSummaryRow(
-              label: '완성/구매',
-              value:
-                  '족보 ${summary.playedHandTotal} · Jester ${summary.boughtJesterCount} · 아이템 ${summary.boughtItemCount}',
+              label: context.translate('battleWidgetsScore'),
+              value: scoreText,
             ),
             _GameOverSummaryRow(
-              label: '덱/시드',
-              value: '추가 타일 ${summary.addedDeckTileCount} · ${summary.seed}',
+              label: context.translate('battleWidgetsBestHand'),
+              value: bestHand,
+            ),
+            _GameOverSummaryRow(
+              label: context.translate('battleWidgetsMostPlayed'),
+              value: mostPlayed,
+            ),
+            _GameOverSummaryRow(
+              label: context.translate('battleWidgetsCompletionsPurchases'),
+              value: context.translate(
+                'battleWidgetsCompletionsPurchasesValue',
+                namedArgs: {
+                  'hands': '${summary.playedHandTotal}',
+                  'jesters': '${summary.boughtJesterCount}',
+                  'items': '${summary.boughtItemCount}',
+                },
+              ),
+            ),
+            _GameOverSummaryRow(
+              label: context.translate('battleWidgetsDeckSeed'),
+              value: context.translate(
+                'battleWidgetsDeckSeedValue',
+                namedArgs: {
+                  'count': '${summary.addedDeckTileCount}',
+                  'seed': '${summary.seed}',
+                },
+              ),
             ),
           ],
         ),
@@ -454,7 +513,7 @@ class _GameOverSummaryRow extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: Text(
+          child: SemanticText(
             value,
             softWrap: true,
             style: const TextStyle(
@@ -467,42 +526,5 @@ class _GameOverSummaryRow extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-String _gameOverHandRankLabel(RummiHandRank rank) {
-  return switch (rank) {
-    RummiHandRank.highCard => '하이',
-    RummiHandRank.onePair => '원페어',
-    RummiHandRank.twoPair => '투페어',
-    RummiHandRank.threeOfAKind => '트리플',
-    RummiHandRank.straight => '스트레이트',
-    RummiHandRank.flush => '플러시',
-    RummiHandRank.fullHouse => '풀하우스',
-    RummiHandRank.fourOfAKind => '포카드',
-    RummiHandRank.straightFlush => '스티플',
-    RummiHandRank.prismStraight => '프리즘 스트레이트',
-    RummiHandRank.crownFourOfAKind => '크라운 포카드',
-    RummiHandRank.lowStraightFlush => '로우 스티플',
-    RummiHandRank.royalStraightFlush => '로열 스티플',
-    RummiHandRank.fiveOfAKind => '파이브 카드',
-    RummiHandRank.flushHouse => '플러시 하우스',
-    RummiHandRank.flushFive => '플러시 파이브',
-  };
-}
-
-String _localizedGameResultTitle(BuildContext context) {
-  return _localizedDialogLabel(context, 'gameResult', '게임결과');
-}
-
-String _localizedDialogLabel(
-  BuildContext context,
-  String key,
-  String fallback,
-) {
-  try {
-    return context.tr(key);
-  } on Object {
-    return fallback;
   }
 }

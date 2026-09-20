@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rummipoker/resources/item_translation_scope.dart';
 import 'package:rummipoker/resources/jester_translation_scope.dart';
+import '../../../support/test_translations.dart';
 
 Future<void> pumpLocalizedGameWidget(
   WidgetTester tester, {
@@ -11,6 +12,7 @@ Future<void> pumpLocalizedGameWidget(
 }) async {
   await tester.pumpWidget(
     EasyLocalization(
+      assetLoader: const TestTranslationAssetLoader(),
       supportedLocales: const [Locale('ko'), Locale('en')],
       path: 'assets/translations',
       fallbackLocale: const Locale('ko'),

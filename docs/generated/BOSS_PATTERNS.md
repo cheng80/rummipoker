@@ -4,7 +4,7 @@
 
 - Command: `dart run tools/generate_docs.dart`
 - Check: `dart run tools/generate_docs.dart --check`
-- Generation-time source dirty: clean
+- Generation-time source dirty: dirty: lib/logic/rummi_poker_grid/boss_modifier.dart
 - Self-check: PASS: 14 unique boardCellBlock IDs; coordinates 0..4; unique cells; at most 5 blocked cells per pattern.
 
 ## Sources
@@ -13,7 +13,7 @@
 - `data/common/items_common_v1.json`: `3c96c2d86c03f210244c99f8b14b40bd52e9e03e380c8e2bf0d430ef086c4a72`
 - `assets/translations/data/ko/jesters.json`: `445904a9adcf0910c90bc9b032d4f89ec71fe99ae97eb3590fd21ad7deb935af`
 - `assets/translations/data/ko/items.json`: `9fb7728d4e6a3faace296771cda00e5fde8407392118adb6da77d5779656aaa8`
-- `lib/logic/rummi_poker_grid/boss_modifier.dart`: `b17e0fb6ec19d4ddf3d7391bfda2894a0808579c8402b92888d0de29a8cce9d1`
+- `lib/logic/rummi_poker_grid/boss_modifier.dart`: `dfada3a7844697088ed07c7872135769b14a181003ab02b0582af52088a587ad`
 
 `1`은 배치 가능, `0`은 배치 금지 칸이다.
 

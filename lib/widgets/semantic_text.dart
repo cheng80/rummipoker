@@ -97,6 +97,8 @@ class SemanticText extends Text {
         final wrapped = _resolveWrappedText(
           text: text,
           model: model,
+          // Caller-owned model levels/weights may change between builds.
+          cacheResult: phraseModels == null,
           metrics: _TextMetrics.of(context, this),
           // Round the available box down to whole logical pixels. During a size
           // animation the raw value moves by a fraction every frame, which would
@@ -183,9 +185,23 @@ class _TextMetrics {
         const TextStyle(fontWeight: FontWeight.bold),
       );
     }
+    // Match Text.build's plain TextSpan and strut overrides. Resolving these
+    // before forming the cache key also invalidates layouts on setting changes.
+    final lineHeight = MediaQuery.maybeLineHeightScaleFactorOverrideOf(context);
+    final letterSpacing = MediaQuery.maybeLetterSpacingOverrideOf(context);
+    final wordSpacing = MediaQuery.maybeWordSpacingOverrideOf(context);
+    if (lineHeight != null || letterSpacing != null || wordSpacing != null) {
+      effectiveStyle = effectiveStyle!.merge(
+        TextStyle(
+          height: lineHeight,
+          letterSpacing: letterSpacing,
+          wordSpacing: wordSpacing,
+        ),
+      );
+    }
     return _TextMetrics(
       style: effectiveStyle!,
-      strutStyle: widget.strutStyle,
+      strutStyle: widget.strutStyle?.merge(StrutStyle(height: lineHeight)),
       textAlign: widget.textAlign ?? defaults.textAlign ?? TextAlign.start,
       textDirection: widget.textDirection ?? Directionality.of(context),
       textScaler: widget.textScaler ?? MediaQuery.textScalerOf(context),
@@ -246,6 +262,7 @@ final LinkedHashMap<_CacheKey, String?> _wrapCache =
 String? _resolveWrappedText({
   required String text,
   required PhraseModel model,
+  required bool cacheResult,
   required _TextMetrics metrics,
   required double maxWidth,
   required double maxHeight,
@@ -264,7 +281,7 @@ String? _resolveWrappedText({
     maxWidth: maxWidth,
     maxHeight: maxHeight,
   );
-  if (_wrapCache.containsKey(key)) {
+  if (cacheResult && _wrapCache.containsKey(key)) {
     // Refresh the entry so the cap evicts the least recently used text.
     final cached = _wrapCache.remove(key);
     _wrapCache[key] = cached;
@@ -303,9 +320,11 @@ String? _resolveWrappedText({
     painter.dispose();
   }
 
-  _wrapCache[key] = result;
-  if (_wrapCache.length > _cacheCapacity) {
-    _wrapCache.remove(_wrapCache.keys.first);
+  if (cacheResult) {
+    _wrapCache[key] = result;
+    if (_wrapCache.length > _cacheCapacity) {
+      _wrapCache.remove(_wrapCache.keys.first);
+    }
   }
   return result;
 }

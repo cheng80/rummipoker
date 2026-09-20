@@ -1,13 +1,15 @@
 import 'dart:math';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../../logic/rummi_poker_grid/jester_meta.dart';
 import '../../../logic/rummi_poker_grid/rummi_market_facade.dart';
-import '../../../logic/rummi_poker_grid/rummi_poker_grid_session.dart';
 import '../../../logic/rummi_poker_grid/rummi_station_facade.dart';
 import '../../../resources/card_emblem_assets.dart';
 import '../../../resources/jester_translation_scope.dart';
+import '../../../utils/app_translation.dart';
+import '../../../widgets/semantic_text.dart';
 import '../../../widgets/fx/fx_sprites.dart';
 import '../../../widgets/fx/motion_policy.dart';
 import '../game_presentation_timings.dart';
@@ -39,12 +41,18 @@ String localizedJesterEffect(BuildContext context, RummiJesterCard card) {
   return translations.resolveEffectText(card.id, card.effectText);
 }
 
-String jesterCategoryLabel(RummiJesterCard card) {
+String jesterCategoryLabel(RummiJesterCard card, {BuildContext? context}) {
   return switch (card.effectType) {
-    'economy' => '경제형',
-    'stateful_growth' => '상태형',
-    'chips_bonus' || 'mult_bonus' || 'xmult_bonus' || 'other' => '점수형',
-    _ => '기타',
+    'economy' => _jesterTranslation(context, 'battleWidgetsCategoryEconomy'),
+    'stateful_growth' => _jesterTranslation(
+      context,
+      'battleWidgetsCategoryStateful',
+    ),
+    'chips_bonus' ||
+    'mult_bonus' ||
+    'xmult_bonus' ||
+    'other' => _jesterTranslation(context, 'battleWidgetsCategoryScore'),
+    _ => _jesterTranslation(context, 'battleWidgetsCategoryOther'),
   };
 }
 
@@ -52,6 +60,7 @@ String? jesterRuntimeValueText(
   RummiJesterCard card,
   RummiJesterRuntimeSnapshot snapshot, {
   required int slotIndex,
+  BuildContext? context,
 }) {
   final stateValue = snapshot.stateValueForSlot(slotIndex);
   final playedHandTotal = snapshot.playedHandCounts.values.fold<int>(
@@ -59,34 +68,71 @@ String? jesterRuntimeValueText(
     (sum, value) => sum + value,
   );
   return switch (card.id) {
-    'green_jester' => '현재 점수 ${_signedMultPercentToken(stateValue)}',
-    'popcorn' => '현재 점수 +${stateValue * 5}%',
-    'ice_cream' => '현재 +$stateValue 칩',
-    'supernova' => '누적 확정 $playedHandTotal회',
-    'ride_the_bus' => '현재 점수 ${_signedMultPercentToken(stateValue)}',
+    'green_jester' => _jesterTranslation(
+      context,
+      'battleWidgetsCurrentScore',
+      namedArgs: {'value': _signedMultPercentToken(stateValue)},
+    ),
+    'popcorn' => _jesterTranslation(
+      context,
+      'battleWidgetsCurrentScore',
+      namedArgs: {'value': '+${stateValue * 5}%'},
+    ),
+    'ice_cream' => _jesterTranslation(
+      context,
+      'battleWidgetsCurrentChips',
+      namedArgs: {'count': '$stateValue'},
+    ),
+    'supernova' => _jesterTranslation(
+      context,
+      'battleWidgetsTotalConfirms',
+      namedArgs: {'count': '$playedHandTotal'},
+    ),
+    'ride_the_bus' => _jesterTranslation(
+      context,
+      'battleWidgetsCurrentScore',
+      namedArgs: {'value': _signedMultPercentToken(stateValue)},
+    ),
     _ => null,
   };
 }
 
-String jesterEffectBadge(RummiJesterEffectBreakdown effect) {
-  final suffix = effect.displaySuffix;
-  if (suffix.isEmpty) {
-    return effect.displayToken;
+String jesterEffectBadge(
+  RummiJesterEffectBreakdown effect, {
+  BuildContext? context,
+}) {
+  if (context == null) {
+    final suffix = effect.displaySuffix;
+    return suffix.isEmpty
+        ? effect.displayToken
+        : '${effect.displayToken} $suffix';
   }
-  return '${effect.displayToken} $suffix';
-}
-
-String? settlementJesterNames(ConfirmedLineBreakdown line) {
-  if (line.effects.isEmpty) return null;
-  final names = <String>[];
-  for (final effect in line.effects) {
-    if (!names.contains(effect.displayName)) {
-      names.add(effect.displayName);
-    }
-    if (names.length >= 2) break;
+  if (effect.xmultBonus > 1.0) {
+    return context.translate(
+      'coreSettlementEffectMultiplier',
+      namedArgs: {
+        'value': effect.hasIntegerMultiplierToken
+            ? '${effect.xmultBonus.round()}'
+            : effect.xmultBonus.toStringAsFixed(1),
+      },
+    );
   }
-  if (names.isEmpty) return null;
-  return names.join(' · ');
+  if (effect.chipsBonus > 0) {
+    return context.translate(
+      'coreSettlementEffectChips',
+      namedArgs: {'value': '${effect.chipsBonus}'},
+    );
+  }
+  if (effect.multBonus > 0) {
+    return context.translate(
+      'coreSettlementEffectPercent',
+      namedArgs: {'value': '${effect.multPercentBonus}'},
+    );
+  }
+  return context.translate(
+    'coreSettlementEffectScore',
+    namedArgs: {'value': '${effect.scoreDelta}'},
+  );
 }
 
 String _signedMultPercentToken(int value) {
@@ -143,6 +189,7 @@ class GameJesterStrip extends StatelessWidget {
                       card,
                       market.runtimeSnapshot,
                       slotIndex: index,
+                      context: context,
                     )
                   : null,
               extended: index == 4,
@@ -331,7 +378,11 @@ class GameJesterSlot extends StatelessWidget {
                         Center(
                           child: Text(
                             locked
-                                ? (extended ? '5th' : '잠김')
+                                ? (extended
+                                      ? '5th'
+                                      : context.translate(
+                                          'battleWidgetsLocked',
+                                        ))
                                 : extended
                                 ? '5th'
                                 : '+',
@@ -480,7 +531,10 @@ class GameJesterSlot extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(999),
                                 ),
                                 child: Text(
-                                  jesterEffectBadge(activeEffect!),
+                                  jesterEffectBadge(
+                                    activeEffect!,
+                                    context: context,
+                                  ),
                                   maxLines: 1,
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
@@ -670,4 +724,15 @@ class GameJesterHeaderRow extends StatelessWidget {
       ),
     );
   }
+}
+
+// Compatibility for external callers during the staged migration. Screen builds
+// pass context so a locale change registers a Localizations dependency.
+String _jesterTranslation(
+  BuildContext? context,
+  String key, {
+  Map<String, String>? namedArgs,
+}) {
+  return context?.translate(key, namedArgs: namedArgs) ??
+      key.tr(namedArgs: namedArgs);
 }

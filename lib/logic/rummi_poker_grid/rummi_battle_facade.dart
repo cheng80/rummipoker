@@ -42,7 +42,7 @@ class RummiScoringPreview {
         tileModifierEffectCount += line.bonusRankProgress;
       }
       for (final effect in line.effects) {
-        final key = '${effect.jesterId}:${effect.displayToken}';
+        final key = '${effect.jesterId}:${effect.displayIdentity}';
         if (!effectIds.add(key)) continue;
         if (effect.jesterId.startsWith('tile:') ||
             effect.jesterId.startsWith('tile_edition:')) {

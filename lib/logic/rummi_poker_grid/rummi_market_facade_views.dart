@@ -2,11 +2,10 @@ part of 'rummi_market_facade.dart';
 
 enum RummiMarketCategory { jester, item, tile }
 
-/// 나침반("가장 싼 첫 offer") 할인이 붙은 offer에 표시하는 출처 라벨이다.
-///
-/// 구매 경로가 이 라벨로 "이 offer가 할인 대상이었다"를 읽으므로, 표시와
-/// 청구가 같은 문자열을 쓰도록 한 곳에 둔다.
+/// Legacy label retained for manually constructed offers.
 const String rummiMarketCompassDiscountLabel = '나침반';
+
+enum RummiMarketDiscountSource { none, compass }
 
 class RummiMarketOwnedEntryView {
   const RummiMarketOwnedEntryView({
@@ -75,6 +74,7 @@ class RummiMarketOfferView {
     required this.isAffordable,
     required this.card,
     this.discountSourceLabel,
+    this.discountSource,
   }) : originalPrice = originalPrice ?? price;
 
   factory RummiMarketOfferView.fromShopOffer(
@@ -83,6 +83,7 @@ class RummiMarketOfferView {
     int? price,
     int? originalPrice,
     String? discountSourceLabel,
+    RummiMarketDiscountSource? discountSource,
   }) {
     final resolvedPrice = price ?? offer.price;
     final resolvedOriginalPrice = originalPrice ?? resolvedPrice;
@@ -98,6 +99,7 @@ class RummiMarketOfferView {
       isAffordable: currentGold >= resolvedPrice,
       card: offer.card,
       discountSourceLabel: discountSourceLabel,
+      discountSource: discountSource,
     );
   }
 
@@ -112,6 +114,7 @@ class RummiMarketOfferView {
   final bool isAffordable;
   final RummiJesterCard card;
   final String? discountSourceLabel;
+  final RummiMarketDiscountSource? discountSource;
 
   int get discountAmount => (originalPrice - price).clamp(0, originalPrice);
   bool get hasDiscount => discountAmount > 0;
@@ -121,7 +124,9 @@ class RummiMarketOfferView {
   /// 구매 경로는 이 값으로 할인을 소비할지 정한다. 대상 판정을 호출부마다
   /// 다시 쓰지 않게 한 곳에 둔다.
   bool get isCompassDiscounted =>
-      discountSourceLabel == rummiMarketCompassDiscountLabel;
+      discountSource == RummiMarketDiscountSource.compass ||
+      (discountSource == null &&
+          discountSourceLabel == rummiMarketCompassDiscountLabel);
 }
 
 class RummiMarketItemOfferView {
@@ -140,6 +145,7 @@ class RummiMarketItemOfferView {
     required this.isAffordable,
     required this.item,
     this.discountSourceLabel,
+    this.discountSource,
   }) : originalPrice = originalPrice ?? price;
 
   factory RummiMarketItemOfferView.fromItemDefinition(
@@ -149,6 +155,7 @@ class RummiMarketItemOfferView {
     int? price,
     int? originalPrice,
     String? discountSourceLabel,
+    RummiMarketDiscountSource? discountSource,
   }) {
     final resolvedPrice = price ?? item.basePrice;
     final resolvedOriginalPrice = originalPrice ?? resolvedPrice;
@@ -167,6 +174,7 @@ class RummiMarketItemOfferView {
       isAffordable: currentGold >= resolvedPrice,
       item: item,
       discountSourceLabel: discountSourceLabel,
+      discountSource: discountSource,
     );
   }
 
@@ -184,6 +192,7 @@ class RummiMarketItemOfferView {
   final bool isAffordable;
   final ItemDefinition item;
   final String? discountSourceLabel;
+  final RummiMarketDiscountSource? discountSource;
 
   int get discountAmount => (originalPrice - price).clamp(0, originalPrice);
   bool get hasDiscount => discountAmount > 0;
@@ -193,7 +202,9 @@ class RummiMarketItemOfferView {
   /// 구매 경로는 이 값으로 할인을 소비할지 정한다. 대상 판정을 호출부마다
   /// 다시 쓰지 않게 한 곳에 둔다.
   bool get isCompassDiscounted =>
-      discountSourceLabel == rummiMarketCompassDiscountLabel;
+      discountSource == RummiMarketDiscountSource.compass ||
+      (discountSource == null &&
+          discountSourceLabel == rummiMarketCompassDiscountLabel);
 }
 
 class RummiMarketTileOfferView {

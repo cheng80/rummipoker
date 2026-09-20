@@ -59,9 +59,39 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('BOSS'), findsOneWidget);
-    expect(find.text('-35%'), findsOneWidget);
+    expect(find.text('약화'), findsOneWidget);
     await tester.pump(const Duration(milliseconds: 1350));
   });
+
+  testWidgets(
+    'custom constraint markers stay literal and empty markers show score delta',
+    (tester) async {
+      for (final marker in ['Custom marker', '']) {
+        await tester.pumpWidget(
+          _effectOverlayHost(
+            activeSettlementStep: ScoringPresentationStep.constraint,
+            line: _line(
+              constraintPenalties: [
+                RummiConstraintPenaltyBreakdown(
+                  modifierId: 'custom-marker-test',
+                  title: 'Custom title',
+                  ruleText: 'Custom rule',
+                  markerText: marker,
+                  scoreDelta: -24,
+                  scoreMultiplier: 0.65,
+                ),
+              ],
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump();
+        expect(find.text(marker.isEmpty ? '-24' : marker), findsOneWidget);
+        await tester.pump(const Duration(milliseconds: 1350));
+        await tester.pumpWidget(const SizedBox.shrink());
+      }
+    },
+  );
 
   testWidgets('제약 penalty가 없으면 제약 단계 보드 이펙트를 띄우지 않는다', (tester) async {
     await tester.pumpWidget(

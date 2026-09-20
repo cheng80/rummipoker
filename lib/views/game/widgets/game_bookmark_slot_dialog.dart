@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
 
+import '../../../utils/app_translation.dart';
+import '../../../widgets/semantic_text.dart';
+
 import '../../../resources/asset_paths.dart';
 import '../../../services/active_run_save_facade.dart';
 import '../../../utils/common_ui.dart';
+import '../../../utils/active_run_translation.dart';
 import 'game_ui_palette.dart';
 
 Future<int?> showBookmarkSlotDialog({
   required BuildContext context,
-  required String title,
-  required String message,
+  String title = '',
+  String message = '',
+  String Function(BuildContext)? titleBuilder,
+  String Function(BuildContext)? messageBuilder,
   required List<ActiveRunBookmarkSlotView> slots,
 }) {
   return showGameChoiceDialog<int?>(
     context,
     title: title,
     message: message,
+    titleBuilder: titleBuilder,
+    messageBuilder: messageBuilder,
     content: SizedBox(
       width: 360,
       child: Column(
@@ -30,9 +38,9 @@ Future<int?> showBookmarkSlotDialog({
         ],
       ),
     ),
-    actions: const [
+    actionsBuilder: (dialogContext) => [
       GameDialogAction<int?>(
-        label: '취소',
+        label: dialogContext.translate('cancel'),
         value: null,
         accent: GameUiPalette.disabledControl,
       ),
@@ -51,7 +59,7 @@ class _BookmarkSlotOption extends StatelessWidget {
     final isEmpty = slot.isEmpty;
     return Semantics(
       button: true,
-      label: '${slot.title} ${slot.label}',
+      label: context.activeRunSlotSemantic(slot),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
@@ -88,7 +96,7 @@ class _BookmarkSlotOption extends StatelessWidget {
                     spacing: 4,
                     children: [
                       Text(
-                        slot.title,
+                        context.activeRunSlotTitle(slot),
                         style: TextStyle(
                           fontFamily: AssetPaths.fontNexonLv2Gothic,
                           color: GameUiPalette.textPrimary.withValues(
@@ -97,8 +105,8 @@ class _BookmarkSlotOption extends StatelessWidget {
                           fontSize: 14,
                         ),
                       ),
-                      Text(
-                        slot.label,
+                      SemanticText(
+                        context.activeRunSlotLabel(slot),
                         softWrap: true,
                         style: TextStyle(
                           color: GameUiPalette.textPrimary.withValues(

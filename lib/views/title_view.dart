@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,21 +10,23 @@ import '../providers/features/rummi_poker_grid/title_notifier.dart';
 import '../resources/asset_paths.dart';
 import '../resources/sound_manager.dart';
 import '../services/active_run_save_facade.dart';
-import '../services/archive_seen_service.dart';
-import '../services/in_app_review_service.dart';
 import '../services/active_run_save_service.dart';
+import '../services/archive_seen_service.dart';
 import '../services/debug_run_fixture_service.dart';
-import '../utils/common_ui.dart';
 import '../services/game_settings.dart';
+import '../services/in_app_review_service.dart';
+import '../utils/active_run_translation.dart';
+import '../utils/app_translation.dart';
+import '../utils/common_ui.dart';
 import '../widgets/fx/entrance_in.dart';
 import '../widgets/fx/fx_ambient.dart';
 import '../widgets/fx/motion_policy.dart';
 import '../widgets/phone_frame_scaffold.dart';
 import 'game/game_feedback_cues.dart';
 import 'game/game_presentation_timings.dart';
-import 'game/widgets/game_ui_palette.dart';
-import 'game/widgets/game_run_info_dialog.dart';
 import 'game/widgets/game_bookmark_slot_dialog.dart';
+import 'game/widgets/game_run_info_dialog.dart';
+import 'game/widgets/game_ui_palette.dart';
 import 'home_entry_widgets.dart';
 
 /// 타이틀 화면. 우주 배경 위에 제목과 모드 선택 버튼을 표시한다.
@@ -117,27 +118,29 @@ class _TitleViewState extends ConsumerState<TitleView>
       if (!mounted) return;
       final action = await showGameChoiceDialog<String>(
         context,
-        title: '이어하기',
-        message: _continueDialogMessage(summary),
-        actions: [
-          const GameDialogAction<String>(
-            label: '삭제',
+        titleBuilder: (dialogContext) =>
+            dialogContext.translate('homeContinueSectionTitle'),
+        messageBuilder: (dialogContext) =>
+            _continueDialogMessage(dialogContext, summary),
+        actionsBuilder: (dialogContext) => [
+          GameDialogAction<String>(
+            label: dialogContext.translate('menuDelete'),
             value: 'delete',
             accent: GameUiPalette.titleDangerAccent,
           ),
-          const GameDialogAction<String>(
-            label: '취소',
+          GameDialogAction<String>(
+            label: dialogContext.translate('cancel'),
             value: 'cancel',
             accent: GameUiPalette.disabledControl,
           ),
           GameDialogAction<String>(
-            label: context.tr('runInfoTitle'),
+            label: dialogContext.translate('runInfoTitle'),
             value: 'runInfo',
             accent: GameUiPalette.actionGoldBright,
             textColor: GameUiPalette.ink,
           ),
-          const GameDialogAction<String>(
-            label: '이어하기',
+          GameDialogAction<String>(
+            label: dialogContext.translate('homeContinueSectionTitle'),
             value: 'continue',
             accent: GameUiPalette.actionGold,
             textColor: GameUiPalette.ink,
@@ -192,11 +195,11 @@ class _TitleViewState extends ConsumerState<TitleView>
         titleState.lastAvailability != ActiveRunAvailability.available) {
       await showGameChoiceDialog<void>(
         context,
-        title: context.tr('runInfoTitle'),
-        message: '진행 중인 런이 없습니다.\n새 런을 시작하면 족보 성장과 추가 덱 정보가 여기에 표시됩니다.',
-        actions: const [
+        title: context.translate('runInfoTitle'),
+        message: context.translate('menuNoActiveRun'),
+        actions: [
           GameDialogAction<void>(
-            label: '확인',
+            label: context.translate('ok'),
             value: null,
             accent: GameUiPalette.actionGoldBright,
             textColor: GameUiPalette.ink,
@@ -222,24 +225,24 @@ class _TitleViewState extends ConsumerState<TitleView>
     if (!mounted) return;
     final slotIndex = await showBookmarkSlotDialog(
       context: context,
-      title: '북마크 불러오기',
-      message: '북마크를 불러오면 현재 이어하기 데이터가 선택한 북마크로 덮어써집니다.',
+      titleBuilder: (c) => c.translate('menuLoadBookmark'),
+      messageBuilder: (c) => c.translate('menuLoadBookmarkDesc'),
       slots: slots,
     );
     if (!mounted || slotIndex == null) return;
     final selected = slots[slotIndex];
     if (selected.isEmpty) {
-      showTopNotice(context, '비어 있는 북마크 슬롯입니다.');
+      showTopNotice(context, context.translate('menuEmptyBookmark'));
       return;
     }
     final confirmed = await showConfirmDialog(
       context,
-      title: '북마크 불러오기',
-      message:
-          '${selected.label}\n\n'
-          '이 북마크를 불러오면 현재 이어하기 데이터가 이 상태로 바뀝니다.',
-      cancelLabel: '취소',
-      confirmLabel: '불러오기',
+      titleBuilder: (c) => c.translate('menuLoadBookmark'),
+      messageBuilder: (c) => c.translate(
+        'menuLoadBookmarkPrompt',
+        namedArgs: {'summary': c.activeRunSlotLabel(selected)},
+      ),
+      confirmLabelBuilder: (c) => c.translate('menuLoad'),
     );
     if (!mounted || !confirmed) return;
     final restoredRun = await ActiveRunSaveService.restoreBookmarkToActiveRun(
@@ -247,7 +250,7 @@ class _TitleViewState extends ConsumerState<TitleView>
     );
     if (!mounted) return;
     if (restoredRun == null) {
-      showTopNotice(context, '북마크를 불러오지 못했습니다.');
+      showTopNotice(context, context.translate('menuLoadBookmarkFailed'));
       return;
     }
     SoundManager.unlockForWeb();
@@ -266,17 +269,16 @@ class _TitleViewState extends ConsumerState<TitleView>
   Future<void> _showCorruptedSaveDialog() async {
     final action = await showGameChoiceDialog<String>(
       context,
-      title: '저장 데이터 확인',
-      message:
-          '이어하기용 저장 데이터가 손상되었거나 현재 버전과 호환되지 않습니다.\n삭제 후 새 런을 시작하는 것을 권장합니다.',
-      actions: const [
+      title: context.translate('menuCheckSave'),
+      message: context.translate('menuInvalidSave'),
+      actions: [
         GameDialogAction<String>(
-          label: '취소',
+          label: context.translate('cancel'),
           value: 'cancel',
           accent: GameUiPalette.disabledControl,
         ),
         GameDialogAction<String>(
-          label: '삭제',
+          label: context.translate('menuDelete'),
           value: 'delete',
           accent: GameUiPalette.titleDangerAccent,
         ),
@@ -290,20 +292,20 @@ class _TitleViewState extends ConsumerState<TitleView>
     await ref.read(titleNotifierProvider.notifier).clearStoredRun();
     if (!mounted) return;
     if (showMessage) {
-      showTopNotice(context, '저장 데이터를 삭제했습니다.');
+      showTopNotice(context, context.translate('menuSaveDeleted'));
     }
   }
 
   Future<void> _openDebugFixtureMenu() async {
     final fixtures = DebugRunFixtureService.fixtures;
     if (fixtures.isEmpty) {
-      showTopNotice(context, '등록된 디버그 픽스처가 없습니다.');
+      showTopNotice(context, context.translate('menuNoFixtures'));
       return;
     }
 
     final fixtureId = await showGameChoiceDialog<String>(
       context,
-      title: '디버그 픽스처',
+      title: context.translate('menuDebugFixture'),
       content: SizedBox(
         width: 360,
         child: SingleChildScrollView(
@@ -327,9 +329,9 @@ class _TitleViewState extends ConsumerState<TitleView>
           ),
         ),
       ),
-      actions: const [
+      actions: [
         GameDialogAction<String>(
-          label: '취소',
+          label: context.translate('cancel'),
           value: 'cancel',
           accent: GameUiPalette.disabledControl,
         ),
@@ -342,7 +344,7 @@ class _TitleViewState extends ConsumerState<TitleView>
   Future<void> _startDebugFixture(String fixtureId) async {
     final fixture = DebugRunFixtureService.find(fixtureId);
     if (fixture == null) {
-      showTopNotice(context, '디버그 픽스처를 찾지 못했습니다.');
+      showTopNotice(context, context.translate('menuFixtureNotFound'));
       return;
     }
     final runtime = fixture.builder();
@@ -409,7 +411,7 @@ class _TitleViewState extends ConsumerState<TitleView>
                       child: _TitleLogoIdle(
                         child: Semantics(
                           label: context
-                              .tr('gameTitleBlock')
+                              .translate('gameTitleBlock')
                               .replaceAll('\n', ' '),
                           image: true,
                           child: Image.asset(
@@ -421,7 +423,7 @@ class _TitleViewState extends ConsumerState<TitleView>
                       ),
                     ),
                     Text(
-                      context.tr('gameSubtitle'),
+                      context.translate('gameSubtitle'),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontFamily: AssetPaths.fontNexonLv2Gothic,
@@ -437,21 +439,21 @@ class _TitleViewState extends ConsumerState<TitleView>
                     _entrance(
                       0,
                       HomeSection(
-                        title: context.tr('homeContinueSectionTitle'),
+                        title: context.translate('homeContinueSectionTitle'),
                         child: Column(
                           children: [
                             HomeEntryCard(
                               key: const ValueKey('home-entry-continue'),
-                              title: context.tr('continueGame'),
-                              description:
-                                  storedRunSummary?.currentLocationSummary ??
-                                  (hasStoredActiveRun
-                                      ? context.tr(
-                                          'homeContinueReadyDescription',
-                                        )
-                                      : context.tr(
-                                          'homeContinueEmptyDescription',
-                                        )),
+                              title: context.translate('continueGame'),
+                              description: storedRunSummary != null
+                                  ? context.activeRunLocation(storedRunSummary)
+                                  : (hasStoredActiveRun
+                                        ? context.translate(
+                                            'homeContinueReadyDescription',
+                                          )
+                                        : context.translate(
+                                            'homeContinueEmptyDescription',
+                                          )),
                               primary: true,
                               enabled: hasStoredActiveRun,
                               onTap: _openContinueMenu,
@@ -463,7 +465,7 @@ class _TitleViewState extends ConsumerState<TitleView>
                                 Expanded(
                                   child: HomeEntryCard(
                                     key: const ValueKey('home-entry-run-info'),
-                                    title: context.tr('runInfoTitle'),
+                                    title: context.translate('runInfoTitle'),
                                     compact: true,
                                     onTap: _openTitleRunInfo,
                                   ),
@@ -471,7 +473,7 @@ class _TitleViewState extends ConsumerState<TitleView>
                                 Expanded(
                                   child: HomeEntryCard(
                                     key: const ValueKey('home-entry-bookmark'),
-                                    title: '북마크 불러오기',
+                                    title: context.translate('menuBookmarks'),
                                     compact: true,
                                     onTap: _openBookmarkLoadMenu,
                                   ),
@@ -486,11 +488,13 @@ class _TitleViewState extends ConsumerState<TitleView>
                     _entrance(
                       1,
                       HomeSection(
-                        title: context.tr('homeNewRunSectionTitle'),
+                        title: context.translate('homeNewRunSectionTitle'),
                         child: HomeEntryCard(
                           key: const ValueKey('home-entry-new-run'),
-                          title: context.tr('homeNewRunTitle'),
-                          description: context.tr('homeNewRunDescription'),
+                          title: context.translate('homeNewRunTitle'),
+                          description: context.translate(
+                            'homeNewRunDescription',
+                          ),
                           primary: true,
                           decision: true,
                           onTap: () => context.push(RoutePaths.newRun),
@@ -501,14 +505,14 @@ class _TitleViewState extends ConsumerState<TitleView>
                     _entrance(
                       2,
                       HomeSection(
-                        title: context.tr('homeOtherMenuSectionTitle'),
+                        title: context.translate('homeOtherMenuSectionTitle'),
                         child: Row(
                           spacing: 8,
                           children: [
                             Expanded(
                               child: HomeEntryCard(
                                 key: const ValueKey('home-entry-archive'),
-                                title: context.tr('archiveTitle'),
+                                title: context.translate('archiveTitle'),
                                 compact: true,
                                 onTap: () => context.push(RoutePaths.archive),
                               ),
@@ -516,10 +520,10 @@ class _TitleViewState extends ConsumerState<TitleView>
                             if (_showDebugEntries)
                               Expanded(
                                 child: HomeEntryCard(
-                                  key: const ValueKey(
-                                    'home-entry-special-mode',
+                                  key: ValueKey('home-entry-special-mode'),
+                                  title: context.translate(
+                                    'homeSpecialModeTitle',
                                   ),
-                                  title: context.tr('homeSpecialModeTitle'),
                                   compact: true,
                                   accent: GameUiPalette.titleDebugPurple,
                                   onTap: () => context.push(RoutePaths.trial),
@@ -534,11 +538,11 @@ class _TitleViewState extends ConsumerState<TitleView>
                       _entrance(
                         3,
                         HomeSection(
-                          title: '디버그',
+                          title: context.translate('menuDebug'),
                           child: HomeEntryCard(
                             key: const ValueKey('home-entry-debug-fixture'),
-                            title: '디버그 픽스처',
-                            description: '검증용 런 상태로 바로 시작',
+                            title: context.translate('menuDebugFixture'),
+                            description: context.translate('menuDebugDesc'),
                             accent: GameUiPalette.titleDebugPurpleDark,
                             onTap: _openDebugFixtureMenu,
                           ),
@@ -549,11 +553,13 @@ class _TitleViewState extends ConsumerState<TitleView>
                     _entrance(
                       4,
                       HomeSection(
-                        title: context.tr('settings'),
+                        title: context.translate('settings'),
                         child: HomeEntryCard(
                           key: const ValueKey('home-entry-setting'),
-                          title: context.tr('settings'),
-                          description: context.tr('homeSettingsDescription'),
+                          title: context.translate('settings'),
+                          description: context.translate(
+                            'homeSettingsDescription',
+                          ),
                           onTap: () {
                             context.push(RoutePaths.setting);
                           },
@@ -568,8 +574,8 @@ class _TitleViewState extends ConsumerState<TitleView>
                         builder: (context, snapshot) {
                           final v = snapshot.data;
                           final text = v != null
-                              ? '${context.tr('appVersion')} ${v.version}+${v.buildNumber}'
-                              : context.tr('appVersion');
+                              ? '${context.translate('appVersion')} ${v.version}+${v.buildNumber}'
+                              : context.translate('appVersion');
                           // 버전 값이 늦게 와도 툭 튀지 않게 fade로 바꾼다.
                           return AnimatedSwitcher(
                             duration: GamePresentationTimings.flowEntranceIn,
@@ -599,11 +605,14 @@ class _TitleViewState extends ConsumerState<TitleView>
   }
 }
 
-String _continueDialogMessage(RummiActiveRunSaveFacade? summary) {
+String _continueDialogMessage(
+  BuildContext context,
+  RummiActiveRunSaveFacade? summary,
+) {
   if (summary == null) {
-    return '이어하기는 저장된 현재 런을 복원합니다.\n삭제하거나 그대로 이어할지 선택하세요.';
+    return context.translate('menuContinueDesc');
   }
-  return summary.continueDialogMessage();
+  return context.activeRunContinueMessage(summary);
 }
 
 class _DebugFixtureOption extends StatelessWidget {
@@ -691,7 +700,7 @@ class _DebugFixtureOption extends StatelessWidget {
                         ),
                       ),
                     ),
-                    child: const Padding(
+                    child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                       child: Icon(
                         Icons.chevron_right_rounded,

@@ -180,10 +180,6 @@ class _MarketOfferAmbientMotion extends StatelessWidget {
   }
 }
 
-String _activeRunSummaryLabel(RummiActiveRunSaveFacade summary) {
-  return summary.snapshotSummaryLabel();
-}
-
 class _GameShopOfferCard extends StatelessWidget {
   const _GameShopOfferCard({
     required this.offer,
@@ -233,10 +229,10 @@ class _GameShopOfferCard extends StatelessWidget {
       onTap: onTap,
       onLongPress: () => _showMarketCardPreview(
         context,
-        previewCard,
-        title: localizedJesterName(context, offer.card),
-        effectText: localizedJesterEffect(context, offer.card),
-        tags: _jesterSynergyTags(offer.card),
+        (context) => previewCard,
+        title: (context) => localizedJesterName(context, offer.card),
+        effectText: (context) => localizedJesterEffect(context, offer.card),
+        tags: (context) => _jesterSynergyTags(context, offer.card),
       ),
       child: SizedBox(
         width: kMarketShopCellWidth,
@@ -270,7 +266,12 @@ class _GameShopOfferCard extends StatelessWidget {
                 price: offer.price,
                 originalPrice: offer.originalPrice,
                 isAffordable: canAfford,
-                discountSourceLabel: offer.discountSourceLabel,
+                discountSourceLabel: offer.isCompassDiscounted
+                    ? ItemTranslationScope.of(context).resolveDisplayName(
+                        'market_compass',
+                        offer.discountSourceLabel ?? '',
+                      )
+                    : offer.discountSourceLabel,
               ),
             ),
           ],
@@ -348,14 +349,14 @@ class _MarketOfferCardDisplay extends StatelessWidget {
 
 void _showMarketCardPreview(
   BuildContext context,
-  Widget card, {
-  required String title,
-  required String effectText,
-  required List<String> tags,
+  WidgetBuilder cardBuilder, {
+  required String Function(BuildContext) title,
+  required String Function(BuildContext) effectText,
+  required List<String> Function(BuildContext) tags,
 }) {
   showGameFramedDialog<void>(
     context: context,
-    semanticLabel: '상점 카드 정보',
+    semanticLabel: context.translate('marketCardInfo'),
     builder: (dialogContext) {
       final previewMaxHeight = math
           .min(MediaQuery.sizeOf(dialogContext).height - 96, 720.0)
@@ -372,7 +373,7 @@ void _showMarketCardPreview(
                   children: [
                     Expanded(
                       child: GameCardNameText(
-                        title,
+                        title(dialogContext),
                         textAlign: TextAlign.start,
                         style: const TextStyle(
                           color: GameUiPalette.textPrimary,
@@ -382,11 +383,12 @@ void _showMarketCardPreview(
                       ),
                     ),
                     IconButton(
+                      key: const ValueKey('market-card-preview-close'),
                       onPressed: () => Navigator.of(dialogContext).pop(),
                       icon: const Icon(Icons.close_rounded),
                       color: GameUiPalette.textPrimary,
                       visualDensity: VisualDensity.compact,
-                      tooltip: '닫기',
+                      tooltip: dialogContext.translate('marketClose'),
                     ),
                   ],
                 ),
@@ -395,12 +397,15 @@ void _showMarketCardPreview(
                   child: SizedBox(
                     width: kMarketOfferCardWidth * 3,
                     height: kMarketOfferCardHeight * 3,
-                    child: FittedBox(fit: BoxFit.contain, child: card),
+                    child: FittedBox(
+                      fit: BoxFit.contain,
+                      child: cardBuilder(dialogContext),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  effectText,
+                SemanticText(
+                  effectText(dialogContext),
                   style: TextStyle(
                     color: GameUiPalette.textPrimary.withValues(alpha: 0.82),
                     fontSize: 13,
@@ -408,9 +413,9 @@ void _showMarketCardPreview(
                     height: 1.3,
                   ),
                 ),
-                if (tags.isNotEmpty) ...[
+                if (tags(dialogContext).isNotEmpty) ...[
                   const SizedBox(height: 10),
-                  _MarketDetailTagWrap(tags: tags),
+                  _MarketDetailTagWrap(tags: tags(dialogContext)),
                 ],
               ],
             ),
@@ -451,11 +456,11 @@ class _MarketItemOfferCard extends StatelessWidget {
         ),
       ),
     );
-    final previewCard = SizedBox(
+    Widget previewCard(BuildContext context) => SizedBox(
       width: kMarketOfferCardWidth,
       height: kMarketOfferCardHeight,
       child: _MarketItemCardFace(
-        label: itemName,
+        label: localizedItemName(context, offer),
         placement: offer.item.placement,
         rarity: offer.item.rarity,
         selected: false,
@@ -470,9 +475,9 @@ class _MarketItemOfferCard extends StatelessWidget {
       onLongPress: () => _showMarketCardPreview(
         context,
         previewCard,
-        title: itemName,
-        effectText: localizedItemEffect(context, offer),
-        tags: _itemSynergyTags(offer.item),
+        title: (context) => localizedItemName(context, offer),
+        effectText: (context) => localizedItemEffect(context, offer),
+        tags: (context) => _itemSynergyTags(context, offer.item),
       ),
       child: SizedBox(
         width: kMarketShopCellWidth,
@@ -506,7 +511,12 @@ class _MarketItemOfferCard extends StatelessWidget {
                 price: offer.price,
                 originalPrice: offer.originalPrice,
                 isAffordable: offer.isAffordable,
-                discountSourceLabel: offer.discountSourceLabel,
+                discountSourceLabel: offer.isCompassDiscounted
+                    ? ItemTranslationScope.of(context).resolveDisplayName(
+                        'market_compass',
+                        offer.discountSourceLabel ?? '',
+                      )
+                    : offer.discountSourceLabel,
               ),
             ),
           ],
@@ -629,7 +639,7 @@ class _MarketOfferPriceLabel extends StatelessWidget {
               borderRadius: BorderRadius.circular(3),
             ),
             child: Text(
-              discountSourceLabel ?? '할인',
+              discountSourceLabel ?? context.translate('marketDiscount'),
               maxLines: 1,
               style: const TextStyle(
                 color: GameUiPalette.textPrimary,
@@ -701,7 +711,7 @@ class _MarketTileOfferCard extends StatelessWidget {
             ),
             const SizedBox(height: 3),
             Text(
-              _tileOfferCompactLabel(offer),
+              _tileOfferCompactLabel(context, offer),
               maxLines: 1,
               style: TextStyle(
                 color: offer.isAffordable
@@ -721,19 +731,27 @@ class _MarketTileOfferCard extends StatelessWidget {
 
 String _tileLabel(Tile tile) => '${tile.color.code}${tile.number}';
 
-String _tileOfferCompactLabel(RummiMarketTileOfferView offer) {
-  final price = offer.isFreeReward ? '무료' : '${offer.price}G';
+String _tileOfferCompactLabel(
+  BuildContext context,
+  RummiMarketTileOfferView offer,
+) {
+  final price = offer.isFreeReward
+      ? context.translate('marketFree')
+      : '${offer.price}G';
   if (!offer.tile.hasModifier) {
-    return '칩 ${offer.tile.baseChipValue} · $price';
+    return context.translate(
+      'marketTilePrice',
+      namedArgs: {'chips': '${offer.tile.baseChipValue}', 'price': price},
+    );
   }
   final modifier = offer.tile.enhancement != null
-      ? tileEnhancementDisplayName(offer.tile.enhancement!)
-      : tileSealDisplayName(offer.tile.seal!);
+      ? tileEnhancementDisplayName(offer.tile.enhancement!, context: context)
+      : tileSealDisplayName(offer.tile.seal!, context: context);
   return '$modifier · $price';
 }
 
-String _tileOfferDetailText(Tile tile) {
-  const base = '다음 블라인드부터 드로우 덱에 추가됩니다.';
+String _tileOfferDetailText(BuildContext context, Tile tile) {
+  final base = context.translate('marketTileDeckNotice');
   if (!tile.hasModifier) return base;
-  return '$base ${tileModifierBadgeDescriptionText(tile)}';
+  return '$base ${tileModifierBadgeDescriptionText(tile, context: context)}';
 }

@@ -1,4 +1,3 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,7 +5,10 @@ import 'package:flutter/services.dart';
 import '../../../resources/asset_paths.dart';
 import '../../../resources/sound_manager.dart';
 import '../../../services/active_run_save_facade.dart';
+import '../../../utils/active_run_translation.dart';
+import '../../../utils/app_translation.dart';
 import '../../../utils/common_ui.dart';
+import '../../../widgets/semantic_text.dart';
 import '../game_feedback_cues.dart';
 import 'game_shared_widgets.dart';
 import 'game_ui_palette.dart';
@@ -50,7 +52,7 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
                 children: [
                   Expanded(
                     child: Text(
-                      context.tr('gameOptions'),
+                      dialogContext.translate('gameOptions'),
                       style: TextStyle(
                         fontFamily: AssetPaths.fontNexonLv2Gothic,
                         color: GameUiPalette.textPrimary.withValues(
@@ -60,7 +62,7 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
                     ),
                   ),
                   GameIconButtonChip(
-                    tooltip: context.tr('cancel'),
+                    tooltip: dialogContext.translate('cancel'),
                     onPressed: () {
                       SoundManager.playSfx(AssetPaths.sfxBtnSnd);
                       Navigator.of(
@@ -73,7 +75,7 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
               ),
               const SizedBox(height: 8),
               GameDialogSection(
-                title: context.tr('runSeedLabel'),
+                title: dialogContext.translate('runSeedLabel'),
                 margin: const EdgeInsets.only(bottom: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,13 +96,18 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
                           ),
                         ),
                         GameIconButtonChip(
-                          tooltip: context.tr('copy'),
+                          tooltip: dialogContext.translate('copy'),
                           onPressed: () async {
                             await Clipboard.setData(
                               ClipboardData(text: '$runSeed'),
                             );
-                            if (!context.mounted) return;
-                            showTopNotice(context, '시드 번호를 복사했습니다.');
+                            if (!context.mounted || !dialogContext.mounted) {
+                              return;
+                            }
+                            showTopNotice(
+                              context,
+                              dialogContext.translate('menuSeedCopied'),
+                            );
                           },
                           icon: Icons.copy_rounded,
                           backgroundColor: GameUiPalette.iconButtonMuted,
@@ -112,13 +119,13 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
               ),
               if (activeRunSaveView != null)
                 GameDialogSection(
-                  title: 'Run Snapshot',
+                  title: dialogContext.translate('menuRunSnapshot'),
                   margin: const EdgeInsets.only(bottom: 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        _activeRunSummaryLabel(activeRunSaveView),
+                      SemanticText(
+                        dialogContext.activeRunSnapshot(activeRunSaveView),
                         style: TextStyle(
                           color: GameUiPalette.textPrimary.withValues(
                             alpha: 0.92,
@@ -132,8 +139,8 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
                   ),
                 ),
               GameMenuActionTile(
-                title: context.tr('runInfoTitle'),
-                subtitle: context.tr('runInfoActionSubtitle'),
+                title: dialogContext.translate('runInfoTitle'),
+                subtitle: dialogContext.translate('runInfoActionSubtitle'),
                 icon: Icons.bar_chart_rounded,
                 accentColor: GameUiPalette.actionGoldBright,
                 onTap: () async {
@@ -144,8 +151,10 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
               ),
               const SizedBox(height: 8),
               GameMenuActionTile(
-                title: context.tr('tutorialBattleReplayTitle'),
-                subtitle: context.tr('tutorialBattleReplaySubtitle'),
+                title: dialogContext.translate('tutorialBattleReplayTitle'),
+                subtitle: dialogContext.translate(
+                  'tutorialBattleReplaySubtitle',
+                ),
                 icon: Icons.help_outline_rounded,
                 accentColor: GameUiPalette.menuAccentTutorial,
                 onTap: () async {
@@ -156,8 +165,8 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
               ),
               const SizedBox(height: 8),
               GameMenuActionTile(
-                title: '북마크하기',
-                subtitle: '현재 진행 상태를 북마크 슬롯 3개 중 하나에 저장합니다.',
+                title: dialogContext.translate('menuBookmark'),
+                subtitle: dialogContext.translate('menuBookmarkDesc'),
                 icon: Icons.bookmark_add_rounded,
                 accentColor: GameUiPalette.actionInfoBlue,
                 onTap: () async {
@@ -166,8 +175,8 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
               ),
               const SizedBox(height: 8),
               GameMenuActionTile(
-                title: '북마크 불러오기',
-                subtitle: '저장된 북마크를 불러오고 이어하기 데이터를 덮어씁니다.',
+                title: dialogContext.translate('menuLoadBookmark'),
+                subtitle: dialogContext.translate('menuBookmarkOptionsDesc'),
                 icon: Icons.bookmarks_rounded,
                 accentColor: GameUiPalette.titleDebugBlue,
                 onTap: () async {
@@ -180,8 +189,8 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
               ),
               const SizedBox(height: 8),
               GameMenuActionTile(
-                title: '현재 전투 재시작',
-                subtitle: '현재 전투 시작 시점으로만 되돌립니다.',
+                title: dialogContext.translate('menuRestartBattle'),
+                subtitle: dialogContext.translate('menuRestartBattleDesc'),
                 icon: Icons.replay_rounded,
                 accentColor: GameUiPalette.menuAccentRestart,
                 onTap: () async {
@@ -194,8 +203,10 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
               ),
               const SizedBox(height: 8),
               GameMenuActionTile(
-                title: isDebugFixtureRun ? '디버그 픽스처 재로드' : '현재 Station 재시작',
-                subtitle: '현재 진행을 유지한 채 이번 Station 시작 시점으로 되돌립니다.',
+                title: isDebugFixtureRun
+                    ? dialogContext.translate('menuReloadFixture')
+                    : dialogContext.translate('menuRestartStation'),
+                subtitle: dialogContext.translate('menuRestartStationDesc'),
                 icon: Icons.refresh_rounded,
                 accentColor: GameUiPalette.menuAccentRestart,
                 onTap: () async {
@@ -208,8 +219,8 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
               ),
               const SizedBox(height: 8),
               GameMenuActionTile(
-                title: context.tr('settings'),
-                subtitle: '설정 화면을 열고 복귀 후 현재 메뉴를 다시 엽니다.',
+                title: dialogContext.translate('settings'),
+                subtitle: dialogContext.translate('menuSettingsDesc'),
                 icon: Icons.settings_rounded,
                 accentColor: GameUiPalette.menuAccentSettings,
                 onTap: () async {
@@ -221,8 +232,8 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
               if (_enableTestCrash) ...[
                 const SizedBox(height: 8),
                 GameMenuActionTile(
-                  title: 'Crashlytics 테스트 크래시',
-                  subtitle: 'Firebase Console 수신 확인용입니다.',
+                  title: dialogContext.translate('menuTestCrash'),
+                  subtitle: dialogContext.translate('menuTestCrashDesc'),
                   icon: Icons.bug_report_rounded,
                   accentColor: GameUiPalette.menuAccentExit,
                   onTap: () {
@@ -232,8 +243,8 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
               ],
               const SizedBox(height: 8),
               GameMenuActionTile(
-                title: context.tr('exit'),
-                subtitle: '현재 런을 종료하고 타이틀 화면으로 돌아갑니다.',
+                title: dialogContext.translate('exit'),
+                subtitle: dialogContext.translate('menuExitDesc'),
                 icon: Icons.logout_rounded,
                 accentColor: GameUiPalette.menuAccentExit,
                 onTap: () async {
@@ -251,8 +262,4 @@ Future<GameOptionsCloseAction> showGameOptionsDialog({
     ),
   );
   return action ?? GameOptionsCloseAction.resumeGame;
-}
-
-String _activeRunSummaryLabel(RummiActiveRunSaveFacade summary) {
-  return summary.snapshotSummaryLabel();
 }

@@ -153,16 +153,8 @@ final GoRouter appRouter = GoRouter(
       path: RoutePaths.trial,
       pageBuilder: (context, state) => appTransitionPage(
         state: state,
-        child: HomePlaceholderView(
-          title: '특별 모드',
-          summary: '추가 규칙을 가진 별도 모드 자리입니다.',
-          cardTitle: '안내 카드',
+        child: TrialPlaceholderView(
           debugScrollPreset: state.uri.queryParameters['debug_scroll'],
-          items: [
-            '지금은 진입 구조만 먼저 분리해 둔 상태입니다.',
-            '규칙, 보상, 기록 정책은 아직 정해지지 않았습니다.',
-            '개발 검증용 진입은 여기 두지 않고 디버그에만 둡니다.',
-          ],
         ),
       ),
     ),

@@ -92,25 +92,54 @@ class _MarketRerollCostQuote {
   bool get hasDiscount => originalCost > cost;
 }
 
-String _rerollButtonLabel(_MarketRerollCostQuote quote) {
-  if (quote.cost <= 0) return '첫 리롤 무료';
-  if (quote.hasDiscount) return '리롤 ${quote.originalCost}→${quote.cost}';
-  return '리롤 ${quote.cost}';
+String _rerollButtonLabel(BuildContext context, _MarketRerollCostQuote quote) {
+  if (quote.cost <= 0) return context.translate('marketRerollFirstFree');
+  if (quote.hasDiscount) {
+    return context.translate(
+      'marketRerollDiscountPrice',
+      namedArgs: {'original': '${quote.originalCost}', 'cost': '${quote.cost}'},
+    );
+  }
+  return context.translate(
+    'marketRerollPrice',
+    namedArgs: {'cost': '${quote.cost}'},
+  );
 }
 
-String _rerollConfirmActionLabel(_MarketRerollCostQuote quote) {
-  return quote.cost <= 0 ? '무료 리롤' : '리롤';
+String _rerollConfirmActionLabel(
+  BuildContext context,
+  _MarketRerollCostQuote quote,
+) {
+  return quote.cost <= 0
+      ? context.translate('marketRerollFree')
+      : context.translate('marketReroll');
 }
 
-String _rerollConfirmMessage(String laneLabel, _MarketRerollCostQuote quote) {
+String _rerollConfirmMessage(
+  BuildContext context,
+  String laneLabel,
+  _MarketRerollCostQuote quote,
+) {
   if (quote.cost <= 0) {
-    return '$laneLabel 후보를 리롤할까요?\n상점 입장 보너스로 첫 리롤은 무료입니다.';
+    return context.translate(
+      'marketRerollFreeMessage',
+      namedArgs: {'lane': laneLabel},
+    );
   }
   if (quote.hasDiscount) {
-    return '$laneLabel 후보를 리롤할까요?\n'
-        '리롤 할인 적용: ${quote.originalCost}G → ${quote.cost}G';
+    return context.translate(
+      'marketRerollDiscountMessage',
+      namedArgs: {
+        'lane': laneLabel,
+        'original': '${quote.originalCost}',
+        'cost': '${quote.cost}',
+      },
+    );
   }
-  return '$laneLabel 후보를 리롤할까요?';
+  return context.translate(
+    'marketRerollMessage',
+    namedArgs: {'lane': laneLabel},
+  );
 }
 
 class _MarketPagerBar extends StatelessWidget {
@@ -176,7 +205,7 @@ class _MarketPagerBar extends StatelessWidget {
             children: [
               GameActionButton(
                 key: const ValueKey('market-reroll'),
-                label: _rerollButtonLabel(rerollQuote),
+                label: _rerollButtonLabel(context, rerollQuote),
                 background: GameUiPalette.tileChipInlaid,
                 compact: true,
                 onPressed: onReroll,
@@ -310,9 +339,22 @@ String _offerLaneLabel(_MarketOfferLane lane) {
 }
 
 String? _offerLaneBonusLabel(
+  BuildContext context,
   RummiMarketRuntimeFacade market,
   _MarketOfferLane lane,
 ) {
+  final count = lane == _MarketOfferLane.jester
+      ? market.jesterOfferBonusSlots
+      : market.itemOfferBonusSlots;
+  if (lane != _MarketOfferLane.tile && count != null) {
+    if (count <= 0) return null;
+    return context.translate(
+      lane == _MarketOfferLane.jester
+          ? 'coreActionTrophySlots'
+          : 'coreActionLensSlots',
+      namedArgs: {'count': '$count'},
+    );
+  }
   return switch (lane) {
     _MarketOfferLane.jester => market.jesterOfferSlotBonusLabel,
     _MarketOfferLane.tile => null,

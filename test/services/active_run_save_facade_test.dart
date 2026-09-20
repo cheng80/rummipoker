@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:rummipoker/logic/rummi_poker_grid/jester_meta.dart';
@@ -73,7 +75,29 @@ void main() {
         ),
       );
 
+      final before = sha256.convert(utf8.encode(jsonEncode(save.toJson())));
       final facade = RummiActiveRunSaveFacade.fromSaveData(save);
+      final after = sha256.convert(utf8.encode(jsonEncode(save.toJson())));
+      expect(after, before);
+      // Kept in the focused log as reproducible serialization evidence.
+      // ignore: avoid_print
+      print('SAVE_JSON_SHA256 before=$before after=$after');
+      final restored = ActiveRunSaveData.fromJson(save.toJson());
+      expect(jsonEncode(restored.toJson()), jsonEncode(save.toJson()));
+      expect(facade.difficulty, NewRunDifficulty.standard);
+      expect(facade.runModifier, NewRunModifier.basic);
+      for (final difficulty in NewRunDifficulty.values) {
+        for (final modifier in NewRunModifier.values) {
+          final json = save.toJson()
+            ..['difficulty'] = difficulty.name
+            ..['runModifier'] = modifier.id;
+          final typed = RummiActiveRunSaveFacade.fromSaveData(
+            ActiveRunSaveData.fromJson(json),
+          );
+          expect(typed.difficulty, difficulty);
+          expect(typed.runModifier, modifier);
+        }
+      }
 
       expect(facade.schemaVersion, 2);
       expect(facade.activeScene, 'shop');
@@ -111,6 +135,8 @@ void main() {
 
       final facade = RummiActiveRunSaveFacade.fromRuntimeState(runtime);
 
+      expect(facade.difficulty, runtime.difficulty);
+      expect(facade.runModifier, runtime.runModifier);
       expect(facade.schemaVersion, ActiveRunSaveService.schemaVersion);
       expect(facade.sceneAlias, RummiSaveSceneAlias.battle);
       expect(facade.currentStageIndex, 3);

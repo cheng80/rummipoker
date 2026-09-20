@@ -40,13 +40,28 @@ class _MarketTutorialTarget extends StatelessWidget {
 }
 
 class _MarketUseFeedbackToast extends StatelessWidget {
-  const _MarketUseFeedbackToast({required this.label, this.deltaLabel});
+  const _MarketUseFeedbackToast({
+    required this.label,
+    this.deltaLabel,
+    this.item,
+    this.deltaLabelBuilder,
+  });
 
   final String label;
   final String? deltaLabel;
+  final ItemDefinition? item;
+  final String? Function(BuildContext, ItemDefinition)? deltaLabelBuilder;
 
   @override
   Widget build(BuildContext context) {
+    final label = item == null
+        ? this.label
+        : ItemTranslationScope.of(
+            context,
+          ).resolveDisplayName(item!.id, this.label);
+    final deltaLabel = item == null
+        ? this.deltaLabel
+        : deltaLabelBuilder?.call(context, item!) ?? this.deltaLabel;
     return IgnorePointer(
       child: Align(
         alignment: const Alignment(0, 0.16),
@@ -98,7 +113,7 @@ class _MarketUseFeedbackToast extends StatelessWidget {
                       ),
                       if (deltaLabel != null)
                         Text(
-                          deltaLabel!,
+                          deltaLabel,
                           style: TextStyle(
                             color: fade(GameUiPalette.actionGoldBright),
                             fontSize: 13,
@@ -170,10 +185,10 @@ class _MarketEffectPresentationToast extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      presentation.title ?? event.sourceLabel,
+                      summary
+                          ? context.translate('marketEntryItemsTriggered')
+                          : localizedItemPresentationSource(context, event),
                       key: const ValueKey('market-effect-source'),
-                      maxLines: summary ? 2 : 1,
-                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: accent,
                         fontSize: 11,
@@ -192,10 +207,8 @@ class _MarketEffectPresentationToast extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              event.target.label,
+                              localizedItemPresentationTarget(context, event),
                               key: const ValueKey('market-effect-target'),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 color: GameUiPalette.textPrimary,
                                 fontSize: 13,
@@ -211,15 +224,17 @@ class _MarketEffectPresentationToast extends StatelessWidget {
                             size: 16,
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            event.resultLabel,
-                            key: const ValueKey('market-effect-result'),
-                            maxLines: 1,
-                            style: TextStyle(
-                              color: accent,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w900,
-                              height: 1.1,
+                          Flexible(
+                            flex: 2,
+                            child: Text(
+                              localizedItemPresentationResult(context, event),
+                              key: const ValueKey('market-effect-result'),
+                              style: TextStyle(
+                                color: accent,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w900,
+                                height: 1.1,
+                              ),
                             ),
                           ),
                         ],
@@ -275,10 +290,8 @@ class _MarketEffectSummaryList extends StatelessWidget {
               const SizedBox(width: 7),
               Expanded(
                 child: Text(
-                  '${event.sourceLabel}: ${event.resultLabel}',
+                  localizedItemPresentationSummary(context, event),
                   key: ValueKey('market-effect-summary-${event.itemId}'),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: GameUiPalette.textPrimary,
                     fontSize: 12,

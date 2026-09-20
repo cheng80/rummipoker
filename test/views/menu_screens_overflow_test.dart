@@ -12,6 +12,7 @@ import 'package:rummipoker/views/new_run_view.dart';
 import 'package:rummipoker/views/setting_view.dart';
 import 'package:rummipoker/views/title_view.dart';
 import 'package:rummipoker/widgets/fx/fx_ambient.dart';
+import '../support/test_translations.dart';
 
 /// 작은 화면과 문구가 긴 언어에서 메뉴 세 화면이 넘치지 않는지 본다.
 ///
@@ -54,6 +55,7 @@ void main() {
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       EasyLocalization(
+        assetLoader: const TestTranslationAssetLoader(),
         supportedLocales: locales,
         path: 'assets/translations',
         fallbackLocale: const Locale('ko'),

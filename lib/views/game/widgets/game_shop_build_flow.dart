@@ -62,6 +62,7 @@ extension _GameShopBuildFlow on _GameShopScreenState {
             selectedOwned.card,
             market.runtimeSnapshot,
             slotIndex: selectedOwned.slotIndex,
+            context: context,
           );
     final detailKey = ValueKey<String>(
       'market-detail-${_selectedOwnedIndex ?? 'none'}-$_selectedOfferIndex-'
@@ -125,7 +126,9 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                           ),
                           const SizedBox(width: 6),
                           GameIconButtonChip(
-                            tooltip: context.tr('tutorialMarketReplayTooltip'),
+                            tooltip: context.translate(
+                              'tutorialMarketReplayTooltip',
+                            ),
                             onPressed: () =>
                                 _startMarketTutorial(markSeen: false),
                             icon: Icons.help_outline_rounded,
@@ -134,6 +137,7 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                           ),
                           const SizedBox(width: 6),
                           GameIconButtonChip(
+                            key: const ValueKey('market-options-open'),
                             onPressed: _openOptions,
                             icon: Icons.more_horiz_rounded,
                             size: 36,
@@ -242,6 +246,8 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                                                       .runtimeSnapshot,
                                                                   slotIndex:
                                                                       index,
+                                                                  context:
+                                                                      context,
                                                                 ),
                                                           extended: index == 4,
                                                           activeEffect: null,
@@ -252,7 +258,9 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                                         ),
                                                       ),
                                                     );
-                                                    final previewCard = SizedBox(
+                                                    Widget previewCard(
+                                                      BuildContext context,
+                                                    ) => SizedBox(
                                                       width:
                                                           kMarketOwnedCardWidth,
                                                       height:
@@ -268,6 +276,8 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                                                     .runtimeSnapshot,
                                                                 slotIndex:
                                                                     index,
+                                                                context:
+                                                                    context,
                                                               ),
                                                         extended: index == 4,
                                                         activeEffect: null,
@@ -301,18 +311,21 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                                               onLongPress: () => _showMarketCardPreview(
                                                                 context,
                                                                 previewCard,
-                                                                title:
+                                                                title: (context) =>
                                                                     localizedJesterName(
                                                                       context,
                                                                       card,
                                                                     ),
                                                                 effectText:
-                                                                    localizedJesterEffect(
+                                                                    (
+                                                                      context,
+                                                                    ) => localizedJesterEffect(
                                                                       context,
                                                                       card,
                                                                     ),
-                                                                tags: [
+                                                                tags: (context) => [
                                                                   ..._jesterSynergyTags(
+                                                                    context,
                                                                     card,
                                                                   ),
                                                                   if (jesterRuntimeValueText(
@@ -321,6 +334,8 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                                                             .runtimeSnapshot,
                                                                         slotIndex:
                                                                             index,
+                                                                        context:
+                                                                            context,
                                                                       ) !=
                                                                       null)
                                                                     jesterRuntimeValueText(
@@ -329,6 +344,8 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                                                           .runtimeSnapshot,
                                                                       slotIndex:
                                                                           index,
+                                                                      context:
+                                                                          context,
                                                                     )!,
                                                                 ],
                                                               ),
@@ -453,9 +470,11 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                               context,
                                               selectedOwnedItemSlot,
                                             )
-                                          : '선택된 카드 없음',
+                                          : context.translate(
+                                              'marketNoSelection',
+                                            ),
                                       subtitle: selectedOwned != null
-                                          ? '보유 슬롯'
+                                          ? context.translate('marketOwnedSlot')
                                           : selectedOffer != null
                                           ? 'Jester Shop'
                                           : selectedItemOffer != null
@@ -466,9 +485,12 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                                 : 'Tile Shop'
                                           : selectedOwnedItemSlot != null
                                           ? _ownedItemSlotSubtitle(
+                                              context,
                                               selectedOwnedItemSlot,
                                             )
-                                          : '카드를 선택하세요',
+                                          : context.translate(
+                                              'marketSelectCard',
+                                            ),
                                       body: selectedOwned != null
                                           ? Column(
                                               crossAxisAlignment:
@@ -504,6 +526,7 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                                 selectedOffer.card,
                                               ),
                                               tags: _jesterSynergyTags(
+                                                context,
                                                 selectedOffer.card,
                                               ),
                                             )
@@ -514,26 +537,46 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                                 selectedItemOffer,
                                               ),
                                               tags: _itemSynergyTags(
+                                                context,
                                                 selectedItemOffer.item,
                                               ),
                                             )
                                           : selectedTileOffer != null
                                           ? _MarketOfferDetailBody(
                                               effectText: _tileOfferDetailText(
+                                                context,
                                                 selectedTileOffer.tile,
                                               ),
                                               tags: [
-                                                '타일 ${_tileLabel(selectedTileOffer.tile)}',
-                                                '칩 ${selectedTileOffer.tile.baseChipValue}',
+                                                context.translate(
+                                                  'marketNamedTile',
+                                                  namedArgs: {
+                                                    'tile': _tileLabel(
+                                                      selectedTileOffer.tile,
+                                                    ),
+                                                  },
+                                                ),
+                                                context.translate(
+                                                  'marketBaseChips',
+                                                  namedArgs: {
+                                                    'count':
+                                                        '${selectedTileOffer.tile.baseChipValue}',
+                                                  },
+                                                ),
                                                 if (selectedTileOffer
                                                     .tile
                                                     .hasModifier)
                                                   tileModifierSummary(
                                                     selectedTileOffer.tile,
+                                                    context: context,
                                                   ),
                                                 selectedTileOffer.isFreeReward
-                                                    ? '무료 선택'
-                                                    : '덱 추가',
+                                                    ? context.translate(
+                                                        'marketFreeSelection',
+                                                      )
+                                                    : context.translate(
+                                                        'marketAddToDeck',
+                                                      ),
                                               ],
                                             )
                                           : selectedOwnedItemSlot != null
@@ -541,7 +584,9 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                               slot: selectedOwnedItemSlot,
                                             )
                                           : _MarketDescriptionText(
-                                              '선택한 카드의 정보와 액션이 여기에 표시됩니다.',
+                                              context.translate(
+                                                'marketSelectionHelp',
+                                              ),
                                               color: GameUiPalette.textPrimary
                                                   .withValues(alpha: 0.68),
                                             ),
@@ -549,7 +594,9 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                           ? _MarketActionPane(
                                               priceLabel:
                                                   '+${selectedOwned.sellPrice}',
-                                              buttonLabel: '판매',
+                                              buttonLabel: context.translate(
+                                                'marketSell',
+                                              ),
                                               buttonColor:
                                                   GameUiPalette.actionDanger,
                                               onPressed: () => _sellOwned(
@@ -560,7 +607,9 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                           ? _MarketActionPane(
                                               priceLabel:
                                                   '${selectedOffer.price}',
-                                              buttonLabel: '구매',
+                                              buttonLabel: context.translate(
+                                                'marketBuy',
+                                              ),
                                               buttonColor:
                                                   GameUiPalette.actionGold,
                                               foreground: GameUiPalette.ink,
@@ -572,7 +621,10 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                                   selectedOffer.isAffordable
                                                   ? null
                                                   : () {
-                                                      const reason = 'Gold 부족';
+                                                      final reason = context
+                                                          .translate(
+                                                            'marketNotEnoughGold',
+                                                          );
                                                       _startMarketDenyFeedback(
                                                         'jester-buy',
                                                         reason,
@@ -586,18 +638,25 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                               disabledReason:
                                                   selectedOffer.isAffordable
                                                   ? null
-                                                  : 'Gold 부족',
+                                                  : context.translate(
+                                                      'marketNotEnoughGold',
+                                                    ),
                                               denyActive:
                                                   _marketDenyTarget ==
                                                   'jester-buy',
                                               denyTick: _marketDenyTick,
-                                              denyReason: _marketDenyReason,
+                                              denyReason:
+                                                  _marketDenyReasonBuilder
+                                                      ?.call(context) ??
+                                                  _marketDenyReason,
                                             )
                                           : selectedItemOffer != null
                                           ? _MarketActionPane(
                                               priceLabel:
                                                   '${selectedItemOffer.price}',
-                                              buttonLabel: '구매',
+                                              buttonLabel: context.translate(
+                                                'marketBuy',
+                                              ),
                                               buttonColor:
                                                   GameUiPalette.actionGold,
                                               foreground: GameUiPalette.ink,
@@ -609,7 +668,10 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                                   selectedItemOffer.isAffordable
                                                   ? null
                                                   : () {
-                                                      const reason = 'Gold 부족';
+                                                      final reason = context
+                                                          .translate(
+                                                            'marketNotEnoughGold',
+                                                          );
                                                       _startMarketDenyFeedback(
                                                         'item-buy',
                                                         reason,
@@ -623,23 +685,34 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                               disabledReason:
                                                   selectedItemOffer.isAffordable
                                                   ? null
-                                                  : 'Gold 부족',
+                                                  : context.translate(
+                                                      'marketNotEnoughGold',
+                                                    ),
                                               denyActive:
                                                   _marketDenyTarget ==
                                                   'item-buy',
                                               denyTick: _marketDenyTick,
-                                              denyReason: _marketDenyReason,
+                                              denyReason:
+                                                  _marketDenyReasonBuilder
+                                                      ?.call(context) ??
+                                                  _marketDenyReason,
                                             )
                                           : selectedTileOffer != null
                                           ? _MarketActionPane(
                                               priceLabel:
                                                   selectedTileOffer.isFreeReward
-                                                  ? '무료'
+                                                  ? context.translate(
+                                                      'marketFree',
+                                                    )
                                                   : '${selectedTileOffer.price}',
                                               buttonLabel:
                                                   selectedTileOffer.isFreeReward
-                                                  ? '선택'
-                                                  : '구매',
+                                                  ? context.translate(
+                                                      'marketSelect',
+                                                    )
+                                                  : context.translate(
+                                                      'marketBuy',
+                                                    ),
                                               buttonColor:
                                                   GameUiPalette.actionGold,
                                               foreground: GameUiPalette.ink,
@@ -651,7 +724,10 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                                   selectedTileOffer.isAffordable
                                                   ? null
                                                   : () {
-                                                      const reason = 'Gold 부족';
+                                                      final reason = context
+                                                          .translate(
+                                                            'marketNotEnoughGold',
+                                                          );
                                                       _startMarketDenyFeedback(
                                                         'tile-buy',
                                                         reason,
@@ -665,12 +741,17 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                               disabledReason:
                                                   selectedTileOffer.isAffordable
                                                   ? null
-                                                  : 'Gold 부족',
+                                                  : context.translate(
+                                                      'marketNotEnoughGold',
+                                                    ),
                                               denyActive:
                                                   _marketDenyTarget ==
                                                   'tile-buy',
                                               denyTick: _marketDenyTick,
-                                              denyReason: _marketDenyReason,
+                                              denyReason:
+                                                  _marketDenyReasonBuilder
+                                                      ?.call(context) ??
+                                                  _marketDenyReason,
                                             )
                                           : selectedOwnedItemSlot != null
                                           ? _ownedMarketItemActionPane(
@@ -717,6 +798,7 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                             feedbackTick:
                                                 _marketRerollFeedbackTick,
                                             bonusLabel: _offerLaneBonusLabel(
+                                              context,
                                               market,
                                               currentOfferLane,
                                             ),
@@ -761,8 +843,22 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                                           _shopTab ==
                                                                   _MarketShopTab
                                                                       .cardsAndQuickSlots
-                                                              ? '이번 Market에 노출된 ${_offerLaneLabel(currentOfferLane)} 후보가 없습니다.'
-                                                              : '이번 Market에 노출된 ${_offerLaneLabel(currentOfferLane)} 후보가 없습니다.',
+                                                              ? context.translate(
+                                                                  'marketNoOffers',
+                                                                  namedArgs: {
+                                                                    'lane': _offerLaneLabel(
+                                                                      currentOfferLane,
+                                                                    ),
+                                                                  },
+                                                                )
+                                                              : context.translate(
+                                                                  'marketNoOffers',
+                                                                  namedArgs: {
+                                                                    'lane': _offerLaneLabel(
+                                                                      currentOfferLane,
+                                                                    ),
+                                                                  },
+                                                                ),
                                                           style: TextStyle(
                                                             color: GameUiPalette
                                                                 .textPrimary
@@ -861,7 +957,7 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                         children: [
                           Expanded(
                             child: GameActionButton(
-                              label: '메인 메뉴',
+                              label: context.translate('marketMainMenu'),
                               background: GameUiPalette.disabledControl,
                               onPressed: () async {
                                 GameFeedback.play(GameCue.menuNavigate);
@@ -874,7 +970,7 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                                   if (context.mounted) {
                                     showBottomNotice(
                                       context,
-                                      '저장에 실패했습니다. 다시 시도해 주세요.',
+                                      context.translate('marketSaveFailed'),
                                     );
                                   }
                                 }
@@ -884,7 +980,7 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                           const SizedBox(width: 10),
                           Expanded(
                             child: GameActionButton(
-                              label: '다음 Station',
+                              label: context.translate('marketNextStation'),
                               background: GameUiPalette.marketPositive,
                               onPressed: () async {
                                 GameFeedback.play(GameCue.stationAdvance);
@@ -926,6 +1022,8 @@ extension _GameShopBuildFlow on _GameShopScreenState {
                   Positioned.fill(
                     child: _MarketUseFeedbackToast(
                       label: _marketUseFeedbackLabel!,
+                      item: _marketUseFeedbackItem,
+                      deltaLabelBuilder: _marketUseFeedbackDeltaLabel,
                       deltaLabel: _marketUseFeedbackDelta,
                     ),
                   ),

@@ -58,9 +58,15 @@ class GameStageClearOverlay extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      isEndless
-                          ? (isSettlement ? 'ENDLESS SCORE' : 'ENDLESS CLEAR')
-                          : (isSettlement ? 'SCORE SETTLED' : 'STATION CLEAR'),
+                      context.translate(
+                        isEndless
+                            ? (isSettlement
+                                  ? 'coreSettlementEndlessScore'
+                                  : 'coreSettlementEndlessClear')
+                            : (isSettlement
+                                  ? 'coreSettlementScoreSettled'
+                                  : 'coreSettlementStationClear'),
+                      ),
                       style: TextStyle(
                         color: isSettlement
                             ? GameUiPalette.textPrimary.withValues(alpha: 0.78)
@@ -72,7 +78,15 @@ class GameStageClearOverlay extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      isEndless ? '무한 도전 S$stageIndex' : 'Station $stageIndex',
+                      isEndless
+                          ? context.translate(
+                              'marketEndlessStation',
+                              namedArgs: {'stage': '$stageIndex'},
+                            )
+                          : context.translate(
+                              'coreSettlementStation',
+                              namedArgs: {'stage': '$stageIndex'},
+                            ),
                       style: TextStyle(
                         color: isEndless
                             ? GameUiPalette.specialEndlessText
@@ -101,7 +115,9 @@ class GameStageClearOverlay extends StatelessWidget {
                       )
                     else
                       Text(
-                        isEndless ? '무한 도전 목표 달성' : 'Station Goal 달성',
+                        isEndless
+                            ? context.translate('marketEndlessGoalReached')
+                            : context.translate('marketGoalReached'),
                         style: TextStyle(
                           color: GameUiPalette.textPrimary.withValues(
                             alpha: 0.9,
@@ -112,7 +128,12 @@ class GameStageClearOverlay extends StatelessWidget {
                       ),
                     const SizedBox(height: 8),
                     Text(
-                      isSettlement ? '이번 확정으로 +$scoreAdded' : '정산 중...',
+                      isSettlement
+                          ? context.translate(
+                              'marketConfirmedScore',
+                              namedArgs: {'score': '$scoreAdded'},
+                            )
+                          : context.translate('marketSettling'),
                       style: TextStyle(
                         color: GameUiPalette.textPrimary.withValues(
                           alpha: 0.66,
@@ -232,8 +253,8 @@ class GameFloatingSettlementBurst extends StatelessWidget {
         ? _settlementStepMultiEffectLabel(context, step, activeEffects)
         : _settlementStepLabel(context, currentLine, step, activeEffect);
     final subLabel = activeEffects.length > 1
-        ? _settlementStepMultiEffectSubLabel(activeEffects)
-        : _settlementStepSubLabel(currentLine, step, activeEffect);
+        ? _settlementStepMultiEffectSubLabel(context, activeEffects)
+        : _settlementStepSubLabel(context, currentLine, step, activeEffect);
     final displayedScore = activeEffects.length > 1
         ? activeEffects.fold<int>(0, (sum, effect) => sum + effect.scoreDelta)
         : _settlementStepScore(currentLine, step, activeEffect);
@@ -345,23 +366,38 @@ String _settlementStepMultiEffectLabel(
             ScoringPresentationStep.item => ItemTranslationScope.of(
               context,
             ).resolveDisplayName(effect.jesterId, effect.displayName),
-            _ => effect.displayName,
+            _ => localizedSettlementTileEffectName(context, effect),
           };
         })
         .join(' · ');
   }
   return switch (step) {
-    ScoringPresentationStep.jester => 'Jester 발동 x${effects.length}',
-    ScoringPresentationStep.tile => '타일 효과 x${effects.length}',
-    ScoringPresentationStep.item => 'Item 발동 x${effects.length}',
-    _ => '점수 효과 x${effects.length}',
+    ScoringPresentationStep.jester => context.translate(
+      'marketJesterEffects',
+      namedArgs: {'count': '${effects.length}'},
+    ),
+    ScoringPresentationStep.tile => context.translate(
+      'marketTileEffects',
+      namedArgs: {'count': '${effects.length}'},
+    ),
+    ScoringPresentationStep.item => context.translate(
+      'marketItemEffects',
+      namedArgs: {'count': '${effects.length}'},
+    ),
+    _ => context.translate(
+      'marketScoreEffects',
+      namedArgs: {'count': '${effects.length}'},
+    ),
   };
 }
 
 String _settlementStepMultiEffectSubLabel(
+  BuildContext context,
   List<RummiJesterEffectBreakdown> effects,
 ) {
-  return effects.map(jesterEffectBadge).join(' · ');
+  return effects
+      .map((effect) => jesterEffectBadge(effect, context: context))
+      .join(' · ');
 }
 
 String _settlementStepLabel(
@@ -370,57 +406,95 @@ String _settlementStepLabel(
   ScoringPresentationStep step,
   RummiJesterEffectBreakdown? effect,
 ) {
-  if (line == null) return '점수 정산';
+  if (line == null) return context.translate('marketScoreSettlement');
   return switch (step) {
-    ScoringPresentationStep.boardLine =>
-      '${gameLineRefShortLabel(line.ref)} 라인',
-    ScoringPresentationStep.handRank => gameHandRankLabel(line.rank),
-    ScoringPresentationStep.overlap => 'overlap bonus',
+    ScoringPresentationStep.boardLine => context.translate(
+      'marketNamedLine',
+      namedArgs: {'line': localizedGameLineRefShortLabel(context, line.ref)},
+    ),
+    ScoringPresentationStep.handRank => gameHandRankLabel(
+      line.rank,
+      context: context,
+    ),
+    ScoringPresentationStep.overlap => context.translate(
+      'coreSettlementOverlap',
+    ),
     ScoringPresentationStep.constraint =>
       line.constraintPenalties.isEmpty
-          ? '제약 적용'
-          : line.constraintPenalties.first.title,
+          ? context.translate('marketConstraintApplied')
+          : (line.constraintPenalties.first.displayKeys == null
+                ? line.constraintPenalties.first.title
+                : context.translate(
+                    line.constraintPenalties.first.displayKeys!.titleKey,
+                  )),
     ScoringPresentationStep.jester =>
       effect == null
-          ? 'Jester 발동'
+          ? context.translate('marketJesterEffect')
           : JesterTranslationScope.of(
               context,
             ).resolveDisplayName(effect.jesterId, effect.displayName),
     ScoringPresentationStep.tile =>
-      effect == null ? '타일 효과' : effect.displayName,
+      effect == null
+          ? context.translate('marketTileEffect')
+          : localizedSettlementTileEffectName(context, effect),
     ScoringPresentationStep.item =>
       effect == null
-          ? 'Item 발동'
+          ? context.translate('marketItemEffect')
           : ItemTranslationScope.of(
               context,
             ).resolveDisplayName(effect.jesterId, effect.displayName),
-    ScoringPresentationStep.finalScore => 'Station Goal',
-    ScoringPresentationStep.none =>
-      '${gameHandRankLabel(line.rank)} · ${gameLineRefShortLabel(line.ref)}',
+    ScoringPresentationStep.finalScore => context.translate(
+      'coreSettlementGoal',
+    ),
+    ScoringPresentationStep.none => context.translate(
+      'marketRankLine',
+      namedArgs: {
+        'rank': gameHandRankLabel(line.rank, context: context),
+        'line': localizedGameLineRefShortLabel(context, line.ref),
+      },
+    ),
   };
 }
 
 String? _settlementStepSubLabel(
+  BuildContext context,
   ConfirmedLineBreakdown? line,
   ScoringPresentationStep step,
   RummiJesterEffectBreakdown? effect,
 ) {
   if (line == null) return null;
   return switch (step) {
-    ScoringPresentationStep.boardLine => '보드 라인 확정',
-    ScoringPresentationStep.handRank =>
-      '칩 ${line.rankBaseScore ?? line.baseScore}',
-    ScoringPresentationStep.overlap => '겹침 +${line.overlapBonus}',
+    ScoringPresentationStep.boardLine => context.translate(
+      'marketBoardLineConfirmed',
+    ),
+    ScoringPresentationStep.handRank => context.translate(
+      'marketBaseChips',
+      namedArgs: {'count': '${line.rankBaseScore ?? line.baseScore}'},
+    ),
+    ScoringPresentationStep.overlap => context.translate(
+      'marketOverlapBonus',
+      namedArgs: {'count': '${line.overlapBonus}'},
+    ),
     ScoringPresentationStep.constraint =>
       line.constraintPenalties.isEmpty
           ? null
-          : line.constraintPenalties.first.ruleText,
+          : (line.constraintPenalties.first.displayKeys == null
+                ? line.constraintPenalties.first.ruleText
+                : context.translate(
+                    line.constraintPenalties.first.displayKeys!.ruleTextKey,
+                  )),
     ScoringPresentationStep.jester ||
     ScoringPresentationStep.tile ||
     ScoringPresentationStep.item =>
-      effect == null ? null : jesterEffectBadge(effect),
-    ScoringPresentationStep.finalScore => gameScoreBreakdownLabel(line),
-    ScoringPresentationStep.none => gameScoreBreakdownLabel(line),
+      effect == null ? null : jesterEffectBadge(effect, context: context),
+    ScoringPresentationStep.finalScore => gameScoreBreakdownLabel(
+      line,
+      context: context,
+    ),
+    ScoringPresentationStep.none => gameScoreBreakdownLabel(
+      line,
+      context: context,
+    ),
   };
 }
 

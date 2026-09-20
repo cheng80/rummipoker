@@ -19,6 +19,7 @@ import 'package:rummipoker/services/tutorial_state_service.dart';
 import 'package:rummipoker/utils/storage_helper.dart';
 import 'package:rummipoker/views/game_view.dart';
 import 'package:rummipoker/widgets/fx/motion_policy.dart';
+import '../../../support/test_translations.dart';
 
 /// 정산을 1x, 즉시, 중간 탭 스킵, 동작 줄이기로 돌려도 저장되는 최종 상태가 같아야 한다.
 void main() {
@@ -135,6 +136,7 @@ void main() {
 
 Widget _app(ActiveRunRuntimeState restoredRun) {
   return EasyLocalization(
+    assetLoader: const TestTranslationAssetLoader(),
     supportedLocales: const [Locale('ko'), Locale('en')],
     path: 'assets/translations',
     fallbackLocale: const Locale('ko'),

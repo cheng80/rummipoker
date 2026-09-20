@@ -7,7 +7,9 @@ class GameTopHud extends StatelessWidget {
     required this.battle,
     required this.onOptionsTap,
     this.onTutorialTap,
-    this.difficultyLabel = '표준',
+    this.difficultyLabel,
+    this.difficulty,
+    this.runModifier,
     this.onBlindInfoTap,
     this.stationGoalDisplayScore,
     this.stationGoalPulse = false,
@@ -17,7 +19,9 @@ class GameTopHud extends StatelessWidget {
 
   final RummiStationRuntimeFacade station;
   final RummiBattleRuntimeFacade battle;
-  final String difficultyLabel;
+  final String? difficultyLabel;
+  final NewRunDifficulty? difficulty;
+  final NewRunModifier? runModifier;
   final VoidCallback onOptionsTap;
   final VoidCallback? onTutorialTap;
   final VoidCallback? onBlindInfoTap;
@@ -30,6 +34,11 @@ class GameTopHud extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final difficultyLabel = context.runModeLabel(
+      difficulty: difficulty,
+      runModifier: runModifier,
+      difficultyLabel: this.difficultyLabel,
+    );
     final objective = station.objective;
     final scoreTowardObjective =
         stationGoalDisplayScore ?? objective.scoreTowardObjective;
@@ -43,9 +52,13 @@ class GameTopHud extends StatelessWidget {
       isEndless: isEndless,
     );
     final bossModifier = battle.bossModifier;
-    final stationLabel = isEndless
-        ? '∞S${battle.stageIndex} · $difficultyLabel'
-        : 'S${battle.stageIndex} · $difficultyLabel';
+    final stationLabel = context.translate(
+      'coreSaveStationMode',
+      namedArgs: {
+        'station': '${isEndless ? '∞' : ''}S${battle.stageIndex}',
+        'mode': difficultyLabel,
+      },
+    );
     final goalLabel = isEndless ? 'ENDLESS GOAL' : 'STATION GOAL';
     final goalColor = isEndless
         ? GameUiPalette.specialGold
@@ -103,7 +116,12 @@ class GameTopHud extends StatelessWidget {
                     const SizedBox(height: 0),
                     if (bossModifier == null)
                       Text(
-                        '보상 +${RummiRunProgress.stageClearGoldBase}',
+                        context.translate(
+                          'battleWidgetsReward',
+                          namedArgs: {
+                            'gold': '${RummiRunProgress.stageClearGoldBase}',
+                          },
+                        ),
                         style: gameHudSubStyle,
                         maxLines: 1,
                         textAlign: TextAlign.center,

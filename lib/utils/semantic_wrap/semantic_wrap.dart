@@ -615,7 +615,9 @@ SemanticWrapResult selectLineBreaks({
 /// The package calls this an experimental model trained on 100 Korean article
 /// titles, so it suits short display text, not body copy.
 final PhraseModel koTitlePhraseModel = PhraseModel(
-  levels: [
+  // The widget caches this preset only. Its generated weights are const, and
+  // its level list must also stay immutable for cached layouts to remain valid.
+  levels: List<PhraseLevel>.unmodifiable([
     PhraseLevel(name: 'coarse', weights: koreanCoarseTitleWeights, penalty: 0),
     PhraseLevel(
       name: 'medium',
@@ -623,6 +625,6 @@ final PhraseModel koTitlePhraseModel = PhraseModel(
       penalty: 0.35,
     ),
     PhraseLevel(name: 'fine', weights: koreanFineTitleWeights, penalty: 0.7),
-  ],
+  ]),
   fallbackPenalty: 1,
 );
