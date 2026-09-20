@@ -127,6 +127,53 @@ python3 -m http.server 8080
 - 예: `"/rummipoker"` ❌ (끝에 `/` 없음)
 - 루트에서 서비스할 경우: `"/"`
 
+### 웹 splash fade와 `flutter_native_splash` 재생성
+
+웹 splash는 첫 Flutter 프레임 위에서 240ms 동안 서서히 사라집니다. 이 fade는 `web/index.html`의 `removeSplashFromWeb` 함수 안에 직접 넣은 코드입니다. 그런데 이 함수가 들어 있는 `<script id="splash-screen-script">` 블록은 `flutter_native_splash` 패키지가 만드는 블록입니다. 그래서 `dart run flutter_native_splash:create`를 다시 실행하면 이 블록이 패키지 원본으로 덮어써지고 fade가 조용히 사라집니다. 원본 함수는 splash 요소를 바로 `remove()`하므로 화면이 하드컷으로 바뀝니다.
+
+1. 재생성 직후에 `git diff web/index.html`을 실행합니다.
+2. diff에서 `removeSplashFromWeb` 함수가 `document.getElementById("splash")?.remove();` 세 줄짜리 원본으로 돌아가 있으면 fade가 빠진 것입니다. `transition = "opacity 240ms ease-out"` 줄이 diff에 삭제로 보여도 마찬가지입니다.
+3. 아래 코드로 `removeSplashFromWeb` 함수와 바로 위 주석을 통째로 바꿉니다. 이 코드는 현재 `web/index.html`의 내용과 같습니다.
+
+```html
+    // T4: 첫 Flutter 프레임 위에서 splash를 짧게 fade한 뒤 지운다(하드컷 방지).
+    // 동작 줄이기에서는 바로 지운다. transitionend가 오지 않아도 타이머로 지운다.
+    function removeSplashFromWeb() {
+      var nodes = ["splash", "splash-branding"]
+        .map(function (id) { return document.getElementById(id); })
+        .filter(Boolean);
+      document.body.style.background = "transparent";
+      var reduce = window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (reduce) {
+        nodes.forEach(function (n) { n.remove(); });
+        return;
+      }
+      nodes.forEach(function (n) {
+        n.style.position = "fixed";
+        n.style.inset = "0";
+        n.style.zIndex = "2147483647";
+        n.style.pointerEvents = "none";
+        n.style.background = "#ffffff";
+        n.style.transition = "opacity 240ms ease-out";
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () { n.style.opacity = "0"; });
+        });
+        setTimeout(function () { n.remove(); }, 320);
+      });
+    }
+```
+
+동작 줄이기(`prefers-reduced-motion: reduce`)에서는 fade 없이 바로 지웁니다. `transitionend`에 기대지 않고 320ms 타이머로도 지우므로 이벤트가 오지 않아도 splash가 남지 않습니다.
+
+가장 쉬운 되돌리기 방법은 재생성 결과를 버리는 것입니다.
+
+1. `git checkout -- web/index.html`로 fade가 들어 있던 파일을 복원합니다.
+2. 재생성이 꼭 필요했던 변경(splash 이미지나 배경색 변경으로 바뀐 생성 부분)이 있다면 그 부분만 다시 반영합니다. `removeSplashFromWeb` 함수는 건드리지 않습니다.
+3. `flutter build web --release --base-href /rummipoker/` 결과를 로컬 서버로 띄우고, 새로고침할 때 splash가 서서히 사라지는지 눈으로 확인합니다. 하드컷으로 사라지면 fade가 아직 빠져 있는 것입니다.
+
+`web/index.html`의 splash `<script>` 위에도 이 절을 가리키는 한 줄 주석이 있습니다. 패키지가 그 주석까지 지울 수 있으므로 이 문서가 정본입니다.
+
 ### 관련 파일
 
 - `web/index.html`: `<base href="$FLUTTER_BASE_HREF">` — 빌드 시 `--base-href` 값으로 치환됨

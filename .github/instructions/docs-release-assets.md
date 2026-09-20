@@ -33,6 +33,7 @@ alwaysApply: false
 - screenshot fixture는 최종 화면과 동일한 장면을 안정적으로 만드는 데만 쓰며 debug chrome은 숨긴다. 화면 변경 뒤 기존 캡처를 재사용하지 않는다.
 - 인포그래픽 HTML은 구조화 원천과 관계도만 제공한다. 최종물 요청 시 HTML screenshot으로 대체하지 않고 지정된 poster/image-generation 경로를 사용한다.
 - Rummi Poker 인포그래픽 제목에 `Grid`를 붙이지 않는다. 포커는 족보 차용으로 설명하고 시각 예시는 숫자·색의 루미큐브식 tile을 쓴다. 기존 이미지의 일부만 바꾸라는 요청은 다른 구성·문구를 재설계하지 않는다.
+- `dart run flutter_native_splash:create`는 `web/index.html`의 splash 블록을 덮어써 직접 넣은 fade를 지운다. 실행 직후 `git diff web/index.html`로 확인하고, 빠졌으면 `docs/release/web_build.md`의 절차로 다시 넣는다.
 - build, deploy, store 제출, 외부 업로드는 명시적 요청이 있을 때만 수행한다. 실제 실행하지 않은 검증을 통과로 기록하지 않는다.
 
 ## 유지보수
