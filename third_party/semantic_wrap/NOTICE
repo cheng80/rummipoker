@@ -1,0 +1,29 @@
+semantic-wrap
+Copyright 2026 Woohyun Park
+
+This product includes a small BudouX-compatible model inference implementation
+adapted from the BudouX Parser, Copyright 2021 Google LLC, licensed under the
+Apache License 2.0.
+
+BudouX: https://github.com/google/budoux
+Apache License 2.0: https://www.apache.org/licenses/LICENSE-2.0
+
+-------------------------------------------------------------------------------
+Use in this repository
+-------------------------------------------------------------------------------
+
+Rummi Poker Grid contains a Dart port of the line-breaking core of semantic-wrap
+version 0.4.0, and a copy of the Korean phrase model weights from the
+@semantic-wrap/ko package of the same version.
+
+  Upstream: https://github.com/woohyun-park/semantic-wrap
+  Ported files:
+    lib/utils/semantic_wrap/semantic_wrap.dart   (port of @semantic-wrap/core)
+    lib/utils/semantic_wrap/ko_title_model.dart  (weights from @semantic-wrap/ko)
+
+Both files carry the attribution in their header. The port keeps the space
+boundary path the Korean preset uses and leaves out the paths that preset never
+reaches; docs/core/I18N.md lists what was left out and why.
+
+The Korean model is described by its authors as experimental, trained on 100
+Korean article titles. It never predicts a boundary inside a Korean word.
