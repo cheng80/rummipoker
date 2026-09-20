@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:rummipoker/views/game/game_feedback_cues.dart';
+import 'package:rummipoker/resources/asset_paths.dart';
 import 'package:rummipoker/resources/game_haptics.dart';
 import 'package:rummipoker/resources/sound_manager.dart';
 import 'package:rummipoker/services/game_settings.dart';
@@ -95,7 +95,7 @@ void main() {
     await pumpNewRun(tester);
     await tapHighStakes(tester);
 
-    expect(sfx, [gameFeedbackCues[GameCue.deny]!.sfx]);
+    expect(sfx, [AssetPaths.sfxFail]);
     expect(haptics, [HapticGrade.error]);
     var state = await tester.runAsync(RunUnlockStateService.load);
     expect(state!.isRunModifierUnlocked(NewRunModifier.highStakes), isFalse);
@@ -104,7 +104,7 @@ void main() {
     await tester.runAsync(() => RunUnlockStateService.addInsight(20));
     await tapHighStakes(tester);
 
-    expect(sfx, [gameFeedbackCues[GameCue.unlock]!.sfx]);
+    expect(sfx, [AssetPaths.sfxClear]);
     expect(haptics, [HapticGrade.impact]);
     state = await tester.runAsync(RunUnlockStateService.load);
     expect(state!.isRunModifierUnlocked(NewRunModifier.highStakes), isTrue);

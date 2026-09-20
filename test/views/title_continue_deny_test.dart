@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:rummipoker/views/game/game_feedback_cues.dart';
+import 'package:rummipoker/resources/asset_paths.dart';
 import 'package:rummipoker/resources/game_haptics.dart';
 import 'package:rummipoker/resources/sound_manager.dart';
 import 'package:rummipoker/services/game_settings.dart';
@@ -76,7 +76,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('home-entry-continue')));
     await tester.pumpAndSettle();
 
-    expect(sfx, [gameFeedbackCues[GameCue.deny]!.sfx]);
+    expect(sfx, [AssetPaths.sfxFail]);
     expect(haptics, [HapticGrade.error]);
     expect(find.byType(Dialog), findsNothing);
 

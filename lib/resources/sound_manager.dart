@@ -16,17 +16,11 @@ class SoundManager {
 
   static const Duration _resumeStateSettleDelay = Duration(milliseconds: 120);
   static const int _sfxPoolMaxPlayers = 3;
-  /// 네이티브에서 빠르게 연달아 울리는 효과음. 재생마다 새 player를 만들지 않게
-  /// pool로 돌린다.
   static const Set<String> _pooledSfxPaths = <String>{
     AssetPaths.sfxBtnSnd,
     AssetPaths.sfxCollect,
     AssetPaths.sfxClear,
     AssetPaths.sfxTimeUp,
-    AssetPaths.sfxScoreTick,
-    AssetPaths.sfxTilePick,
-    AssetPaths.sfxTilePlace,
-    AssetPaths.sfxMultHit,
   };
 
   static String? _currentBgm;
@@ -46,50 +40,15 @@ class SoundManager {
   static double _globalPitch = 1;
   static Timer? _globalPitchRamp;
 
-  /// 앱을 열자마자 받아 두는 효과음. 손가락을 대는 순간 바로 울려야 하는 것들이다.
-  static const List<String> _eagerSfxPaths = <String>[
+  static const List<String> _sfxPaths = <String>[
     AssetPaths.sfxTimeTic,
     AssetPaths.sfxStart,
     AssetPaths.sfxCollect,
     AssetPaths.sfxFail,
     AssetPaths.sfxBtnSnd,
-    AssetPaths.sfxUiToggle,
-    AssetPaths.sfxPanelOpen,
-    AssetPaths.sfxPanelClose,
-    AssetPaths.sfxDeny,
-    AssetPaths.sfxTilePick,
-    AssetPaths.sfxTilePlace,
-    AssetPaths.sfxCardDraw,
-    AssetPaths.sfxCardToss,
-    AssetPaths.sfxLineLoad,
-    AssetPaths.sfxStationTick,
-    AssetPaths.sfxScoreTick,
-    AssetPaths.sfxMultHit,
-    AssetPaths.sfxJesterFire,
-    AssetPaths.sfxScoreImpact,
-    AssetPaths.sfxGold,
-    AssetPaths.sfxShuffle,
-  ];
-
-  /// 한 판에 한 번 울릴까 말까 한 효과음. 모바일 웹 첫 화면이 이것들 때문에
-  /// 느려지지 않게 첫 사용자 제스처까지 미뤘다가 받는다.
-  static const List<String> _deferredSfxPaths = <String>[
-    AssetPaths.sfxBossIntro,
-    AssetPaths.sfxReward,
     AssetPaths.sfxClear,
     AssetPaths.sfxTimeUp,
   ];
-
-  static const List<String> _sfxPaths = <String>[
-    ..._eagerSfxPaths,
-    ..._deferredSfxPaths,
-  ];
-
-  static bool _deferredSfxRequested = false;
-
-  /// cue가 쓰는 효과음이 모두 목록에 있는지 테스트에서 확인한다.
-  @visibleForTesting
-  static List<String> get debugSfxPaths => _sfxPaths;
 
   /// 테스트에서 실제 재생 대신 (path, volume, rate)를 받는다.
   @visibleForTesting
@@ -311,7 +270,6 @@ class SoundManager {
     if (!_shouldHandleWebAudioGesture(isWeb: kIsWeb)) return;
     if (_shouldForwardWebSfxUnlock(isWeb: kIsWeb)) {
       unlockWebSfx();
-      _requestDeferredSfx();
     }
     _webUnlocked = true;
     if (_bgmAutoResumeBlockDepth > 0) return;
@@ -455,7 +413,7 @@ class SoundManager {
   /// 게임·메뉴 BGM과 효과음을 미리 로드한다. 앱 시작 시 호출.
   static Future<void> preload() async {
     if (kIsWeb) {
-      for (final path in _eagerSfxPaths) {
+      for (final path in _sfxPaths) {
         initializeWebSfx(path);
       }
       return;
@@ -465,15 +423,6 @@ class SoundManager {
       FlameAudio.audioCache.load(AssetPaths.bgmMain),
       for (final path in _sfxPaths) FlameAudio.audioCache.load(path),
     ]);
-  }
-
-  /// 드물게 쓰는 효과음을 받는다. 웹에서 첫 사용자 제스처가 올 때 한 번만 돈다.
-  static void _requestDeferredSfx() {
-    if (_deferredSfxRequested) return;
-    _deferredSfxRequested = true;
-    for (final path in _deferredSfxPaths) {
-      initializeWebSfx(path);
-    }
   }
 
   /// BGM 재생. 음소거 시에는 _currentBgm만 갱신하고 재생하지 않음.

@@ -117,7 +117,7 @@ Archive는 마지막으로 확인한 항목 집합을 SharedPreferences의 별�
 | 화면 흔들림 `ScreenShake` | trauma(0~1)를 더하고 선형으로 줄이며 흔들림은 trauma²다. 난수 없이 사인파를 섞는다. 호스트는 `PhoneFrame` 안에 하나다 |
 | FX 레이어 `FxLayer` | 앱 루트의 전체 화면 `CustomPainter` 한 장. 파티클은 구운 스프라이트 atlas를 `drawRawAtlas` 한 번으로 그리고, 그릴 것이 없으면 티커를 멈춘다. 프리셋은 `lineConfirm`, `constraintImpact`, `largeScore`, `burst`, `sparks`, `coins`, `shards`다 |
 | 구운 글로우 `FxBoxGlow` | 애니메이션되는 그림자·글로우는 프레임마다 blur를 계산하지 않고 한 번 구운 이미지의 크기와 투명도만 바꾼다 |
-| 의미 레지스트리 `GameCue` | 소리와 햅틱은 의미 키로 고르고 항상 같은 시점에 낸다. 효과음 25개를 계열로 묶어 매핑하고 계열 안의 차이만 pitch·변주로 낸다([game_feedback_cues.dart](../../lib/views/game/game_feedback_cues.dart)) |
+| 의미 레지스트리 `GameCue` | 소리와 햅틱은 의미 키로 고르고 항상 같은 시점에 낸다. 지금은 효과음 7개와 pitch·변주 조합으로 매핑한다([game_feedback_cues.dart](../../lib/views/game/game_feedback_cues.dart)) |
 
 설정과 접근성 계약은 다음과 같다.
 
@@ -125,10 +125,6 @@ Archive는 마지막으로 확인한 항목 집합을 SharedPreferences의 별�
 - OS의 동작 줄이기(`disableAnimations`, `reduceMotion`)가 켜져 있으면 juice와 흔들림, 추종 모션은 설정과 무관하게 0이고 설정 화면에 그 사실을 알린다.
 - 화면 흔들림과 진동은 각각 끌 수 있다. 진동은 네이티브에서 `HapticFeedback`, Android 웹에서 20ms 이하 `navigator.vibrate`를 쓰고 iOS 웹에서는 아무것도 하지 않는다.
 - 웹 효과음은 Web Audio `playbackRate`로 음높이를 바꾼다. 반면 네이티브는 audioplayers가 음높이를 유지한 채 속도만 바꾸므로 원음으로 재생한다. 전역 pitch 배율은 게임오버 연출용이며 다음 run에서 1로 되돌린다.
-- 효과음은 원래 있던 7개에 Kenney의 CC0 팩에서 가져온 18개를 더해 모두 25개다. 타일 집기·놓기, 드로우, 버리기, 줄 장전, 정산 단계, 점수 카운트, 배수 타격, Jester 발동, 최종 점수, gold 거래, 리롤, Boss 등장, 보상 공개, 모달 열림·닫힘, 토글, 거부가 각각 자기 소리를 갖는다. 출처와 가공은 [CREDITS.md](../../assets/audio/sfx/CREDITS.md)에 있고, 파일을 다시 만드는 방법은 `tools/build_sfx.py`다.
-- 새 음원이 제 소리를 내므로 cue의 기본 pitch는 1 근처다. 정산 단계마다 올라가는 `bigScore1~4` 사다리처럼 뜻이 있는 것만 크게 벌린다. 네이티브는 pitch 없이 원음으로 재생하므로 원음만으로도 뜻이 통해야 한다.
-- 아주 짧은 UI 소리(`UiToggle`, `TilePick`, `TilePlace`, `StationTick`, `ScoreTick`)만 wav이고 나머지는 mp3다. mp3 인코더가 파일 앞에 붙이는 패딩 때문에 손가락을 떼는 순간보다 소리가 늦게 들리는 것을 피하기 위해서다. iOS Safari의 Web Audio가 읽지 못하는 ogg는 쓰지 않는다.
-- 한 판에 한 번 울릴까 말까 한 소리(`BossIntro`, `Reward`, `Clear`, `TimeUp`)는 모바일 웹 첫 화면을 늦추지 않게 첫 사용자 제스처까지 기다렸다가 받는다.
 
 ### 공통 입력, 팝업, 화면 전환
 
