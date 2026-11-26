@@ -87,32 +87,29 @@ void main() {
     await player.dispose();
   });
 
-  test(
-    'all twelve registered assets load once and reach native output',
-    () async {
-      final loaded = <String>[];
-      final realAssetPlayer = NativeSfxPlayer(
-        engine: engine,
-        loadAsset: (path) async {
-          loaded.add(path);
-          final bytes = await File('assets/audio/$path').readAsBytes();
-          expect(bytes, isNotEmpty);
-          return bytes;
-        },
-        log: (message, _) => errors.add(message),
-      );
-      addTearDown(realAssetPlayer.dispose);
-      await realAssetPlayer.initialize(AssetPaths.sfxAssets);
-      expect(AssetPaths.sfxAssets, hasLength(12));
-      expect(loaded.toSet(), AssetPaths.sfxAssets.toSet());
-      expect(realAssetPlayer.cachedSourceCount, 12);
-      for (final path in AssetPaths.sfxAssets) {
-        expect(realAssetPlayer.play(path, volume: 1, rate: 1), isNotNull);
-      }
-      expect(engine.rates.values, everyElement(1));
-      expect(errors, isEmpty);
-    },
-  );
+  test('all registered assets load once and reach native output', () async {
+    final loaded = <String>[];
+    final realAssetPlayer = NativeSfxPlayer(
+      engine: engine,
+      loadAsset: (path) async {
+        loaded.add(path);
+        final bytes = await File('assets/audio/$path').readAsBytes();
+        expect(bytes, isNotEmpty);
+        return bytes;
+      },
+      log: (message, _) => errors.add(message),
+    );
+    addTearDown(realAssetPlayer.dispose);
+    await realAssetPlayer.initialize(AssetPaths.sfxAssets);
+    expect(AssetPaths.sfxAssets, hasLength(26));
+    expect(loaded.toSet(), AssetPaths.sfxAssets.toSet());
+    expect(realAssetPlayer.cachedSourceCount, AssetPaths.sfxAssets.length);
+    for (final path in AssetPaths.sfxAssets) {
+      expect(realAssetPlayer.play(path, volume: 1, rate: 1), isNotNull);
+    }
+    expect(engine.rates.values, everyElement(1));
+    expect(errors, isEmpty);
+  });
 
   test('concurrent preload shares init and source cache', () async {
     engine.initGate = Completer<void>();

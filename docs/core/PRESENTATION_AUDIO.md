@@ -16,7 +16,7 @@
 | Item/Jester/tile effect | source badge, burst, flight, 2초 feedback | effect 결과 label 유지 |
 | Market deny/success | deny shake·badge 또는 purchase flight·slot pulse·offer reveal·NEW reveal | notice로 guard 이유 표시, 구매 전 collection state 확인 |
 | cash-out | 단계별 reward reveal, coin burst, 최종 current/total gold, 성장 보상 묶음 | collect SFX |
-| game over | 2초 danger fade 동안 보드가 가라앉고 소리 하강, 뒤이어 modal | Deny SFX; retry/new run/exit 제공 |
+| game over | 2초 danger fade 동안 보드가 가라앉고 소리 하강, 뒤이어 modal | GameOver SFX; retry/new run/exit 제공 |
 | focus-out | tutorial 제거, veil/options, animation time pause | BGM pause; resume에서 적절한 scene BGM 복구 |
 
 시간 상수는 [game_presentation_timings.dart](../../lib/views/game/game_presentation_timings.dart), audio 정책은 [sound_manager.dart](../../lib/resources/sound_manager.dart)가 소유한다. motion은 결과 state를 소유하지 않으며 pause 중 duration 진행을 멈춘다.
@@ -49,7 +49,7 @@
 | 화면 흔들림 `ScreenShake` | trauma(0~1)를 더하고 선형으로 줄이며 흔들림은 trauma²다. 난수 없이 사인파를 섞는다. 호스트는 `PhoneFrame` 안에 하나다 |
 | FX 레이어 `FxLayer` | 앱 루트의 전체 화면 `CustomPainter` 한 장. 파티클은 구운 스프라이트 atlas를 `drawRawAtlas` 한 번으로 그리고, 그릴 것이 없으면 티커를 멈춘다. 프리셋은 `lineConfirm`, `constraintImpact`, `largeScore`, `burst`, `sparks`, `coins`, `shards`다 |
 | 구운 글로우 `FxBoxGlow` | 애니메이션되는 그림자·글로우는 프레임마다 blur를 계산하지 않고 한 번 구운 이미지의 크기와 투명도만 바꾼다 |
-| 의미 레지스트리 `GameCue` | 게임 행동의 소리와 햅틱은 의미 키로 고르고 같은 시점에 낸다. 일반 UI 클릭은 공용 입력 부품이 `BtnSnd` 원음을 한 번 재생한다. 음원 12개를 등록하되 단어 음성을 일반 변주에 쓰지 않으며, 시각·햅틱만 필요한 cue는 소리를 생략한다([game_feedback_cues.dart](../../lib/views/game/game_feedback_cues.dart)) |
+| 의미 레지스트리 `GameCue` | 게임 행동의 소리와 햅틱은 의미 키로 고르고 같은 시점에 낸다. 일반 UI 클릭은 공용 입력 부품이 `BtnSnd` 원음을 한 번 재생한다. 음원 26개를 등록하되 단어 음성을 일반 변주에 쓰지 않으며, 시각·햅틱만 필요한 cue는 소리를 생략한다([game_feedback_cues.dart](../../lib/views/game/game_feedback_cues.dart)) |
 
 설정과 접근성 계약은 다음과 같다.
 
@@ -63,14 +63,18 @@
 | 역할 | 음원·시점 | 소유권 |
 |---|---|---|
 | 일반 입력 | 메뉴·설정·분류·상품 선택은 `BtnSnd` 원음 1회 | 공용 버튼 또는 명시적 클릭 cue 중 한 곳. UI 원음 flag로 globalPitch도 무시 |
-| 거래·행동 결과 | 구매·판매·리롤·아이템 사용·줄 변환·해금·Station 이동은 `BtnSnd` 원음 1회. 거절과 게임오버는 `Deny` 원음 | 결과 handler가 소유하며 버튼 기본음과 겹치지 않는다 |
-| 타일 조작 | 선택 `TilePick`, 배치 `TilePlace`, 버리기 `CardToss`. 드로우·이동은 `BtnSnd` | 원음 1회, 호출부 pitch·변주·globalPitch를 무시 |
+| 거래·행동 결과 | 구매 `Buy`, 판매 `Sell`, 리롤 `Reroll`, 아이템 사용 `ItemUse`, 줄 변환 `LineTransform`, 해금 `Unlock`, Station 이동 `StationAdvance`는 행동마다 전용 음원 원음 1회. 거절은 `Deny`, 게임오버는 `GameOver` 원음 | 결과 handler가 소유하며 버튼 기본음과 겹치지 않는다 |
+| 타일 조작 | 선택 `TilePick`, 배치 `TilePlace`, 버리기 `CardToss`, 드로우 `TileDraw`, 이동 `TileMove` | 원음 1회, 호출부 pitch·변주·globalPitch를 무시 |
 | 승리 | `Reward` 원음 | 승리 연출 시작 시 1회 |
+| 런 흐름 | 런 시작 `RunStart`, 전투 시작 `BattleStart`, 이어하기·북마크 복원 `RunRestore`, Boss 인트로 `BossIntro` | 원음 1회, 호출부 pitch·변주·globalPitch를 무시 |
 | 정산 보호 | `scoreTick`, `overlapHit`, `penalty`, `jesterFire`, `tileModifierFire`, `itemFire`, `bigScore1..4`, `countTick`, `cashOutCollect` | 기존 음원·배율·변주·상승식·타이밍 유지. 정산 전 확정 버튼은 `BtnSnd` |
-| 단어 음성 | `Clear`는 최종 정산창 첫 표시 원음 1회. `Start`는 승인된 재생 상황 없음 | 일반 효과음으로 변주하지 않는다 |
-| 무음 | 자동 보스 소개·상하단 notice·점수 미리보기 변화·NEW·상점 자동 진입 | 기존 시각·햅틱은 유지 |
+| 정산 완료 | `Clear`는 최종 정산창 첫 표시 원음 1회 | 말 없는 효과음이며 다른 상황에 재사용하거나 변주하지 않는다 |
+| 단어 음성 | `Start`는 승인된 재생 상황 없음 | 일반 효과음으로 변주하지 않는다 |
+| 무음 | 상하단 notice·점수 미리보기 변화·NEW·상점 자동 진입 | 기존 시각·햅틱은 유지 |
 
 2026-09-21 Jev-1.13.0의 한국어·영어 메타데이터 평가를 동일 기준으로 적용했다. 19개 상황을 한영으로 총 38번 판단했으며, 8개가 양쪽 기준을 통과했다. 나머지 11개는 기본 클릭·무음 정책에 따라 BtnSnd 또는 무음으로 정했다. 평가 19개와 별도로 정산 전 `confirmPress`는 기본 클릭 정책을 적용했다. 모델의 실제 청취 결과로 간주하지 않으며 런타임 모델 의존성은 없다. 등록 파일·출처는 `assets/audio/sfx/CREDITS.md`, 전체 44개 매핑과 정산 보호 baseline은 `test/resources/fixtures/audio_cue_contract.json`에서 검증한다.
+
+2026-11-26에는 BtnSnd, Deny, 무음을 쓰던 행동 cue 14개에 전용 음원을 넣었다. 음원은 ElevenLabs로 생성했고 길이와 음량 측정으로 골랐다. 같은 날 `Clear`도 음성 나레이션에서 말 없는 효과음으로 바꿨다. 사람이 들어 보고 확인한 것은 아니다.
 
 버튼 기본음과 결과음의 중복은 시간 기반 차단 대신 호출 소유권으로 막는다. HUD 도움말·옵션·보스 정보, 카드 상세, 선택창·뒤로·닫기와 사용자 건너뛰기는 BtnSnd 원음 1회다. 자동 장면 종료에는 클릭음을 내지 않는다. 보드의 실제 선택·해제와 이동 취소는 BtnSnd를 내며, 빈칸 ignored·입력 잠금·비활성 컨트롤은 예외다. 정보가 없는 보스 HUD는 비활성이고 활성 판매가 거절되면 Deny를 낸다. 즉시 아이템 사용은 결과 handler, 대상 선택창을 여는 별도 클릭은 버튼음이 소유한다. `GameTileChoiceDialog`는 선택·닫기 후 호출부의 결과음 소유 여부를 각각 명시한다. 기존 Fail·TimeUp의 발화 여부는 검증하지 않았으며 보호된 정산 외에서 재사용하지 않는다.
 
@@ -80,8 +84,8 @@
 
 - 누름: 입력 부품은 공용 `PressFeedback`([common_ui.dart](../../lib/utils/common_ui.dart))을 거친다. pointer-down에 살짝 찌그러지고, tap에는 juice와 햅틱, `BtnSnd` 원음(pitch 1, 변주 0)이 따른다. 자체 cue를 가진 호출부는 `playSound: false`로 공용 소리를 끈다. 비활성 입력과 자동 닫힘은 클릭음을 내지 않는다. 공용 버튼, 아이콘 칩, 메뉴 타일, 타이틀·New Run 카드, Blind play 버튼, 난이도·modifier 카드, Archive 카드와 페이지 버튼이 여기에 해당한다. 런 시작과 전투 시작 같은 결정 버튼은 juice를 더 크게 준다.
 - 거절: 비활성 이어하기 카드, 잠기거나 이미 끝난 Blind의 play 버튼, 기억 카드가 모자란 modifier는 눌러도 상태가 바뀌지 않는다. 대신 좌우로 짧게 흔들리고 `deny` 소리와 error 햅틱이 난다. 화면 전체를 번쩍이지는 않는다.
-- 의미 소리: 런 시작(`runStart`), 전투 시작(`battleStart`), 이어하기·북마크 복원(`runRestore`), 난이도·modifier·언어·연출 설정 선택(`choiceSelect`)은 의미 cue를 쓰고, 옵션·뒤로·닫기·튜토리얼·북마크 클릭은 공용 버튼 또는 `withButtonSound`가 소리를 맡는다. `runStart`, `battleStart`, `runRestore`의 효과음은 기존 `BtnSnd` 원음(pitch 1)을 유지한다. 상점 탭·분류·페이지·상품 선택과 해제는 같은 항목을 다시 눌러도 클릭마다 `BtnSnd` 한 번만 낸다. 언어·연출 설정도 pitch 1과 변주 0을 유지한다. 음소거 해제는 설정을 먼저 적용하고 클릭음을 내며, 음소거 설정은 소리를 내지 않는다. 정산 카운트와 결과 효과는 보호된 게임 cue를 유지한다. top·bottom notice는 소리를 내지 않는다. 호출부가 이미 다른 cue를 냈다면 `cue: null`로 끈다.
-- modifier 해금: 기억 카드로 modifier를 해금하면 그 카드가 크게 튕기고 FX 레이어 불꽃이 튀며 `unlock`의 `BtnSnd` 소리가 난다. Station 이동은 `BtnSnd`, 런 승리는 `Reward`를 쓰며 `Clear`를 재사용하지 않는다.
+- 의미 소리: 런 시작(`runStart`), 전투 시작(`battleStart`), 이어하기·북마크 복원(`runRestore`), 난이도·modifier·언어·연출 설정 선택(`choiceSelect`)은 의미 cue를 쓰고, 옵션·뒤로·닫기·튜토리얼·북마크 클릭은 공용 버튼 또는 `withButtonSound`가 소리를 맡는다. `runStart`, `battleStart`, `runRestore`는 각각 전용 음원 `RunStart`, `BattleStart`, `RunRestore`를 원음(pitch 1)으로 낸다. 상점 탭·분류·페이지·상품 선택과 해제는 같은 항목을 다시 눌러도 클릭마다 `BtnSnd` 한 번만 낸다. 언어·연출 설정도 pitch 1과 변주 0을 유지한다. 음소거 해제는 설정을 먼저 적용하고 클릭음을 내며, 음소거 설정은 소리를 내지 않는다. 정산 카운트와 결과 효과는 보호된 게임 cue를 유지한다. top·bottom notice는 소리를 내지 않는다. 호출부가 이미 다른 cue를 냈다면 `cue: null`로 끈다.
+- modifier 해금: 기억 카드로 modifier를 해금하면 그 카드가 크게 튕기고 FX 레이어 불꽃이 튀며 `unlock`의 `Unlock` 소리가 난다. Station 이동은 `StationAdvance`, 런 승리는 `Reward`를 쓰며 `Clear`를 재사용하지 않는다.
 - 팝업: `showAppDialog`와 `showGameFramedDialog`는 220ms scale-pop으로 열리고 140ms 만에 닫힌다. barrier는 route 애니메이션을 따라 fade된다. 닫힌 직후 route를 바꿀 때 `endOfFrame`을 기다리는 규칙은 변함없이 적용된다.
 - 화면 전환: route는 280ms fade와 짧은 slide로 바뀐다. 디버그 픽스처, `auto_*`·`debug_*` 쿼리, OS 동작 줄이기에서는 즉시 전환해 풀런봇과 자동 흐름을 늦추지 않는다. 타이틀에서 전투로 나갈 때 웹 BGM은 320ms 동안 줄어든 뒤 멈춘다.
 - 동작 줄이기에서는 흔들림, juice, 팝업 scale이 모두 빠진다. 소리, 햅틱, fade는 남는다. 시간 값은 `GamePresentationTimings`에, cue 매핑은 `gameFeedbackCues`의 T0 구역에 있다.

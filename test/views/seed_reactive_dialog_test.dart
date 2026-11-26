@@ -214,7 +214,9 @@ void main() {
       await tester.runAsync(() => Future<void>.delayed(Duration.zero));
       await tester.pumpAndSettle();
       expect(find.byType(Dialog), findsNothing);
-      expect(harness.sounds, [(AssetPaths.sfxBtnSnd, 1.0)]);
+      expect(harness.sounds, [
+        (exit == 'cancel' ? AssetPaths.sfxBtnSnd : AssetPaths.sfxRunStart, 1.0),
+      ]);
       if (exit == 'cancel') {
         expect(harness.startedRun, isNull);
         expect(ActiveRunSaveService.hasStoredActiveRun(), isFalse);

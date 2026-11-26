@@ -79,15 +79,44 @@ void main() {
     expect(haptics, [HapticGrade.error]);
   });
 
-  test('run navigation preserves the original button sound and pitch', () {
+  test('run navigation plays its own sound at the original pitch', () {
+    for (final entry in {
+      GameCue.runStart: AssetPaths.sfxRunStart,
+      GameCue.battleStart: AssetPaths.sfxBattleStart,
+      GameCue.runRestore: AssetPaths.sfxRunRestore,
+    }.entries) {
+      GameFeedback.play(entry.key);
+      expect(sfx.last.$1, entry.value, reason: entry.key.name);
+      expect(sfx.last.$3, 1, reason: entry.key.name);
+    }
+  });
+
+  test('action cues do not fall back to the shared button click', () {
     for (final cue in [
+      GameCue.tileDraw,
+      GameCue.tileMove,
+      GameCue.itemUse,
+      GameCue.lineTransform,
+      GameCue.buy,
+      GameCue.sell,
+      GameCue.reroll,
+      GameCue.unlock,
+      GameCue.stationAdvance,
       GameCue.runStart,
       GameCue.battleStart,
       GameCue.runRestore,
+      GameCue.gameOver,
+      GameCue.bossIntro,
     ]) {
-      GameFeedback.play(cue);
-      expect(sfx.last.$1, AssetPaths.sfxBtnSnd, reason: cue.name);
-      expect(sfx.last.$3, 1, reason: cue.name);
+      final spec = gameFeedbackCues[cue]!;
+      expect(spec.sfx, isNotNull, reason: cue.name);
+      expect(spec.sfx, isNot(AssetPaths.sfxBtnSnd), reason: cue.name);
+      expect(spec.sfx, isNot(AssetPaths.sfxDeny), reason: cue.name);
+      expect(
+        gameFeedbackCues.values.where((other) => other.sfx == spec.sfx),
+        hasLength(1),
+        reason: '${cue.name} shares its sound with another cue',
+      );
     }
   });
 
@@ -182,12 +211,18 @@ void main() {
         GameCue.marketPage,
         GameCue.menuNavigate,
         GameCue.panelOpen,
+      ]) {
+        GameFeedback.play(cue, pitch: 1.8);
+        expect(sfx.last.$1, AssetPaths.sfxBtnSnd);
+        expect(sfx.last.$3, 1, reason: cue.name);
+      }
+      for (final cue in [
         GameCue.runStart,
         GameCue.battleStart,
         GameCue.runRestore,
       ]) {
         GameFeedback.play(cue, pitch: 1.8);
-        expect(sfx.last.$1, AssetPaths.sfxBtnSnd);
+        expect(sfx.last.$1, gameFeedbackCues[cue]!.sfx, reason: cue.name);
         expect(sfx.last.$3, 1, reason: cue.name);
       }
       GameFeedback.play(GameCue.tilePlace);

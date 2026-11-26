@@ -79,7 +79,7 @@ class GameCueSpec {
   final HapticGrade? haptic;
 }
 
-/// 등록 음원 12개 중 승인된 상황 매핑을 사용한다.
+/// 등록 음원 중 승인된 상황 매핑을 사용한다.
 /// 비언어 효과만 pitch·변주에 사용하며, 소리 없는 시각·햅틱 cue도 허용한다.
 const Map<GameCue, GameCueSpec> gameFeedbackCues = {
   GameCue.buttonTap: GameCueSpec(
@@ -99,7 +99,7 @@ const Map<GameCue, GameCueSpec> gameFeedbackCues = {
   ),
   GameCue.tileDraw: GameCueSpec(
     preserveOriginalPitch: true,
-    sfx: AssetPaths.sfxBtnSnd,
+    sfx: AssetPaths.sfxTileDraw,
     haptic: HapticGrade.select,
   ),
   GameCue.discard: GameCueSpec(
@@ -109,22 +109,22 @@ const Map<GameCue, GameCueSpec> gameFeedbackCues = {
   ),
   GameCue.itemUse: GameCueSpec(
     preserveOriginalPitch: true,
-    sfx: AssetPaths.sfxBtnSnd,
+    sfx: AssetPaths.sfxItemUse,
     haptic: HapticGrade.impact,
   ),
   GameCue.buy: GameCueSpec(
     preserveOriginalPitch: true,
-    sfx: AssetPaths.sfxBtnSnd,
+    sfx: AssetPaths.sfxBuy,
     haptic: HapticGrade.impact,
   ),
   GameCue.sell: GameCueSpec(
     preserveOriginalPitch: true,
-    sfx: AssetPaths.sfxBtnSnd,
+    sfx: AssetPaths.sfxSell,
     haptic: HapticGrade.place,
   ),
   GameCue.reroll: GameCueSpec(
     preserveOriginalPitch: true,
-    sfx: AssetPaths.sfxBtnSnd,
+    sfx: AssetPaths.sfxReroll,
     haptic: HapticGrade.select,
   ),
   GameCue.deny: GameCueSpec(
@@ -171,7 +171,7 @@ const Map<GameCue, GameCueSpec> gameFeedbackCues = {
   ),
   GameCue.unlock: GameCueSpec(
     preserveOriginalPitch: true,
-    sfx: AssetPaths.sfxBtnSnd,
+    sfx: AssetPaths.sfxUnlock,
     haptic: HapticGrade.impact,
   ),
   GameCue.marketEntry: GameCueSpec(haptic: HapticGrade.impact),
@@ -187,7 +187,7 @@ const Map<GameCue, GameCueSpec> gameFeedbackCues = {
   ),
   GameCue.stationAdvance: GameCueSpec(
     preserveOriginalPitch: true,
-    sfx: AssetPaths.sfxBtnSnd,
+    sfx: AssetPaths.sfxStationAdvance,
     haptic: HapticGrade.impact,
   ),
   GameCue.menuNavigate: GameCueSpec(
@@ -207,6 +207,7 @@ const Map<GameCue, GameCueSpec> gameFeedbackCues = {
   GameCue.newReveal: GameCueSpec(haptic: HapticGrade.impact),
   GameCue.bossIntro: GameCueSpec(
     preserveOriginalPitch: true,
+    sfx: AssetPaths.sfxBossIntro,
     haptic: HapticGrade.heavy,
   ),
   GameCue.victory: GameCueSpec(
@@ -216,24 +217,24 @@ const Map<GameCue, GameCueSpec> gameFeedbackCues = {
   ),
   GameCue.gameOver: GameCueSpec(
     preserveOriginalPitch: true,
-    sfx: AssetPaths.sfxDeny,
+    sfx: AssetPaths.sfxGameOver,
     haptic: HapticGrade.heavy,
   ),
 
   // --- T0: 공통 입력·팝업·화면 전환 ---
   GameCue.runStart: GameCueSpec(
     preserveOriginalPitch: true,
-    sfx: AssetPaths.sfxBtnSnd,
+    sfx: AssetPaths.sfxRunStart,
     haptic: HapticGrade.impact,
   ),
   GameCue.battleStart: GameCueSpec(
     preserveOriginalPitch: true,
-    sfx: AssetPaths.sfxBtnSnd,
+    sfx: AssetPaths.sfxBattleStart,
     haptic: HapticGrade.heavy,
   ),
   GameCue.runRestore: GameCueSpec(
     preserveOriginalPitch: true,
-    sfx: AssetPaths.sfxBtnSnd,
+    sfx: AssetPaths.sfxRunRestore,
     haptic: HapticGrade.impact,
   ),
   GameCue.choiceSelect: GameCueSpec(
@@ -263,12 +264,12 @@ const Map<GameCue, GameCueSpec> gameFeedbackCues = {
   ),
   GameCue.tileMove: GameCueSpec(
     preserveOriginalPitch: true,
-    sfx: AssetPaths.sfxBtnSnd,
+    sfx: AssetPaths.sfxTileMove,
     haptic: HapticGrade.place,
   ),
   GameCue.lineTransform: GameCueSpec(
     preserveOriginalPitch: true,
-    sfx: AssetPaths.sfxBtnSnd,
+    sfx: AssetPaths.sfxLineTransform,
     haptic: HapticGrade.impact,
   ),
   GameCue.previewChange: GameCueSpec(preserveOriginalPitch: true),

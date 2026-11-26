@@ -153,7 +153,7 @@ void main() {
       await tester.tap(find.text('owned'));
       await tester.tap(find.text('owned'));
       await tester.pumpAndSettle();
-      expect(sfx, [AssetPaths.sfxBtnSnd, AssetPaths.sfxBtnSnd]);
+      expect(sfx, [AssetPaths.sfxRunStart, AssetPaths.sfxRunStart]);
       expect(rates, [1, 1]);
     },
   );
@@ -229,7 +229,7 @@ void main() {
       haptics.clear();
       await tester.tap(find.text('restore now'));
       await tester.pumpAndSettle();
-      expect(sfx, [AssetPaths.sfxBtnSnd]);
+      expect(sfx, [AssetPaths.sfxRunRestore]);
       expect(rates, [1]);
       expect(haptics, contains(HapticGrade.impact));
     },
