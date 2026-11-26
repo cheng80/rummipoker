@@ -9,7 +9,7 @@ alwaysApply: false
 ## 문서 체계
 
 - `START_HERE.md`를 최상위 진입점으로 유지하고 다른 router나 active plan으로 대체하지 않는다. 문서 정리 전에 START_HERE의 읽기 순서와 current 참조를 먼저 맞춘다.
-- 현재 게임 정본은 `docs/core/`의 `GAME_DESIGN`, `GAME_RULES`, `RUN_ECONOMY`, `UI_UX`, `CONTENT_SYSTEM`, `SAVE_DATA`, `SYSTEM_ARCHITECTURE`다. 코드·데이터·테스트 근거 없이 새 규칙을 단정하지 않는다.
+- 현재 게임 정본은 `docs/core/`의 `GAME_DESIGN`, `GAME_RULES`, `RUN_ECONOMY`, `UI_UX`, `PRESENTATION_AUDIO`, `CONTENT_SYSTEM`, `SAVE_DATA`, `SYSTEM_ARCHITECTURE`다. 코드·데이터·테스트 근거 없이 새 규칙을 단정하지 않는다.
 - `docs/release/`는 build, deploy, store metadata, screenshot, infographic 전용이며 게임 역기획 정본과 합치지 않는다. release 작업에서도 게임 설명은 `docs/core/`를 참조한다.
 - 표와 catalog snapshot 같은 기계 파생물은 `docs/generated/`에 두고 원본처럼 수동 편집하지 않는다.
 - `docs/superpowers/specs/**`와 `docs/superpowers/plans/**`는 선택적 스킬 산출물로 허용하되 제품 정본이나 registry 대상으로 취급하지 않는다. 확정된 계약과 실행 상태는 담당 core·planning 문서에 반영한다.

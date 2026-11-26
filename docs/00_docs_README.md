@@ -67,10 +67,11 @@
 | `docs/core/GAME_DESIGN.md` | core | 게임 정체성·코어 루프 |
 | `docs/core/I18N.md` | core | 번역 파일·키 규칙·줄바꿈 계약 |
 | `docs/core/GAME_RULES.md` | core | 보드·족보·전투 규칙 |
+| `docs/core/PRESENTATION_AUDIO.md` | core | 연출·사운드·진동 계약 |
 | `docs/core/RUN_ECONOMY.md` | core | run·정산·경제 계약 |
 | `docs/core/SAVE_DATA.md` | core | 저장 schema·복원 계약 |
 | `docs/core/SYSTEM_ARCHITECTURE.md` | core | runtime 계층·소유권 |
-| `docs/core/UI_UX.md` | core | 화면·입력·피드백 계약 |
+| `docs/core/UI_UX.md` | core | 화면·입력·접근성 계약 |
 | `docs/generated/BOSS_PATTERNS.md` | generated | 코드에서 생성한 Boss 표 |
 | `docs/generated/CONTENT_CATALOG.md` | generated | 데이터에서 생성한 콘텐츠 목록 |
 | `docs/planning/ACTIVE_EXECUTION_PLAN.md` | planning | 현재 실행 상태·다음 행동 |

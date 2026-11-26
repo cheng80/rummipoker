@@ -8,7 +8,7 @@ alwaysApply: false
 
 ## 정본과 구조
 
-- 수정 전에 `docs/core/UI_UX.md`, `docs/core/SYSTEM_ARCHITECTURE.md`, `docs/planning/verification/TEST_QA_ACCEPTANCE.md`의 관련 절을 확인한다. 화면별 수치와 상태 위계는 이 문서나 코드·테스트를 다시 적지 않는다.
+- 수정 전에 `docs/core/UI_UX.md`, `docs/core/PRESENTATION_AUDIO.md`, `docs/core/SYSTEM_ARCHITECTURE.md`, `docs/planning/verification/TEST_QA_ACCEPTANCE.md`의 관련 절을 확인한다. 화면별 수치와 상태 위계는 이 문서나 코드·테스트를 다시 적지 않는다.
 - View에는 표시와 입력 조정만 두고 게임 규칙·저장·카탈로그 상태는 `logic`, `providers`, `services`가 소유한다. Riverpod은 수동 `Notifier`/`Provider`를 유지하고 코드젠을 추가하지 않는다.
 - 공용 helper는 책임이 맞는 파일에 둔다. 한 화면만 위한 예외나 카드별 px 보정으로 공용 레이아웃 문제를 덮지 않는다.
 
@@ -33,7 +33,7 @@ alwaysApply: false
 - Item/Jester/Ritual 효과는 `source → target → result`가 보이게 presentation event와 피드백을 함께 설계한다. 지연·동시 발동은 아이템명, 효과, 소모 여부를 읽을 수 있는 요약으로 표시한다.
 - 웹 autoplay 대응은 `SoundManager` 안에 제한한다. 실제 사용자 gesture에서 unlock/resume을 재시도하고 같은 BGM을 스크롤마다 재시작하지 않는다. 짧은 `inactive`는 debounce 후 공통 pause로 처리한다.
 
-- 피드백 매핑이나 음원 롤백은 `docs/core/UI_UX.md`의 효과음 역할·소유권 계약을 따른다. 실제 클릭과 화면 흐름에서 음원 경로·배율·총 재생 횟수를 검증한다. 메타데이터 기반 모델 선택과 정책 대체를 구분하고 정산 보호 baseline을 확인한다.
+- 피드백 매핑이나 음원 롤백은 `docs/core/PRESENTATION_AUDIO.md`의 효과음 역할·소유권 계약을 따른다. 실제 클릭과 화면 흐름에서 음원 경로·배율·총 재생 횟수를 검증한다. 메타데이터 기반 모델 선택과 정책 대체를 구분하고 정산 보호 baseline을 확인한다.
 
 ## 검증
 
