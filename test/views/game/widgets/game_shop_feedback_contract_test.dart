@@ -387,7 +387,7 @@ void main() {
         SoundManager.debugSfxSink = (path, _, _) => sounds.add(path);
         // Successful purchase selects the acquired slot and exposes its sale action.
         await tapKey(tester, 'market-detail-action');
-        expect(sounds, [AssetPaths.sfxBtnSnd]);
+        expect(sounds, [AssetPaths.sfxSell]);
         final sold = snapshot(progress);
         expect(progress.ownedJesters, isEmpty);
         expect(progress.gold, greaterThan(bought['gold'] as int));
@@ -396,7 +396,7 @@ void main() {
         expect(sounds, [AssetPaths.sfxBtnSnd]);
         sounds.clear();
         await tapKey(tester, 'market-reroll-confirm');
-        expect(sounds, [AssetPaths.sfxBtnSnd]);
+        expect(sounds, [AssetPaths.sfxReroll]);
         expect(
           progress.shopOffers.map((o) => o.card.id),
           everyElement(startsWith('reroll_')),
@@ -412,7 +412,7 @@ void main() {
   );
 
   testWidgets(
-    'first and repeat jester purchases emit one button sound; NEW keeps its haptic',
+    'first and repeat jester purchases emit one buy sound; NEW keeps its haptic',
     (tester) async {
       final progress = run(duplicate: true);
       await mount(tester, progress);
@@ -431,7 +431,7 @@ void main() {
         await tapKey(tester, 'market-detail-action', settle: false);
         await tester.pump(const Duration(milliseconds: 16));
         expect(sounds.where((s) => s.$1 == AssetPaths.sfxStart), isEmpty);
-        expect(sounds.where((s) => s.$1 == AssetPaths.sfxBtnSnd), hasLength(1));
+        expect(sounds.where((s) => s.$1 == AssetPaths.sfxBuy), hasLength(1));
         final reveal = gameFeedbackCues[GameCue.newReveal]!;
         final revealSounds = sounds.where(
           (s) => s.$1 == reveal.sfx && (s.$2 - reveal.pitch).abs() < .05,
@@ -441,7 +441,7 @@ void main() {
           purchase == 0 ? findsOneWidget : findsNothing,
         );
         expect(revealSounds, isEmpty);
-        expect(sounds, [(AssetPaths.sfxBtnSnd, 1.0)]);
+        expect(sounds, [(AssetPaths.sfxBuy, 1.0)]);
         expect(
           haptics.where((h) => h != HapticGrade.select).toList(),
           purchase == 0
@@ -633,7 +633,7 @@ void main() {
   );
 
   testWidgets(
-    'first and repeat item purchases emit one button sound; NEW keeps its haptic',
+    'first and repeat item purchases emit one buy sound; NEW keeps its haptic',
     (tester) async {
       final catalog = feedbackItemCatalog();
       final progress = run(count: 0);
@@ -662,8 +662,8 @@ void main() {
           purchase == 0 ? findsOneWidget : findsNothing,
         );
         expect(sounds.where((s) => s.$1 == AssetPaths.sfxStart), isEmpty);
-        expect(sounds.where((s) => s.$1 == AssetPaths.sfxBtnSnd), hasLength(1));
-        expect(sounds, [(AssetPaths.sfxBtnSnd, 1.0)]);
+        expect(sounds.where((s) => s.$1 == AssetPaths.sfxBuy), hasLength(1));
+        expect(sounds, [(AssetPaths.sfxBuy, 1.0)]);
         final cue = gameFeedbackCues[GameCue.newReveal]!;
         expect(
           sounds

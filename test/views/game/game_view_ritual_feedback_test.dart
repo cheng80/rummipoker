@@ -81,7 +81,7 @@ void main() {
       sounds.clear();
       await tester.tap(find.byKey(const ValueKey('fate-line-confirm-button')));
       expect(sounds, hasLength(1));
-      expect(sounds.single.$1, AssetPaths.sfxBtnSnd);
+      expect(sounds.single.$1, AssetPaths.sfxLineTransform);
       await tester.pump();
 
       expect(find.byKey(const ValueKey('ritual-deck-flight')), findsOneWidget);

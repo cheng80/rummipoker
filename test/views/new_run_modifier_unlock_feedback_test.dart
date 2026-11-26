@@ -106,7 +106,7 @@ void main() {
     await tester.runAsync(() => RunUnlockStateService.addInsight(20));
     await tapHighStakes(tester);
 
-    expect(sfx, [AssetPaths.sfxBtnSnd]);
+    expect(sfx, [AssetPaths.sfxUnlock]);
     expect(haptics, [HapticGrade.impact]);
     state = await tester.runAsync(RunUnlockStateService.load);
     expect(state!.isRunModifierUnlocked(NewRunModifier.highStakes), isTrue);

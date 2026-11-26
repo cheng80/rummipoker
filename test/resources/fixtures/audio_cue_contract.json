@@ -31,13 +31,13 @@
   },
   {
     "cue": "tileDraw",
-    "current_asset": "sfx/BtnSnd.mp3",
+    "current_asset": "sfx/TileDraw.wav",
     "pitch": 1.0,
     "pitch_variance": 0.0,
     "preserve_original_pitch": true,
     "haptic": "select",
     "protected_settlement": false,
-    "basis": "orchestrator_policy_fallback_not_model_selection"
+    "basis": "elevenlabs_generated_2026_11_26_user_approved_scope_not_auditioned"
   },
   {
     "cue": "discard",
@@ -51,43 +51,43 @@
   },
   {
     "cue": "itemUse",
-    "current_asset": "sfx/BtnSnd.mp3",
+    "current_asset": "sfx/ItemUse.mp3",
     "pitch": 1.0,
     "pitch_variance": 0.0,
     "preserve_original_pitch": true,
     "haptic": "impact",
     "protected_settlement": false,
-    "basis": "orchestrator_policy_fallback_not_model_selection"
+    "basis": "elevenlabs_generated_2026_11_26_user_approved_scope_not_auditioned"
   },
   {
     "cue": "buy",
-    "current_asset": "sfx/BtnSnd.mp3",
+    "current_asset": "sfx/Buy.mp3",
     "pitch": 1.0,
     "pitch_variance": 0.0,
     "preserve_original_pitch": true,
     "haptic": "impact",
     "protected_settlement": false,
-    "basis": "orchestrator_policy_fallback_not_model_selection"
+    "basis": "elevenlabs_generated_2026_11_26_user_approved_scope_not_auditioned"
   },
   {
     "cue": "sell",
-    "current_asset": "sfx/BtnSnd.mp3",
+    "current_asset": "sfx/Sell.mp3",
     "pitch": 1.0,
     "pitch_variance": 0.0,
     "preserve_original_pitch": true,
     "haptic": "place",
     "protected_settlement": false,
-    "basis": "orchestrator_policy_fallback_not_model_selection"
+    "basis": "elevenlabs_generated_2026_11_26_user_approved_scope_not_auditioned"
   },
   {
     "cue": "reroll",
-    "current_asset": "sfx/BtnSnd.mp3",
+    "current_asset": "sfx/Reroll.mp3",
     "pitch": 1.0,
     "pitch_variance": 0.0,
     "preserve_original_pitch": true,
     "haptic": "select",
     "protected_settlement": false,
-    "basis": "orchestrator_policy_fallback_not_model_selection"
+    "basis": "elevenlabs_generated_2026_11_26_user_approved_scope_not_auditioned"
   },
   {
     "cue": "deny",
@@ -181,13 +181,13 @@
   },
   {
     "cue": "unlock",
-    "current_asset": "sfx/BtnSnd.mp3",
+    "current_asset": "sfx/Unlock.mp3",
     "pitch": 1.0,
     "pitch_variance": 0.0,
     "preserve_original_pitch": true,
     "haptic": "impact",
     "protected_settlement": false,
-    "basis": "orchestrator_policy_fallback_not_model_selection"
+    "basis": "elevenlabs_generated_2026_11_26_user_approved_scope_not_auditioned"
   },
   {
     "cue": "marketEntry",
@@ -221,13 +221,13 @@
   },
   {
     "cue": "stationAdvance",
-    "current_asset": "sfx/BtnSnd.mp3",
+    "current_asset": "sfx/StationAdvance.mp3",
     "pitch": 1.0,
     "pitch_variance": 0.0,
     "preserve_original_pitch": true,
     "haptic": "impact",
     "protected_settlement": false,
-    "basis": "jev_bilingual_gate_pass"
+    "basis": "elevenlabs_generated_2026_11_26_user_approved_scope_not_auditioned"
   },
   {
     "cue": "menuNavigate",
@@ -247,7 +247,7 @@
     "preserve_original_pitch": false,
     "haptic": "impact",
     "protected_settlement": false,
-    "basis": "preserved baseline"
+    "basis": "elevenlabs_generated_2026_11_26_replaces_spoken_narration_not_auditioned"
   },
   {
     "cue": "cashOutCollect",
@@ -271,13 +271,13 @@
   },
   {
     "cue": "bossIntro",
-    "current_asset": null,
+    "current_asset": "sfx/BossIntro.mp3",
     "pitch": 1.0,
     "pitch_variance": 0.0,
     "preserve_original_pitch": true,
     "haptic": "heavy",
     "protected_settlement": false,
-    "basis": "orchestrator_policy_fallback_not_model_selection"
+    "basis": "elevenlabs_generated_2026_11_26_user_approved_scope_not_auditioned"
   },
   {
     "cue": "victory",
@@ -291,43 +291,43 @@
   },
   {
     "cue": "gameOver",
-    "current_asset": "sfx/Deny.mp3",
+    "current_asset": "sfx/GameOver.mp3",
     "pitch": 1.0,
     "pitch_variance": 0.0,
     "preserve_original_pitch": true,
     "haptic": "heavy",
     "protected_settlement": false,
-    "basis": "jev_bilingual_gate_pass"
+    "basis": "elevenlabs_generated_2026_11_26_user_approved_scope_not_auditioned"
   },
   {
     "cue": "runStart",
-    "current_asset": "sfx/BtnSnd.mp3",
+    "current_asset": "sfx/RunStart.mp3",
     "pitch": 1,
     "pitch_variance": 0,
     "preserve_original_pitch": true,
     "haptic": "impact",
     "protected_settlement": false,
-    "basis": "preserved baseline"
+    "basis": "elevenlabs_generated_2026_11_26_user_approved_scope_not_auditioned"
   },
   {
     "cue": "battleStart",
-    "current_asset": "sfx/BtnSnd.mp3",
+    "current_asset": "sfx/BattleStart.mp3",
     "pitch": 1,
     "pitch_variance": 0,
     "preserve_original_pitch": true,
     "haptic": "heavy",
     "protected_settlement": false,
-    "basis": "preserved baseline"
+    "basis": "elevenlabs_generated_2026_11_26_user_approved_scope_not_auditioned"
   },
   {
     "cue": "runRestore",
-    "current_asset": "sfx/BtnSnd.mp3",
+    "current_asset": "sfx/RunRestore.mp3",
     "pitch": 1,
     "pitch_variance": 0,
     "preserve_original_pitch": true,
     "haptic": "impact",
     "protected_settlement": false,
-    "basis": "preserved baseline"
+    "basis": "elevenlabs_generated_2026_11_26_user_approved_scope_not_auditioned"
   },
   {
     "cue": "choiceSelect",
@@ -401,23 +401,23 @@
   },
   {
     "cue": "tileMove",
-    "current_asset": "sfx/BtnSnd.mp3",
+    "current_asset": "sfx/TileMove.wav",
     "pitch": 1.0,
     "pitch_variance": 0.0,
     "preserve_original_pitch": true,
     "haptic": "place",
     "protected_settlement": false,
-    "basis": "orchestrator_policy_fallback_not_model_selection"
+    "basis": "elevenlabs_generated_2026_11_26_user_approved_scope_not_auditioned"
   },
   {
     "cue": "lineTransform",
-    "current_asset": "sfx/BtnSnd.mp3",
+    "current_asset": "sfx/LineTransform.mp3",
     "pitch": 1.0,
     "pitch_variance": 0.0,
     "preserve_original_pitch": true,
     "haptic": "impact",
     "protected_settlement": false,
-    "basis": "orchestrator_policy_fallback_not_model_selection"
+    "basis": "elevenlabs_generated_2026_11_26_user_approved_scope_not_auditioned"
   },
   {
     "cue": "previewChange",

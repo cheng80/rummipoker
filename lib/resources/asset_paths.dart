@@ -18,6 +18,22 @@ class AssetPaths {
   static const String sfxDeny = 'sfx/Deny.mp3';
   static const String sfxReward = 'sfx/Reward.mp3';
 
+  /// 행동별 효과음. 출처는 assets/audio/sfx/CREDITS.md.
+  static const String sfxTileDraw = 'sfx/TileDraw.wav';
+  static const String sfxTileMove = 'sfx/TileMove.wav';
+  static const String sfxItemUse = 'sfx/ItemUse.mp3';
+  static const String sfxLineTransform = 'sfx/LineTransform.mp3';
+  static const String sfxBuy = 'sfx/Buy.mp3';
+  static const String sfxSell = 'sfx/Sell.mp3';
+  static const String sfxReroll = 'sfx/Reroll.mp3';
+  static const String sfxUnlock = 'sfx/Unlock.mp3';
+  static const String sfxStationAdvance = 'sfx/StationAdvance.mp3';
+  static const String sfxRunStart = 'sfx/RunStart.mp3';
+  static const String sfxBattleStart = 'sfx/BattleStart.mp3';
+  static const String sfxRunRestore = 'sfx/RunRestore.mp3';
+  static const String sfxGameOver = 'sfx/GameOver.mp3';
+  static const String sfxBossIntro = 'sfx/BossIntro.mp3';
+
   /// 웹·네이티브가 함께 미리 로드하는 효과음 등록 목록.
   static const List<String> sfxAssets = [
     sfxTimeTic,
@@ -32,6 +48,20 @@ class AssetPaths {
     sfxCardToss,
     sfxDeny,
     sfxReward,
+    sfxTileDraw,
+    sfxTileMove,
+    sfxItemUse,
+    sfxLineTransform,
+    sfxBuy,
+    sfxSell,
+    sfxReroll,
+    sfxUnlock,
+    sfxStationAdvance,
+    sfxRunStart,
+    sfxBattleStart,
+    sfxRunRestore,
+    sfxGameOver,
+    sfxBossIntro,
   ];
 
   /// BGM 경로. FlameAudio.bgm에는 assets/audio/ 이후 상대 경로를 전달한다.

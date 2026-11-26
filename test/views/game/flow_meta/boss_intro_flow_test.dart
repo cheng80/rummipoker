@@ -121,7 +121,9 @@ void main() {
     expect(sfx.where((e) => e.$1 == AssetPaths.sfxStart), isEmpty);
     expect(find.byType(GameBossIntroCard), findsOneWidget);
     expect(_veilHidden(tester), isTrue);
-    expect(sfx, isEmpty, reason: 'boss intro is silent');
+    expect(sfx, [
+      (AssetPaths.sfxBossIntro, 1.0),
+    ], reason: 'boss intro plays its sting once');
 
     for (var i = 0; i < 15; i++) {
       await tester.pump(const Duration(milliseconds: 200));
